@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antigravity Learning Path - Engenharia & Fullstack</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <div class="progress-container">
+        <div id="progress-fill"></div>
+    </div>
+    <div id="app-container">
+        <main id="roadmap-view">
+            <div class="roadmap-spine"></div>
+            <header class="roadmap-header">
+                <h1>Meu Roteiro de Engenharia</h1>
+                <p>Clique nos tópicos para ver os objetivos e a teoria.</p>
+            </header>
+            
+            <div id="roadmap-nodes">
+                <!-- Nodes renderizados via JS -->
+            </div>
+        </main>
+
+        <aside id="lesson-panel">
+            <button class="close-btn" onclick="closePanel()">×</button>
+            <div id="lesson-content" class="lesson-content">
+                <!-- Conteúdo da lição -->
+            </div>
+        </aside>
+    </div>
+
+    <script type="module" src="app.js"></script>
+    <script>
+        function closePanel() {
+            document.getElementById('lesson-panel').classList.remove('active');
+        }
+    </script>
+</body>
+</html>

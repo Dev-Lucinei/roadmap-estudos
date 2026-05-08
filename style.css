@@ -1,0 +1,278 @@
+:root {
+    --bg-color: #0b0e14;
+    --card-bg: #161b22;
+    --accent-color: #3fb950;
+    --text-primary: #adbac7;
+    --text-bright: #ffffff;
+    --border-color: #444c56;
+    --glass-bg: rgba(22, 27, 34, 0.8);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    overflow-x: hidden;
+}
+
+#app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+}
+
+/* Progress Bar */
+.progress-container {
+    width: 100%;
+    height: 6px;
+    background: var(--border-color);
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+}
+
+#progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #3fb950, #2ea043);
+    box-shadow: 0 0 10px rgba(63, 185, 80, 0.5);
+    transition: width 0.5s ease-out;
+}
+
+/* Roadmap Canvas */
+#roadmap-view {
+    flex: 1;
+    padding: 60px 40px;
+    overflow-y: auto;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: radial-gradient(circle at 50% 50%, #1c2128 0%, #0b0e14 100%);
+}
+
+.section-title {
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+    opacity: 0.8;
+}
+
+.roadmap-spine {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(to bottom, #3fb950, #2ea043, #388bfd);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1;
+}
+
+.roadmap-header {
+    margin-bottom: 50px;
+    text-align: center;
+}
+
+.roadmap-header h1 {
+    font-size: 2.5rem;
+    color: var(--text-bright);
+    margin-bottom: 10px;
+    background: linear-gradient(90deg, #3fb950, #2ea043);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Node Styling */
+.node-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 40px;
+    width: 100%;
+}
+
+.node {
+    background: var(--card-bg);
+    border: 2px solid var(--border-color);
+    padding: 15px 25px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 200px;
+    text-align: center;
+    position: relative;
+    z-index: 2;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+.node:hover {
+    border-color: var(--accent-color);
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(63, 185, 80, 0.2);
+}
+
+.node.central {
+    background: linear-gradient(145deg, #1c2128, #161b22);
+    border-width: 3px;
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: var(--text-bright);
+}
+
+.node-children {
+    display: flex;
+    width: 100%;
+    max-width: 1000px;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 40px;
+    margin-top: 20px;
+}
+
+.side-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.side-column.left { align-items: flex-end; }
+.side-column.right { align-items: flex-start; }
+
+.node {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 180px;
+    text-align: center;
+    position: relative;
+    z-index: 2;
+    font-size: 0.9rem;
+}
+
+.node.central {
+    background: #21262d;
+    border: 2px solid #388bfd;
+    font-weight: bold;
+    font-size: 1rem;
+    color: var(--text-bright);
+    min-width: 220px;
+    box-shadow: 0 0 15px rgba(56, 139, 253, 0.3);
+}
+
+#lesson-panel {
+    width: 450px;
+    background: rgba(22, 27, 34, 0.95);
+    backdrop-filter: blur(20px);
+    border-left: 1px solid var(--border-color);
+    padding: 40px 30px;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: fixed;
+    right: 0;
+    top: 0;
+    height: 100%;
+    z-index: 1000;
+    box-shadow: -15px 0 35px rgba(0,0,0,0.6);
+    overflow-y: auto;
+}
+
+#lesson-panel.active {
+    transform: translateX(0);
+}
+
+.close-btn {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: #30363d;
+    border: 1px solid var(--border-color);
+    color: var(--text-bright);
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: background 0.2s;
+    z-index: 1001;
+}
+
+.close-btn:hover {
+    background: #f85149;
+    color: white;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    cursor: pointer;
+    margin-bottom: 20px;
+}
+
+.lesson-content h2 {
+    color: var(--accent-color);
+    margin-bottom: 15px;
+}
+
+.lesson-content p {
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+/* Conexões (Simples para protótipo) */
+.node.completed {
+    border-color: var(--accent-color);
+    box-shadow: inset 0 0 10px rgba(63, 185, 80, 0.2);
+}
+
+.node.completed::after {
+    content: "✓";
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: var(--accent-color);
+    color: white;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.complete-btn {
+    width: 100%;
+    padding: 12px;
+    margin-top: 20px;
+    background: #238636;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.3s;
+}
+
+.complete-btn:hover {
+    background: #2ea043;
+}
