@@ -666,8 +666,20 @@ class ValidationHarness:
             return result
 
         for py_file in py_files:
+            # Ignora o próprio harness.py (contém padrões proibidos como strings)
+            if py_file.name == "harness.py":
+                continue
             # Ignora arquivos de cache e venv
-            if any(part in str(py_file) for part in ("__pycache__", ".venv", ".pytest_cache", ".mypy_cache", ".ruff_cache")):
+            if any(
+                part in str(py_file)
+                for part in (
+                    "__pycache__",
+                    ".venv",
+                    ".pytest_cache",
+                    ".mypy_cache",
+                    ".ruff_cache",
+                )
+            ):
                 continue
             try:
                 content = py_file.read_text(encoding="utf-8")
@@ -868,8 +880,20 @@ class ValidationHarness:
             return result
 
         for py_file in py_files:
+            # Ignora o próprio harness.py (contém padrões proibidos como strings)
+            if py_file.name == "harness.py":
+                continue
             # Ignora arquivos de cache e venv
-            if any(part in str(py_file) for part in ("__pycache__", ".venv", ".pytest_cache", ".mypy_cache", ".ruff_cache")):
+            if any(
+                part in str(py_file)
+                for part in (
+                    "__pycache__",
+                    ".venv",
+                    ".pytest_cache",
+                    ".mypy_cache",
+                    ".ruff_cache",
+                )
+            ):
                 continue
             self._audit_file(py_file, errors)
 
@@ -912,8 +936,21 @@ class ValidationHarness:
         # Varre arquivos na raiz (server.py, generate_*.py) e em src/
         py_files = list(BASE_DIR.glob("*.py")) + list(SRC_DIR.rglob("*.py"))
         # Ignora arquivos de cache e venv
-        py_files = [f for f in py_files if not any(p in str(f) for p in ("__pycache__", ".venv", ".pytest_cache", ".mypy_cache", ".ruff_cache"))]
-        
+        py_files = [
+            f
+            for f in py_files
+            if not any(
+                p in str(f)
+                for p in (
+                    "__pycache__",
+                    ".venv",
+                    ".pytest_cache",
+                    ".mypy_cache",
+                    ".ruff_cache",
+                )
+            )
+        ]
+
         if not py_files:
             result = StepResult(
                 step="typecheck",
@@ -928,7 +965,10 @@ class ValidationHarness:
 
         # Executa mypy em todos os arquivos Python encontrados
         result = self._run_command(
-            "typecheck", ["mypy"] + [str(f.relative_to(BASE_DIR)) for f in py_files] + ["--show-column-numbers"]
+            "typecheck",
+            ["mypy"]
+            + [str(f.relative_to(BASE_DIR)) for f in py_files]
+            + ["--show-column-numbers"],
         )
         if result.status != "skip":
             result.errors = self._parse_mypy_errors(result.stdout + result.stderr)
@@ -1095,6 +1135,15 @@ class ValidationHarness:
     def run_all(self) -> None:
         """Executa todas as validações na ordem de prioridade."""
         self.run_integrity()  # sempre primeiro — fail-fast se violado
+        self.run_structure()
+        self.run_security()
+        self.run_lint()
+        self.run_typecheck()
+        self.run_tests()
+        self.run_audit()
+
+    def run_without_integrity(self) -> None:
+        """Executa todas as validações exceto integridade (para hooks do git)."""
         self.run_structure()
         self.run_security()
         self.run_lint()
