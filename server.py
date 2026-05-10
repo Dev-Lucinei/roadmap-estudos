@@ -124,6 +124,8 @@ class RoadmapHandler(http.server.SimpleHTTPRequestHandler):
             self.list_roadmaps()
         elif self.path.startswith("/api/roadmap/"):
             self.load_roadmap()
+        elif self.path == "/api/dep-map":
+            self.get_dep_map()
         else:
             super().do_GET()
 
@@ -140,6 +142,8 @@ class RoadmapHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_save_roadmap(data)
         elif self.path == "/api/diagnose":
             self.handle_diagnosis(data)
+        elif self.path == "/api/regenerate-dep-map":
+            self.handle_regenerate_dep_map()
         else:
             self.send_error(404)
 
@@ -171,6 +175,25 @@ class RoadmapHandler(http.server.SimpleHTTPRequestHandler):
             self.wfile.write(content.encode("utf-8"))
         else:
             self.send_error(404)
+
+    def get_dep_map(self):
+        filepath = os.path.join(DATA_DIR, "dep_map.json")
+        if os.path.exists(filepath):
+            with open(filepath, "r", encoding="utf-8") as f:
+                content = f.read()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(content.encode("utf-8"))
+        else:
+            self.send_response(404)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(
+                json.dumps(
+                    {"status": "error", "message": "dep_map.json não encontrado"}
+                ).encode("utf-8")
+            )
 
     def handle_generate_lesson(self, data):
         try:
@@ -281,6 +304,56 @@ class RoadmapHandler(http.server.SimpleHTTPRequestHandler):
                 json.dumps(
                     {"status": "error", "message": f"Erro no diagnóstico: {str(e)}"}
                 ).encode("utf-8")
+            )
+
+    def handle_regenerate_dep_map(self):
+        try:
+            import glob
+
+            dep_map = {}
+            roadmap_files = glob.glob(os.path.join(DATA_DIR, "roadmap_*.json"))
+
+            for filepath in roadmap_files:
+                with open(filepath, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+
+                title = data.get(
+                    "title",
+                    os.path.basename(filepath)
+                    .replace("roadmap_", "")
+                    .replace(".json", ""),
+                )
+                nodes = data.get("nodes", [])
+
+                prereqs = []
+                for node in nodes:
+                    if node.get("type") == "subtopic" and node.get("children"):
+                        prereqs.extend(node["children"])
+
+                dep_map[title] = list(set(prereqs))
+
+            dep_map_path = os.path.join(DATA_DIR, "dep_map.json")
+            with open(dep_map_path, "w", encoding="utf-8") as f:
+                json.dump(dep_map, f, indent=2, ensure_ascii=False)
+
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(
+                json.dumps(
+                    {
+                        "status": "success",
+                        "message": "dep_map.json atualizado",
+                        "entries": len(dep_map),
+                    }
+                ).encode("utf-8")
+            )
+        except Exception as e:
+            self.send_response(500)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(
+                json.dumps({"status": "error", "message": str(e)}).encode("utf-8")
             )
 
 

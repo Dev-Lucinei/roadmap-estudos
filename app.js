@@ -24,6 +24,7 @@ let currentLessonNode = null;
 let isEditMode = false;
 let lessonStartTimes = {};
 let userXP = parseInt(localStorage.getItem('userXP') || '0');
+let depMap = {};  // Cache do mapa de dependências
 
 
 // Inicialização Mermaid
@@ -43,11 +44,23 @@ marked.setOptions({ renderer });
 
 async function init() {
     try {
+        await loadDepMap();
         await listRoadmaps();
     } catch (e) {
         console.error('Falha na inicialização:', e);
     }
     updateStreakUI();
+}
+
+async function loadDepMap() {
+    try {
+        const response = await fetch(`${API_URL}/dep-map`);
+        if (response.ok) {
+            depMap = await response.json();
+        }
+    } catch (e) {
+        console.error('Erro ao carregar mapa de dependências:', e);
+    }
 }
 
 async function listRoadmaps() {
@@ -173,21 +186,18 @@ function createNodeElement(node) {
     quizContainer.style.display = 'none';
     lessonPanel.classList.add('active');
     
-    // Check prerequisites via diagnostic
-    // Enable diagnostic for central nodes or nodes that are children of central nodes
-    // that have prerequisites in dep_map
+    // Check prerequisites via diagnostic using depMap
+    const prereqs = depMap[node.title] || [];
+    const hasPrereqs = prereqs.length > 0;
     const isCentralNode = node.type === 'central';
-    const hasPrereqs = node.prereqs && node.prereqs.length > 0;
     const parentNode = currentRoadmap?.nodes?.find(n => n.children?.includes(node.id));
-    const parentHasPrereqs = parentNode && parentNode.prereqs && parentNode.prereqs.length > 0;
-    
+    const parentTitle = parentNode?.title || '';
+    const parentPrereqs = depMap[parentTitle] || [];
+    const parentHasPrereqs = parentPrereqs.length > 0;
+
     if (isCentralNode || hasPrereqs || parentHasPrereqs) {
-        // For central nodes, we need to check if they have prerequisites in dep_map
-        // For now, we'll enable diagnostic for all central nodes to allow testing
         const passed = await runDiagnostic(node);
         if (!passed) {
-            // Don't show generic alert, the modal already shows the diagnosis result
-            // Just return to let user deal with the modal
             return;
         }
     }
@@ -629,3 +639,15 @@ setInterval(drawConnections, 5000);
 
 window.loadRoadmap = loadRoadmap;
 window.generateLessonForCurrentNode = generateLessonForCurrentNode;
+window.regenerateDepMap = async () => {
+    try {
+        const response = await fetch(`${API_URL}/regenerate-dep-map`, { method: 'POST' });
+        const result = await response.json();
+        if (result.status === 'success') {
+            await loadDepMap();
+            alert(`Mapa de dependências atualizado! (${result.entries} entradas)`);
+        }
+    } catch (e) {
+        alert('Erro ao atualizar mapa de dependências.');
+    }
+};
