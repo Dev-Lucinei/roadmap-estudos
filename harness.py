@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-SkillHub Validation Harness — Agent-Ready Edition.
+Roadmap-Estudos Validation Harness — Agent-Ready Edition.
 
 Executa todas as validações do projeto e gera um relatório completo
 com plano de ação detalhado para agentes de IA corrigirem erros
@@ -14,7 +14,6 @@ Uso:
     python harness.py test       → apenas testes
     python harness.py audit      → apenas auditoria de arquitetura
     python harness.py security   → apenas verificações de segurança
-    python harness.py dsl        → apenas DSL tests
     python harness.py structure  → apenas estrutura de arquivos
 """
 
@@ -34,6 +33,8 @@ from typing import Any
 # =============================================================================
 
 BASE_DIR = Path(__file__).resolve().parent
+# Para este projeto, o código fonte está na raiz (server.py, generate_*.py)
+# src/ existe apenas como placeholder e não é varrido
 SRC_DIR = BASE_DIR / "src"
 TESTS_DIR = BASE_DIR / "tests"
 
@@ -44,22 +45,22 @@ PROTECTED_FILES: list[str] = [
     "scripts/guard_harness.py",
 ]
 
-# Estrutura obrigatória do projeto
+# Estrutura obrigatória do projeto (ajustado para Roadmap-Estudos)
 REQUIRED_FILES = [
-    "src/__init__.py",
-    "src/services/dsl/engine.py",
     "pyproject.toml",
     "README.md",
+    "server.py",
+    "generate_lessons.py",
+    "generate_roadmap.py",
 ]
 
 REQUIRED_DIRS = [
-    "src",
-    "src/services",
-    "src/services/dsl",
     "tests",
     "scripts",
     "docs",
     "skill",
+    "data",
+    "licoes",
 ]
 
 # Padrões proibidos por segurança
@@ -294,19 +295,6 @@ class StepResult:
     stderr: str
     errors: list[ValidationError] = field(default_factory=list)
     tool_missing: bool = False
-
-
-@dataclass
-class AgentInstruction:
-    """Instrução consolidada para o agente executar."""
-
-    priority: int  # 1=crítico, 2=importante, 3=sugestão
-    category: str
-    file: str
-    line: int | None
-    action: str  # descrição da ação
-    command: str | None  # comando exato a executar, se aplicável
-    example: str | None  # exemplo de código before/after
 
 
 # =============================================================================
@@ -596,14 +584,14 @@ class ValidationHarness:
                     ValidationError(
                         type="structure",
                         severity="error",
-                        file=required_file,
+                        file=str(path.relative_to(BASE_DIR)),
                         line=None,
                         column=None,
                         code="MISSING_FILE",
                         message=f"Arquivo obrigatório não encontrado: {required_file}",
                         fix_instruction=(
                             f"Criar o arquivo '{required_file}' com o conteúdo "
-                            "adequado ao seu\\n papel no projeto"
+                            "adequado ao seu papel no projeto"
                         ),
                         fix_example=self._structure_fix_example(required_file),
                         auto_fixable=False,
@@ -618,16 +606,15 @@ class ValidationHarness:
                     ValidationError(
                         type="structure",
                         severity="error",
-                        file=required_dir,
+                        file=str(path.relative_to(BASE_DIR)),
                         line=None,
                         column=None,
                         code="MISSING_DIR",
                         message=f"Diretório obrigatório não encontrado: {required_dir}",
                         fix_instruction=(
-                            f"Criar o diretório '{required_dir}/' e adicionar "
-                            "__init__.py se for pacote Python"
+                            f"Criar o diretório '{required_dir}/' com a estrutura necessária"
                         ),
-                        fix_example=f"mkdir -p {required_dir} && touch {required_dir}/__init__.py",
+                        fix_example=f"mkdir -p {required_dir}",
                         auto_fixable=False,
                         auto_fix_command=f"mkdir -p {required_dir}",
                     )
@@ -659,26 +646,48 @@ class ValidationHarness:
     # =========================================================
 
     def _check_security(self) -> StepResult:
-        """Verifica padrões proibidos em todos os arquivos Python do src/."""
+        """Verifica padrões proibidos em todos os arquivos Python do projeto (raiz + src/)."""
         start = time.time()
         errors: list[ValidationError] = []
 
-        if not SRC_DIR.exists():
+        # Varre arquivos na raiz (server.py, generate_*.py) e em src/
+        py_files = list(BASE_DIR.glob("*.py")) + list(SRC_DIR.rglob("*.py"))
+
+        if not py_files:
             result = StepResult(
                 step="security",
                 status="skip",
                 exit_code=0,
                 duration_ms=int((time.time() - start) * 1000),
                 stdout="",
-                stderr="src/ não encontrado, pulando verificação de segurança",
+                stderr="Nenhum arquivo Python encontrado para verificação",
             )
             self.results.append(result)
             return result
 
-        for py_file in SRC_DIR.rglob("*.py"):
+        for py_file in py_files:
+            # Ignora arquivos de cache e venv
+            if any(part in str(py_file) for part in ("__pycache__", ".venv", ".pytest_cache", ".mypy_cache", ".ruff_cache")):
+                continue
             try:
                 content = py_file.read_text(encoding="utf-8")
-            except Exception:
+            except Exception as exc:
+                # Registra falha de leitura em vez de ignorar silenciosamente
+                errors.append(
+                    ValidationError(
+                        type="security",
+                        severity="error",
+                        file=str(py_file.relative_to(BASE_DIR)),
+                        line=None,
+                        column=None,
+                        code="FILE_READ_ERROR",
+                        message=f"Não foi possível ler o arquivo: {exc}",
+                        fix_instruction="Verificar permissões do arquivo ou encoding inválido",
+                        fix_example=None,
+                        auto_fixable=False,
+                        auto_fix_command=None,
+                    )
+                )
                 continue
 
             for pattern, description, fix in FORBIDDEN_PATTERNS:
@@ -706,7 +715,7 @@ class ValidationHarness:
             status="success" if not errors else "fail",
             exit_code=0 if not errors else 1,
             duration_ms=duration,
-            stdout=f"Verificados {len(list(SRC_DIR.rglob('*.py')))} arquivos Python",
+            stdout=f"Verificados {len(py_files)} arquivos Python",
             stderr="",
             errors=errors,
         )
@@ -739,7 +748,23 @@ class ValidationHarness:
                 )
             )
             return
-        except Exception:
+        except Exception as exc:
+            # Registra falha de leitura em vez de ignorar silenciosamente
+            errors.append(
+                ValidationError(
+                    type="audit",
+                    severity="error",
+                    file=str(py_file.relative_to(BASE_DIR)),
+                    line=None,
+                    column=None,
+                    code="FILE_READ_ERROR",
+                    message=f"Não foi possível ler/parsear o arquivo: {exc}",
+                    fix_instruction="Verificar permissões do arquivo ou encoding inválido",
+                    fix_example=None,
+                    auto_fixable=False,
+                    auto_fix_command=None,
+                )
+            )
             return
 
         rel_path = str(py_file.relative_to(BASE_DIR))
@@ -823,23 +848,29 @@ class ValidationHarness:
             )
 
     def _check_code_quality(self) -> StepResult:
-        """Verifica type hints e docstrings via AST."""
+        """Verifica type hints e docstrings via AST (raiz + src/)."""
         start = time.time()
         errors: list[ValidationError] = []
 
-        if not SRC_DIR.exists():
+        # Varre arquivos na raiz (server.py, generate_*.py) e em src/
+        py_files = list(BASE_DIR.glob("*.py")) + list(SRC_DIR.rglob("*.py"))
+
+        if not py_files:
             result = StepResult(
                 step="audit",
                 status="skip",
                 exit_code=0,
                 duration_ms=int((time.time() - start) * 1000),
                 stdout="",
-                stderr="src/ não encontrado",
+                stderr="Nenhum arquivo Python encontrado para auditoria",
             )
             self.results.append(result)
             return result
 
-        for py_file in SRC_DIR.rglob("*.py"):
+        for py_file in py_files:
+            # Ignora arquivos de cache e venv
+            if any(part in str(py_file) for part in ("__pycache__", ".venv", ".pytest_cache", ".mypy_cache", ".ruff_cache")):
+                continue
             self._audit_file(py_file, errors)
 
         duration = int((time.time() - start) * 1000)
@@ -877,9 +908,27 @@ class ValidationHarness:
             )
 
     def run_typecheck(self) -> None:
-        """Executa mypy no diretório src/."""
+        """Executa mypy nos arquivos Python do projeto (raiz + src/)."""
+        # Varre arquivos na raiz (server.py, generate_*.py) e em src/
+        py_files = list(BASE_DIR.glob("*.py")) + list(SRC_DIR.rglob("*.py"))
+        # Ignora arquivos de cache e venv
+        py_files = [f for f in py_files if not any(p in str(f) for p in ("__pycache__", ".venv", ".pytest_cache", ".mypy_cache", ".ruff_cache"))]
+        
+        if not py_files:
+            result = StepResult(
+                step="typecheck",
+                status="skip",
+                exit_code=0,
+                duration_ms=0,
+                stdout="",
+                stderr="Nenhum arquivo Python encontrado para type check",
+            )
+            self.results.append(result)
+            return
+
+        # Executa mypy em todos os arquivos Python encontrados
         result = self._run_command(
-            "typecheck", ["mypy", "src/", "--show-column-numbers"]
+            "typecheck", ["mypy"] + [str(f.relative_to(BASE_DIR)) for f in py_files] + ["--show-column-numbers"]
         )
         if result.status != "skip":
             result.errors = self._parse_mypy_errors(result.stdout + result.stderr)
@@ -904,223 +953,6 @@ class ValidationHarness:
     def run_structure(self) -> None:
         """Verifica estrutura obrigatória do projeto."""
         self._check_project_structure()
-
-    def run_dsl(self) -> None:
-        """Valida arquivos .skill.md e a estrutura da DSL Engine diretamente."""
-        self._check_dsl_engine()
-        self._check_skill_files()
-
-    def _check_dsl_engine(self) -> StepResult:
-        """Verifica existência e importabilidade da DSL Engine."""
-        start = time.time()
-        errors: list[ValidationError] = []
-
-        engine_path = SRC_DIR / "services" / "dsl" / "engine.py"
-
-        if not engine_path.exists():
-            errors.append(
-                ValidationError(
-                    type="dsl",
-                    severity="error",
-                    file="src/services/dsl/engine.py",
-                    line=None,
-                    column=None,
-                    code="DSL_ENGINE_MISSING",
-                    message="DSLExecutionEngine não encontrado",
-                    fix_instruction=(
-                        "Criar src/services/dsl/engine.py com a classe DSLExecutionEngine. "
-                        "A classe deve implementar pelo menos: __init__, "
-                        "execute(dsl: dict) -> dict, "
-                        "e validate(dsl: dict) -> bool."
-                    ),
-                    fix_example=(
-                        "class DSLExecutionEngine:\n"
-                        '    """Motor de execução declarativa da DSL."""\n'
-                        "    def execute(self, dsl: dict) -> dict:\n"
-                        '        """Executa um fluxo DSL e retorna o resultado."""\n'
-                        "        ..."
-                    ),
-                    auto_fixable=False,
-                    auto_fix_command=None,
-                )
-            )
-        else:
-            # Verifica se o arquivo tem sintaxe válida
-            try:
-                source = engine_path.read_text(encoding="utf-8")
-                tree = ast.parse(source)
-
-                # Verifica se DSLExecutionEngine está definida
-                class_names = [
-                    node.name
-                    for node in ast.walk(tree)
-                    if isinstance(node, ast.ClassDef)
-                ]
-                if "DSLExecutionEngine" not in class_names:
-                    errors.append(
-                        ValidationError(
-                            type="dsl",
-                            severity="error",
-                            file="src/services/dsl/engine.py",
-                            line=None,
-                            column=None,
-                            code="DSL_ENGINE_CLASS_MISSING",
-                            message="Classe DSLExecutionEngine não encontrada em engine.py",
-                            fix_instruction=(
-                                "Definir a classe DSLExecutionEngine em src/services/dsl/engine.py"
-                            ),
-                            fix_example=(
-                                "class DSLExecutionEngine:\n"
-                                '    """Motor de execução declarativa."""\n'
-                                "    ..."
-                            ),
-                            auto_fixable=False,
-                            auto_fix_command=None,
-                        )
-                    )
-
-            except SyntaxError as exc:
-                errors.append(
-                    ValidationError(
-                        type="dsl",
-                        severity="error",
-                        file="src/services/dsl/engine.py",
-                        line=exc.lineno,
-                        column=exc.offset,
-                        code="DSL_SYNTAX_ERROR",
-                        message=f"Erro de sintaxe em engine.py: {exc.msg}",
-                        fix_instruction="Corrigir o erro de sintaxe na linha indicada",
-                        fix_example=None,
-                        auto_fixable=False,
-                        auto_fix_command=None,
-                    )
-                )
-
-        duration = int((time.time() - start) * 1000)
-        result = StepResult(
-            step="dsl_engine",
-            status="success" if not errors else "fail",
-            exit_code=0 if not errors else 1,
-            duration_ms=duration,
-            stdout="",
-            stderr="",
-            errors=errors,
-        )
-        self.results.append(result)
-        return result
-
-    def _check_skill_files(self) -> StepResult:
-        """Valida arquivos .skill.md quanto à estrutura mínima obrigatória."""
-        start = time.time()
-        errors: list[ValidationError] = []
-        skill_dir = BASE_DIR / "skill"
-
-        REQUIRED_SKILL_SECTIONS = [
-            "steps",
-            "output",
-        ]  # seções obrigatórias em todo .skill.md
-
-        if not skill_dir.exists():
-            duration = int((time.time() - start) * 1000)
-            result = StepResult(
-                step="dsl_skills",
-                status="skip",
-                exit_code=0,
-                duration_ms=duration,
-                stdout="Diretório skill/ não encontrado, pulando validação de .skill.md",
-                stderr="",
-            )
-            self.results.append(result)
-            return result
-
-        skill_files = list(skill_dir.rglob("*.skill.md"))
-
-        if not skill_files:
-            errors.append(
-                ValidationError(
-                    type="dsl",
-                    severity="warning",
-                    file="skill/",
-                    line=None,
-                    column=None,
-                    code="DSL_NO_SKILLS",
-                    message="Nenhum arquivo .skill.md encontrado em skill/",
-                    fix_instruction=(
-                        "Criar ao menos um arquivo .skill.md em skill/ "
-                        "seguindo a estrutura: frontmatter YAML + seções ## steps e ## output"
-                    ),
-                    fix_example=(
-                        "---\nname: minha-skill\ndescription: O que esta skill faz\n---\n\n"
-                        "## steps\n1. Passo um\n2. Passo dois\n\n## output\nDescrição do output"
-                    ),
-                    auto_fixable=False,
-                    auto_fix_command=None,
-                )
-            )
-        else:
-            for skill_file in skill_files:
-                rel = str(skill_file.relative_to(BASE_DIR))
-                try:
-                    content = skill_file.read_text(encoding="utf-8")
-                except Exception:
-                    continue
-
-                # Verificar frontmatter
-                if not content.startswith("---"):
-                    errors.append(
-                        ValidationError(
-                            type="dsl",
-                            severity="error",
-                            file=rel,
-                            line=1,
-                            column=None,
-                            code="DSL_MISSING_FRONTMATTER",
-                            message=f"Arquivo .skill.md sem frontmatter YAML: {rel}",
-                            fix_instruction=(
-                                "Adicionar bloco frontmatter no início do arquivo com "
-                                "pelo menos 'name' e 'description'"
-                            ),
-                            fix_example="---\nname: nome-da-skill\ndescription: O que faz\n---",
-                            auto_fixable=False,
-                            auto_fix_command=None,
-                        )
-                    )
-
-                # Verificar seções obrigatórias
-                for section in REQUIRED_SKILL_SECTIONS:
-                    if f"## {section}" not in content.lower():
-                        errors.append(
-                            ValidationError(
-                                type="dsl",
-                                severity="warning",
-                                file=rel,
-                                line=None,
-                                column=None,
-                                code="DSL_MISSING_SECTION",
-                                message=f"Seção obrigatória ausente em {rel}: ## {section}",
-                                fix_instruction=(
-                                    f"Adicionar a seção '## {section}' ao arquivo .skill.md"
-                                ),
-                                fix_example=f"## {section}\nConteúdo da seção aqui",
-                                auto_fixable=False,
-                                auto_fix_command=None,
-                            )
-                        )
-
-        duration = int((time.time() - start) * 1000)
-        result = StepResult(
-            step="dsl_skills",
-            status="success"
-            if not any(e.severity == "error" for e in errors)
-            else "fail",
-            exit_code=0 if not any(e.severity == "error" for e in errors) else 1,
-            duration_ms=duration,
-            stdout=f"Verificados {len(skill_files)} arquivo(s) .skill.md",
-            stderr="",
-            errors=errors,
-        )
-        self.results.append(result)
-        return result
 
     def _check_hash(self, rel_path: str, expected: dict, errors: list[ValidationError]):
         """Verifica o hash de um arquivo protegido."""
@@ -1194,21 +1026,27 @@ class ValidationHarness:
                 for line in git.stdout.splitlines():
                     if len(line) < 4:
                         continue
-                    status, file = line[:2].strip(), line[3:].strip().strip('"')
-                    if file in p_set and status not in ("??",):
+                    # Formato porcelain v1: "XY filename" — colunas fixas
+                    # Arquivos renomeados têm formato "R  old -> new"; extraímos
+                    # apenas o nome destino (após " -> ") para evitar falsos negativos
+                    raw_file = line[3:].strip().strip('"')
+                    if " -> " in raw_file:
+                        raw_file = raw_file.split(" -> ")[-1].strip()
+                    status = line[:2].strip()
+                    if raw_file in p_set and status not in ("??",):
                         errors.append(
                             ValidationError(
                                 type="integrity",
                                 severity="error",
-                                file=file,
+                                file=raw_file,
                                 line=None,
                                 column=None,
                                 code="GIT_DIRTY_PROTECTED",
-                                message=f"Alteração aberta no git: {file}",
-                                fix_instruction=f"Reverter: git checkout HEAD -- {file}",
+                                message=f"Alteração aberta no git: {raw_file}",
+                                fix_instruction=f"Reverter: git checkout HEAD -- {raw_file}",
                                 fix_example=None,
                                 auto_fixable=False,
-                                auto_fix_command=f"git checkout HEAD -- {file}",
+                                auto_fix_command=f"git checkout HEAD -- {raw_file}",
                             )
                         )
         except FileNotFoundError:
@@ -1263,7 +1101,6 @@ class ValidationHarness:
         self.run_typecheck()
         self.run_tests()
         self.run_audit()
-        self.run_dsl()
 
     # =========================================================
     # RELATÓRIO E PLANO DE AÇÃO PARA AGENTES
@@ -1311,6 +1148,7 @@ class ValidationHarness:
             instruction: dict[str, Any] = {
                 "priority": self._error_priority(err),
                 "priority_label": {
+                    0: "BLOQUEANTE",
                     1: "CRÍTICO",
                     2: "IMPORTANTE",
                     3: "MODERADO",
@@ -1430,13 +1268,13 @@ class ValidationHarness:
         for r in self.results:
             icon = {"success": "✅", "skip": "⏭️ ", "fail": "❌"}.get(r.status, "❓")
             tag = f"[{r.status.upper()}]" if r.status != "success" else ""
-            print(f"\\n{icon} {r.step.upper()} {tag} ({r.duration_ms}ms)")
+            print(f"\n{icon} {r.step.upper()} {tag} ({r.duration_ms}ms)")
             if r.tool_missing:
                 print(f"   ⚠️  Ferramenta não encontrada: {self._install_hint(r.step)}")
             for err in r.errors:
                 sev = "🔴" if err.severity == "error" else "🟡"
                 loc = f":{err.line}" if err.line else ""
-                print(f"\\n   {sev} [{err.code}] {err.file}{loc}")
+                print(f"\n   {sev} [{err.code}] {err.file}{loc}")
                 print(f"      Problema: {err.message}")
                 print(f"      Correção: {err.fix_instruction}")
                 if err.auto_fixable:
@@ -1446,24 +1284,24 @@ class ValidationHarness:
         """Imprime o plano de ação consolidado."""
         instructions = self.build_agent_instructions()
         auto_fixes = self.build_auto_fix_sequence()
-        print("\\n" + "═" * 60 + "\\n  PLANO DE AÇÃO\\n" + "═" * 60)
+        print("\n" + "═" * 60 + "\n  PLANO DE AÇÃO\n" + "═" * 60)
         if auto_fixes:
-            print("\\n⚡ CORREÇÕES AUTOMÁTICAS (executar primeiro):")
+            print("\n⚡ CORREÇÕES AUTOMÁTICAS (executar primeiro):")
             for cmd in auto_fixes:
                 print(f"   → {cmd}")
         manual = [i for i in instructions if not i["auto_fixable"]]
         if manual:
-            print("\\n🔧 CORREÇÕES MANUAIS (por prioridade):")
+            print("\n🔧 CORREÇÕES MANUAIS (por prioridade):")
             for it in manual:
                 loc = f":{it['location']['line']}" if it["location"]["line"] else ""
-                print(f"\\n   [{it['priority_label']}] {it['location']['file']}{loc}")
+                print(f"\n   [{it['priority_label']}] {it['location']['file']}{loc}")
                 print(
-                    f"   Problema: {it['problem']}\\n   Ação:     {it['fix_instruction']}"
+                    f"   Problema: {it['problem']}\n   Ação:     {it['fix_instruction']}"
                 )
 
     def print_human(self) -> None:
         """Saída formatada para leitura humana no terminal."""
-        print("\\n" + "═" * 60)
+        print("\n" + "═" * 60)
         print("  SKILLHUB — VALIDAÇÃO COMPLETA")
         print("═" * 60)
 
@@ -1472,7 +1310,7 @@ class ValidationHarness:
 
         report = self.report()
         status_icon = "✅" if report["status"] == "healthy" else "❌"
-        print(f"\\n{status_icon} STATUS FINAL: {report['status'].upper()}")
+        print(f"\n{status_icon} STATUS FINAL: {report['status'].upper()}")
         s = report["summary"]
         print(
             f"   {s['total_errors']} erros · {s['total_warnings']} avisos · "
@@ -1517,8 +1355,9 @@ class ValidationHarness:
 def main() -> None:
     """Ponto de entrada CLI."""
     # ── Fail-fast: verificar integridade antes de qualquer coisa ──────────────
-    _guard = ValidationHarness()
-    integrity_result = _guard.run_integrity()
+    # Reutiliza a mesma instância para evitar dupla execução de run_integrity()
+    harness = ValidationHarness()
+    integrity_result = harness.run_integrity()
     if integrity_result.status == "fail":
         print("\n" + "█" * 60)
         print("  🚨  VIOLAÇÃO DE INTEGRIDADE — EXECUÇÃO BLOQUEADA")
@@ -1532,23 +1371,30 @@ def main() -> None:
         sys.exit(2)
     # ─────────────────────────────────────────────────────────────────────────
 
-    harness = ValidationHarness()
     cmd = sys.argv[1] if len(sys.argv) > 1 else "all"
 
+    # run_all inclui run_integrity, mas já foi executado — define steps restantes
+    def _run_remaining() -> None:
+        harness.run_structure()
+        harness.run_security()
+        harness.run_lint()
+        harness.run_typecheck()
+        harness.run_tests()
+        harness.run_audit()
+
     dispatch = {
-        "all": harness.run_all,
-        "integrity": harness.run_integrity,
+        "all": _run_remaining,
+        "integrity": lambda: None,  # já executado acima
         "lint": harness.run_lint,
         "type": harness.run_typecheck,
         "test": harness.run_tests,
         "audit": harness.run_audit,
         "security": harness.run_security,
         "structure": harness.run_structure,
-        "dsl": harness.run_dsl,
     }
 
     if cmd == "json":
-        harness.run_all()
+        _run_remaining()
         harness.print_json()
         return
 

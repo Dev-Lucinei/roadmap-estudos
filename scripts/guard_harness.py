@@ -8,15 +8,17 @@ Responsabilidades:
   3. Detectar alterações via git em arquivos protegidos
   4. Bloquear execução se qualquer violação for encontrada
   5. Emitir relatório JSON com evidências para auditoria
+  6. Aplicar bloqueio imutável (chattr +i) e permissões 444 em arquivos protegidos
 
 Uso:
     python scripts/guard_harness.py          → verifica e imprime resultado
-    python scripts/guard_harness.py --seal   → gera/atualiza .harness.hash
+    python scripts/guard_harness.py --seal   → gera/atualiza .harness.hash e bloqueia arquivos
     python scripts/guard_harness.py --json   → saída JSON para agentes
 
 Política:
-    - Este script NÃO pode ser modificado por agentes
-    - O hash deste script também é verificado
+    - Arquivos protegidos (harness.py, guard_harness.py, .harness.hash) são bloqueados
+    - Bloqueio: chattr +i + chmod 444 (imutável e leitura-only)
+    - Qualquer tentativa de modificação é detectada e bloqueada
     - Qualquer violação encerra o processo com exit code 2
 """
 
@@ -42,15 +44,27 @@ def run_sudo_command(command: list[str]) -> None:
 
 
 def unlock_file(path: Path) -> None:
-    """Remove atributo imutável (chattr -i)."""
-    # Disabled for environment without sudo
-    pass
+    """Remove atributo imutável (chattr -i) e ajusta permissões para escrita."""
+    try:
+        # Remove atributo imutável (requer sudo)
+        subprocess.run(["sudo", "chattr", "-i", str(path)], check=False)
+        # Remove permissão de leitura-only (444) para permitir escrita
+        subprocess.run(["sudo", "chmod", "644", str(path)], check=False)
+    except Exception:
+        pass
 
 
 def lock_file(path: Path) -> None:
-    """Aplica atributo imutável (chattr +i)."""
-    # Disabled for environment without sudo
-    pass
+    """Aplica atributo imutável (chattr +i) e permissões de leitura-only (444)."""
+    try:
+        # Remove atributo imutável primeiro (para poder aplicar novamente)
+        subprocess.run(["sudo", "chattr", "-i", str(path)], check=False)
+        # Aplica permissão de leitura-only
+        subprocess.run(["sudo", "chmod", "444", str(path)], check=False)
+        # Aplica atributo imutável (requer sudo)
+        subprocess.run(["sudo", "chattr", "+i", str(path)], check=False)
+    except Exception:
+        pass
 
 
 # =============================================================================
@@ -340,7 +354,7 @@ def build_report(
         "agent_policy": {
             "description": (
                 "Agentes NÃO estão autorizados a modificar arquivos protegidos. "
-                "Qualquer tentativa de edição deve ser revertida imediatamente."
+                "Qualquer tentativa de edição será detectada e bloqueada."
             ),
             "allowed_actions": [
                 "Executar harness.py para validar",
@@ -354,6 +368,7 @@ def build_report(
                 "Executar --seal sem autorização humana",
                 "Criar bypass de validações",
                 "Alterar testes para fazer passar",
+                "Remover atributo imutável (chattr -i) sem autorização",
             ],
         },
     }
@@ -389,9 +404,8 @@ def print_human_report(report: dict) -> None:
 
     print("═" * 60 + "\n")
     print("Para desbloquear o guard harness, rode o comando:")
-    print("        sudo chown root:root scripts/guard_harness.py")
-    print("        sudo chmod 644 scripts/guard_harness.py")
     print("        sudo chattr -i scripts/guard_harness.py")
+    print("        sudo chmod 644 scripts/guard_harness.py")
     print("═" * 60 + "\n")
 
 

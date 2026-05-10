@@ -2,6 +2,26 @@
 
 Este documento registra a evolução, decisões técnicas e soluções de problemas do projeto **Roadmap-Estudos**.
 
+## [v2.2.0] - 2026-05-10
+### Corrigido
+- **[P0] Path Traversal em `load_roadmap` e `handle_save_roadmap`** (`server.py`): Adicionado `os.path.basename` + `os.path.realpath` com verificação de prefixo para garantir que nenhum filename vindo da URL ou do body POST possa escapar de `DATA_DIR`. Requisições fora do diretório retornam 403.
+- **[P0] XSS via `innerHTML` com dados do LLM** (`app.js`): `showReviewModal` reescrita usando criação de elementos DOM (`createElement` + `textContent`). Removidas as funções globais `handleReviewClose` e `handleReviewRetry` que dependiam de `innerHTML` com interpolação de strings não sanitizadas.
+- **[P0] Validação de `Content-Length` em `do_POST`** (`server.py`): Adicionado bloco `try-except` com verificação de header ausente, valor não-numérico e limite de 1MB. Servidor retorna 411, 413 ou 400 em vez de lançar exceção não tratada.
+- **[P1] Falha silenciosa de API key** (`generate_lessons.py`, `generate_roadmap.py`): Substituído `os.getenv("OPENROUTER_API_KEY", "")` por verificação explícita com `raise EnvironmentError` — o servidor falha na inicialização com mensagem clara em vez de na primeira chamada de API.
+- **[P1] CORS aberto** (`server.py`): `Access-Control-Allow-Origin` alterado de `*` para `http://localhost:8000`.
+- **[P1] `Content-Type` ausente em respostas de erro 500** (`server.py`): `handle_generate_lesson` e `handle_generate_roadmap` agora enviam `Content-Type: application/json` antes do body em todos os caminhos de erro.
+- **[P1] Contagem cruzada de progresso em `updateProgressBar`** (`app.js`): `completedNodes.length` substituído por filtro que considera apenas nós do roadmap atual, evitando barra acima de 100%.
+- **[P1] `checkQuizCompletion` com escopo global** (`app.js`): Seletor `document.querySelectorAll` substituído por `quizContainer.querySelectorAll` para isolar a contagem ao quiz da sessão atual.
+- **[P1] `setInterval(drawConnections, 5000)` removido** (`app.js`): Eliminado polling periódico que forçava layout thrashing a cada 5 segundos sem nenhuma mudança no DOM.
+- **[P2] `editNode` não implementado** (`app.js`): Função implementada com `prompt` para edição de título, seguida de `renderRoadmap` + `saveRoadmap`.
+- **[P2] `do_DELETE` retornando 200 sem lógica** (`server.py`): Alterado para retornar 405 com body JSON.
+- **[P2] Classe `.glass` ausente** (`style.css`): Definida com `backdrop-filter`, `background` e `border` consistentes com o design system.
+- **[P2] `.review-modal-overlay` sem backdrop** (`style.css`): Adicionado `background: rgba(0,0,0,0.8)` para consistência com `.modal-overlay`.
+
+### Memória Técnica
+- O path traversal em `os.path.join(DATA_DIR, filename)` não é bloqueado automaticamente pelo Python — `os.path.join("/data", "../../.env")` resolve para `../../.env`. A defesa correta é `os.path.realpath` + verificação de prefixo com `os.sep` no final para evitar falsos positivos em nomes como `/data-extra`.
+- `innerHTML` com dados de LLM é uma superfície de XSS real: modelos podem retornar HTML válido como parte do diagnóstico. A única defesa confiável é `textContent`.
+
 ## [v2.1.1] - 2026-05-09
 ### Corrigido
 - **Tratamento de Erro na Inicialização**: Adicionado blocos `try...catch` robustos em `init()`, `listRoadmaps()` e `loadRoadmap()` para capturar falhas de rede, erros HTTP e arrays vazios. Mensagens de erro claras agora são exibidas no `roadmap-selector` e no container de nós quando o backend não responde ou retorna dados inválidos.
@@ -12,6 +32,10 @@ Este documento registra a evolução, decisões técnicas e soluções de proble
 - **Servidor de Ponte (`server.py`)**: API minimalista em Python para gerenciar arquivos e integrações de IA, contornando limitações de segurança do navegador.
 - **Modo Edição (CRUD UI)**: Interface para adicionar, editar e excluir nós diretamente no roadmap visual.
 - **Geração de IA Integrada**: Botões na interface para disparar a criação de lições, quizzes e roadmaps completos via OpenRouter/OpenAI.
+
+## [v2.1.1] - 2026-05-10
+### Corrigido
+- **Tratamento de erro na inicialização**: Adicionada função `loadDepMap()` para pré-carregar o mapa de dependências, blocos `try...catch` em `init()`, `listRoadmaps()` e `loadRoadmap()` para capturar falhas de rede, erros HTTP e arrays vazios, exibindo mensagens de erro claras na UI e evitando que o aplicativo trave silenciosamente.
 
 ### Corrigido
 - **Scroll Unificado**: Conteúdo da lição e Quiz agora compartilham o mesmo container de scroll, evitando que o quiz fique inacessível em textos longos.
