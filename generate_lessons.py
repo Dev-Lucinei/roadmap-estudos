@@ -1,6 +1,4 @@
 import os
-import json
-import re
 from openai import OpenAI
 
 # Define o diretório base para caminhos relativos
@@ -8,8 +6,9 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
-    api_key="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",
+    api_key=os.getenv("OPENROUTER_API_KEY", ""),
 )
+
 
 def gerar_conteudo_ia(topico, tipo):
     prompt = f"""
@@ -42,29 +41,33 @@ def gerar_conteudo_ia(topico, tipo):
     Idioma: Português do Brasil.
     """
     response = client.chat.completions.create(
-        model="openrouter/auto",
-        messages=[{"role": "user", "content": prompt}]
+        model="openrouter/auto", messages=[{"role": "user", "content": prompt}]
     )
     return response.choices[0].message.content
+
 
 def processar_node(node_id, title, node_type, output_dir=None):
     if output_dir is None:
         output_dir = os.path.join(BASE_DIR, "licoes")
-        
+
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-    
+
     nome_arquivo = os.path.join(output_dir, f"{node_id}.md")
     conteudo = gerar_conteudo_ia(title, node_type)
-    
+
     with open(nome_arquivo, "w", encoding="utf-8") as f:
         f.write(conteudo)
     return nome_arquivo
 
+
 if __name__ == "__main__":
     # Mantém compatibilidade com execução manual
     import sys
+
     if len(sys.argv) > 2:
-        processar_node(sys.argv[1], sys.argv[2], sys.argv[3] if len(sys.argv) > 3 else "subtopic")
+        processar_node(
+            sys.argv[1], sys.argv[2], sys.argv[3] if len(sys.argv) > 3 else "subtopic"
+        )
     else:
         print("Uso: python3 generate_lessons.py <id> <titulo> <tipo>")

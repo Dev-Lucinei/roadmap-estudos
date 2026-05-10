@@ -152,8 +152,14 @@ RUFF_SUGGESTIONS: dict[str, dict[str, str]] = {
         "example": "if x == True  →  if x",
         "auto_fixable": "true",
     },
-    "W291": {"fix": "Remover espaços em branco no final da linha", "auto_fixable": "true"},
-    "W293": {"fix": "Remover espaços em branco em linha em branco", "auto_fixable": "true"},
+    "W291": {
+        "fix": "Remover espaços em branco no final da linha",
+        "auto_fixable": "true",
+    },
+    "W293": {
+        "fix": "Remover espaços em branco em linha em branco",
+        "auto_fixable": "true",
+    },
     # isort (I)
     "I001": {
         "fix": (
@@ -389,7 +395,9 @@ class ValidationHarness:
             file, line, col, code, message = match
             suggestion = RUFF_SUGGESTIONS.get(code, {})
 
-            fix_instruction = suggestion.get("fix", f"Corrigir violação {code}: {message}")
+            fix_instruction = suggestion.get(
+                "fix", f"Corrigir violação {code}: {message}"
+            )
             fix_example = suggestion.get("example")
             auto_fixable_str = suggestion.get("auto_fixable", "false")
             auto_fixable = auto_fixable_str == "true"
@@ -438,7 +446,11 @@ class ValidationHarness:
                     )
                 )
 
-        if not errors and "reformatted" not in output and "would reformat" in output.lower():
+        if (
+            not errors
+            and "reformatted" not in output
+            and "would reformat" in output.lower()
+        ):
             errors.append(
                 ValidationError(
                     type="format",
@@ -789,7 +801,9 @@ class ValidationHarness:
                 )
             )
 
-    def _audit_class(self, node: ast.ClassDef, rel_path: str, errors: list[ValidationError]):
+    def _audit_class(
+        self, node: ast.ClassDef, rel_path: str, errors: list[ValidationError]
+    ):
         """Audita docstrings de uma classe."""
         if not ast.get_docstring(node):
             errors.append(
@@ -848,11 +862,15 @@ class ValidationHarness:
 
     def run_lint(self) -> None:
         """Executa ruff check e ruff format --check."""
-        result = self._run_command("lint", ["ruff", "check", ".", "--output-format=concise"])
+        result = self._run_command(
+            "lint", ["ruff", "check", ".", "--output-format=concise"]
+        )
         if result.status != "skip":
             result.errors = self._parse_ruff_errors(result.stdout + result.stderr)
 
-        fmt_result = self._run_command("format_check", ["ruff", "format", "--check", "."])
+        fmt_result = self._run_command(
+            "format_check", ["ruff", "format", "--check", "."]
+        )
         if fmt_result.status != "skip":
             fmt_result.errors = self._parse_ruff_format_errors(
                 fmt_result.stdout + fmt_result.stderr
@@ -860,7 +878,9 @@ class ValidationHarness:
 
     def run_typecheck(self) -> None:
         """Executa mypy no diretório src/."""
-        result = self._run_command("typecheck", ["mypy", "src/", "--show-column-numbers"])
+        result = self._run_command(
+            "typecheck", ["mypy", "src/", "--show-column-numbers"]
+        )
         if result.status != "skip":
             result.errors = self._parse_mypy_errors(result.stdout + result.stderr)
 
@@ -932,7 +952,9 @@ class ValidationHarness:
 
                 # Verifica se DSLExecutionEngine está definida
                 class_names = [
-                    node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef)
+                    node.name
+                    for node in ast.walk(tree)
+                    if isinstance(node, ast.ClassDef)
                 ]
                 if "DSLExecutionEngine" not in class_names:
                     errors.append(
@@ -993,7 +1015,10 @@ class ValidationHarness:
         errors: list[ValidationError] = []
         skill_dir = BASE_DIR / "skill"
 
-        REQUIRED_SKILL_SECTIONS = ["steps", "output"]  # seções obrigatórias em todo .skill.md
+        REQUIRED_SKILL_SECTIONS = [
+            "steps",
+            "output",
+        ]  # seções obrigatórias em todo .skill.md
 
         if not skill_dir.exists():
             duration = int((time.time() - start) * 1000)
@@ -1085,7 +1110,9 @@ class ValidationHarness:
         duration = int((time.time() - start) * 1000)
         result = StepResult(
             step="dsl_skills",
-            status="success" if not any(e.severity == "error" for e in errors) else "fail",
+            status="success"
+            if not any(e.severity == "error" for e in errors)
+            else "fail",
             exit_code=0 if not any(e.severity == "error" for e in errors) else 1,
             duration_ms=duration,
             stdout=f"Verificados {len(skill_files)} arquivo(s) .skill.md",
@@ -1157,7 +1184,10 @@ class ValidationHarness:
         """Verifica se há alterações abertas no git para arquivos protegidos."""
         try:
             git = subprocess.run(
-                ["git", "status", "--porcelain"], capture_output=True, text=True, cwd=BASE_DIR
+                ["git", "status", "--porcelain"],
+                capture_output=True,
+                text=True,
+                cwd=BASE_DIR,
             )
             if git.returncode == 0:
                 p_set = set(PROTECTED_FILES + [".harness.hash"])
@@ -1362,7 +1392,9 @@ class ValidationHarness:
                 "failed_steps": len(failed_steps),
                 "skipped_steps": len([r for r in self.results if r.status == "skip"]),
                 "total_errors": len(critical_errors),
-                "total_warnings": len([e for e in all_errors if e.severity == "warning"]),
+                "total_warnings": len(
+                    [e for e in all_errors if e.severity == "warning"]
+                ),
                 "auto_fixable_count": len([e for e in all_errors if e.auto_fixable]),
             },
             "failed_steps": [r.step for r in failed_steps],
@@ -1425,7 +1457,9 @@ class ValidationHarness:
             for it in manual:
                 loc = f":{it['location']['line']}" if it["location"]["line"] else ""
                 print(f"\\n   [{it['priority_label']}] {it['location']['file']}{loc}")
-                print(f"   Problema: {it['problem']}\\n   Ação:     {it['fix_instruction']}")
+                print(
+                    f"   Problema: {it['problem']}\\n   Ação:     {it['fix_instruction']}"
+                )
 
     def print_human(self) -> None:
         """Saída formatada para leitura humana no terminal."""
