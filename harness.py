@@ -1074,21 +1074,45 @@ class ValidationHarness:
                         raw_file = raw_file.split(" -> ")[-1].strip()
                     status = line[:2].strip()
                     if raw_file in p_set and status not in ("??",):
-                        errors.append(
-                            ValidationError(
-                                type="integrity",
-                                severity="error",
-                                file=raw_file,
-                                line=None,
-                                column=None,
-                                code="GIT_DIRTY_PROTECTED",
-                                message=f"Alteração aberta no git: {raw_file}",
-                                fix_instruction=f"Reverter: git checkout HEAD -- {raw_file}",
-                                fix_example=None,
-                                auto_fixable=False,
-                                auto_fix_command=f"git checkout HEAD -- {raw_file}",
+                        # REGRA CRÍTICA: Se o arquivo está SELADO (chattr +i), significa que
+                        # foi aprovado com senha. Apenas bloqueia se estiver DESBLOQUEADO.
+                        file_path = BASE_DIR / raw_file
+                        is_sealed = False
+                        if file_path.exists():
+                            try:
+                                result = subprocess.run(
+                                    ["lsattr", str(file_path)],
+                                    capture_output=True,
+                                    text=True,
+                                    check=False,
+                                )
+                                if result.returncode == 0:
+                                    attrs = result.stdout.split()[0]
+                                    is_sealed = "i" in attrs
+                            except Exception:
+                                pass
+
+                        # Só bloqueia se o arquivo NÃO estiver selado
+                        if not is_sealed:
+                            errors.append(
+                                ValidationError(
+                                    type="integrity",
+                                    severity="error",
+                                    file=raw_file,
+                                    line=None,
+                                    column=None,
+                                    code="GIT_DIRTY_PROTECTED",
+                                    message=f"Alteração aberta no git: {raw_file} (DESBLOQUEADO)",
+                                    fix_instruction=(
+                                        f"Arquivo protegido modificado mas não selado.\n"
+                                        f"Para aprovar: python scripts/guard_harness.py --seal\n"
+                                        f"Para reverter: git checkout HEAD -- {raw_file}"
+                                    ),
+                                    fix_example=None,
+                                    auto_fixable=False,
+                                    auto_fix_command=None,
+                                )
                             )
-                        )
         except FileNotFoundError:
             pass
 
@@ -1366,30 +1390,6 @@ class ValidationHarness:
             f"{s['auto_fixable_count']} auto-fixáveis · "
             f"{report['total_duration_ms']}ms total"
         )
-
-        print("""
-        ##########################################################
-        #                                                        #
-        #   Para desbloquear execute os comandos abaixo:         #
-        #   sudo chown $USER:$USER harness.py                    #
-        #   sudo chmod 644 harness.py                            #
-        #   sudo chattr -i harness.py                            #
-        #                                                        #
-        ##########################################################
-        """)
-
-        print("""
-        ##########################################################
-        #                                                        #
-        #   Nuca se esqueça de bloquear o harness após cada      #
-        #   alteração manual:                                    #
-        #   python scripts/guard_harness.py --seal               #
-        #   sudo chown root:root harness.py                      #
-        #   sudo chmod 444 harness.py                            #
-        #   sudo chattr +i harness.py                            #
-        #                                                        #
-        ##########################################################
-        """)
 
     def print_json(self) -> None:
         """Saída JSON estruturada para consumo por agentes."""

@@ -75,7 +75,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 HASH_FILE = BASE_DIR / ".harness.hash"
 
 
-
 def unlock_all() -> None:
     """Desbloqueia todos os arquivos protegidos temporariamente."""
     print("\n🔓 Desbloqueando arquivos protegidos...")
@@ -86,7 +85,9 @@ def unlock_all() -> None:
             unlock_file(abs_path)
     if HASH_FILE.exists():
         unlock_file(HASH_FILE)
-    print("\n✅ Arquivos desbloqueados. Faça suas alterações e execute --seal quando terminar.")
+    print(
+        "\n✅ Arquivos desbloqueados. Faça suas alterações e execute --seal quando terminar."
+    )
 
 
 def check_seal_status() -> None:
@@ -99,7 +100,9 @@ def check_seal_status() -> None:
             print(f"  ❌ NÃO EXISTE:   {rel_path}")
             continue
         try:
-            result = subprocess.run(["lsattr", str(abs_path)], capture_output=True, text=True, check=False)
+            result = subprocess.run(
+                ["lsattr", str(abs_path)], capture_output=True, text=True, check=False
+            )
             if result.returncode == 0:
                 attrs = result.stdout.split()[0]
                 if "i" in attrs:
@@ -111,6 +114,8 @@ def check_seal_status() -> None:
         except Exception:
             print(f"  ⚠️  ERRO:        {rel_path} (lsattr não disponível)")
     print()
+
+
 # Arquivos cujo hash é rastreado e cuja integridade é obrigatória
 PROTECTED_FILES: list[str] = [
     "harness.py",
