@@ -22,6 +22,9 @@ let completedNodes = JSON.parse(localStorage.getItem('completedNodes') || '[]');
 let streakData = JSON.parse(localStorage.getItem('streakData') || '{"count": 0, "lastDate": null}');
 let currentLessonNode = null;
 let isEditMode = false;
+let lessonStartTimes = {};
+let userXP = parseInt(localStorage.getItem('userXP') || '0');
+
 
 // Inicialização Mermaid
 mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' });
@@ -39,31 +42,55 @@ marked.setOptions({ renderer });
 // --- INICIALIZAÇÃO E CARREGAMENTO ---
 
 async function init() {
-    await listRoadmaps();
+    try {
+        await listRoadmaps();
+    } catch (e) {
+        console.error('Falha na inicialização:', e);
+    }
     updateStreakUI();
 }
 
 async function listRoadmaps() {
     try {
         const response = await fetch(`${API_URL}/roadmaps`);
+        if (!response.ok) {
+            throw new Error(`Erro HTTP: ${response.status} ${response.statusText}`);
+        }
         const files = await response.json();
+        if (files.length === 0) {
+            roadmapSelector.innerHTML = '<option value="">Nenhum tema encontrado</option>';
+            nodesContainer.innerHTML = '<p style="color: red;">Nenhum roadmap disponível. Crie um novo ou verifique o servidor.</p>';
+            return;
+        }
         roadmapSelector.innerHTML = files.map(f => `<option value="${f}">${f.replace('roadmap_', '').replace('.json', '').toUpperCase()}</option>`).join('');
-        if (files.length > 0) loadRoadmap(files[0]);
+        // Carrega o primeiro roadmap apenas se houver itens
+        loadRoadmap(files[0]);
     } catch (e) {
-        console.error("Erro ao listar roadmaps:", e);
-        roadmapSelector.innerHTML = '<option value="">Erro ao carregar</option>';
+        console.error('Erro ao listar roadmaps:', e);
+        roadmapSelector.innerHTML = '<option value="">Erro ao carregar temas</option>';
+        nodesContainer.innerHTML = '<p style="color: red;">Falha ao obter a lista de roadmaps. Verifique o backend.</p>';
     }
 }
 
 async function loadRoadmap(filename) {
-    if (!filename) return;
+    if (!filename) {
+        currentRoadmap = null;
+        nodesContainer.innerHTML = '<p>Selecione um tema no menu acima.</p>';
+        return;
+    }
     currentRoadmapFile = filename;
     try {
         const response = await fetch(`${API_URL}/roadmap/${filename}`);
+        if (!response.ok) {
+            throw new Error(`Erro HTTP ao carregar roadmap ${filename}: ${response.status} ${response.statusText}`);
+        }
         currentRoadmap = await response.json();
         renderRoadmap();
     } catch (e) {
-        console.error("Erro ao carregar roadmap:", e);
+        console.error('Erro ao carregar roadmap:', e);
+        currentRoadmap = null;
+        currentRoadmapFile = '';
+        nodesContainer.innerHTML = `<p style="color: red;">Falha ao carregar o tema "${filename}". Tente novamente.</p>`;
     }
 }
 
@@ -137,13 +164,34 @@ function createNodeElement(node) {
 
 // --- LIÇÕES E GERAÇÃO IA ---
 
-async function showLesson(node) {
+    async function showLesson(node) {
+    // Registro de tempo para XP
+    lessonStartTimes[node.id] = Date.now();
+
     currentLessonNode = node;
     lessonContent.innerHTML = `<p style="color: #888;">Carregando lição de <strong>${node.title}</strong>...</p>`;
     quizContainer.style.display = 'none';
     lessonPanel.classList.add('active');
     
-    // Mostra botão de gerar se estiver em modo edição
+    // Check prerequisites via diagnostic
+    // Enable diagnostic for central nodes or nodes that are children of central nodes
+    // that have prerequisites in dep_map
+    const isCentralNode = node.type === 'central';
+    const hasPrereqs = node.prereqs && node.prereqs.length > 0;
+    const parentNode = currentRoadmap?.nodes?.find(n => n.children?.includes(node.id));
+    const parentHasPrereqs = parentNode && parentNode.prereqs && parentNode.prereqs.length > 0;
+    
+    if (isCentralNode || hasPrereqs || parentHasPrereqs) {
+        // For central nodes, we need to check if they have prerequisites in dep_map
+        // For now, we'll enable diagnostic for all central nodes to allow testing
+        const passed = await runDiagnostic(node);
+        if (!passed) {
+            // Don't show generic alert, the modal already shows the diagnosis result
+            // Just return to let user deal with the modal
+            return;
+        }
+    }
+
     genQuizBtn.style.display = isEditMode ? 'block' : 'none';
 
     try {
@@ -317,6 +365,13 @@ function completeNode(nodeId) {
     if (!completedNodes.includes(nodeId)) {
         completedNodes.push(nodeId);
         localStorage.setItem('completedNodes', JSON.stringify(completedNodes));
+        // XP reward if completed within 15min
+        const start = lessonStartTimes[nodeId];
+        if (start && Date.now() - start <= 15 * 60 * 1000) {
+            userXP += 10;
+            localStorage.setItem('userXP', userXP);
+            alert(`💎 +10 XP! Total: ${userXP}`);
+        }
         updateStreak();
         renderRoadmap();
         updateProgressBar();
@@ -406,6 +461,160 @@ function updateStreak() {
 function updateStreakUI() {
     const el = document.getElementById('streak-days');
     if (el) el.innerText = streakData.count;
+}
+
+// --- DIAGNÓSTICO DE LACUNAS ---
+
+async function runDiagnostic(node) {
+    try {
+        // Show loading state
+        lessonContent.innerHTML = `<p style="color: #888;">Executando diagnóstico de <strong>${node.title}</strong>...</p>`;
+        
+        // Get user's self-assessment (in a real app, this could be more sophisticated)
+        // For now, we'll use a simple prompt asking the user to explain the concept
+        const userAnswer = prompt(
+            `Para acessar "${node.title}", por favor explique brevemente o que você sabe sobre este tópico:\n\nSeja específico sobre fórmulas, regras ou conceitos-chave que você entende.`
+        );
+        
+        if (userAnswer === null) {
+            // User cancelled
+            return false;
+        }
+        
+        if (!userAnswer.trim()) {
+            alert('Por favor, forneça uma resposta para continuar com o diagnóstico.');
+            return false;
+        }
+        
+        // Call diagnostic API
+        const response = await fetch(`${API_URL}/diagnose`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                topic: node.title,
+                user_answer: userAnswer
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Erro no diagnóstico: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.status === "error") {
+            throw new Error(result.message || 'Erro desconhecido no diagnóstico');
+        }
+        
+        // Show result to user
+        const hasGap = result.has_gap || result.status === "miss";
+        
+        if (hasGap) {
+            // Show review modal with the diagnosis - user needs to review before proceeding
+            showReviewModal({
+                title: `Revisão necessária: ${node.title}`,
+                message: result.message,
+                tags: result.tags || [],
+                showRetryButton: true,  // User can retry after reviewing
+                onRetry: () => {
+                    // Close modal and retry diagnostic
+                    closeModal();
+                    setTimeout(() => runDiagnostic(node), 100);
+                },
+                onClose: () => {
+                    // User closed without retry - stay on current lesson
+                    return false;
+                }
+            });
+            return false; // Block access for now
+        } else {
+            // Show success message and grant access
+            showReviewModal({
+                title: `Acesso liberado: ${node.title}`,
+                message: result.message,
+                tags: result.tags || [],
+                onClose: () => true
+            });
+            return true; // Grant access
+        }
+    } catch (error) {
+        console.error('Erro no diagnóstico:', error);
+        // In case of error, allow access to avoid blocking the user
+        alert('Não foi possível executar o diagnóstico. Permitindo acesso como medida de segurança.');
+        return true;
+    }
+}
+
+function showReviewModal(data) {
+    // Create modal overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'review-modal-overlay';
+    overlay.innerHTML = `
+        <div class="review-modal">
+            <div class="review-modal-header">
+                <h3>${data.title}</h3>
+                <button class="review-modal-close" onclick="this.closest('.review-modal-overlay').remove()">×</button>
+            </div>
+            <div class="review-modal-body">
+                <p>${data.message}</p>
+                ${data.tags && data.tags.length > 0 ? `
+                <div class="review-modal-tags">
+                    <strong>Pré-requisitos relacionados:</strong>
+                    <span class="tags">${data.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}</span>
+                </div>
+                ` : ''}
+            </div>
+            <div class="review-modal-footer">
+                ${data.showRetryButton ? `
+                <button class="review-modal-btn retry-btn" onclick="handleReviewRetry(this)">
+                    Tentar novamente
+                </button>
+                ` : ''}
+                <button class="review-modal-btn" onclick="handleReviewClose(this, '${typeof data.onClose === 'function' ? 'function' : 'boolean'}')">
+                    ${typeof data.onClose === 'function' ? 'Revisar novamente' : 'Entendi, continuar'}
+                </button>
+            </div>
+        </div>
+    `;
+    
+    // Store callback functions on the overlay for later use
+    if (data.onRetry) {
+        overlay.dataset.onRetry = 'true';
+        overlay.onRetry = data.onRetry;
+    }
+    if (data.onClose) {
+        overlay.onClose = data.onClose;
+    }
+    
+    document.body.appendChild(overlay);
+}
+
+function handleReviewClose(button, callbackType) {
+    const overlay = button.closest('.review-modal-overlay');
+    const callback = overlay.onClose;
+    
+    overlay.remove();
+    
+    if (callbackType === 'function' && typeof callback === 'function') {
+        // User clicked "Revisar novamente" - call the callback
+        callback();
+    }
+    // If callback is true/false or not a function, we just continue
+}
+
+function handleReviewRetry(button) {
+    const overlay = button.closest('.review-modal-overlay');
+    const onRetry = overlay.onRetry;
+    
+    // Remove the modal
+    overlay.remove();
+    
+    // Call the retry callback if it exists
+    if (typeof onRetry === 'function') {
+        onRetry();
+    }
 }
 
 window.toggleZenMode = () => document.body.classList.toggle('zen-mode');
