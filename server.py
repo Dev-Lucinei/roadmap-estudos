@@ -110,7 +110,8 @@ class DiagnosisService:
 
 class RoadmapHandler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
-        self.send_header("Access-Control-Allow-Origin", "*")
+        # CORS restrito à origem local — não expor para qualquer origem em produção
+        self.send_header("Access-Control-Allow-Origin", "http://localhost:8000")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, DELETE")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         super().end_headers()
@@ -130,9 +131,42 @@ class RoadmapHandler(http.server.SimpleHTTPRequestHandler):
             super().do_GET()
 
     def do_POST(self):
-        content_length = int(self.headers["Content-Length"])
-        post_data = self.rfile.read(content_length)
-        data = json.loads(post_data.decode("utf-8"))
+        # P0: Validação de Content-Length antes de ler o body
+        try:
+            raw_length = self.headers.get("Content-Length")
+            if raw_length is None:
+                self.send_response(411)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(
+                    json.dumps(
+                        {"status": "error", "message": "Content-Length obrigatório"}
+                    ).encode("utf-8")
+                )
+                return
+            content_length = int(raw_length)
+            if content_length > 1_048_576:  # limite de 1MB
+                self.send_response(413)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(
+                    json.dumps(
+                        {"status": "error", "message": "Payload muito grande"}
+                    ).encode("utf-8")
+                )
+                return
+            post_data = self.rfile.read(content_length)
+            data = json.loads(post_data.decode("utf-8"))
+        except (ValueError, json.JSONDecodeError) as e:
+            self.send_response(400)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(
+                json.dumps(
+                    {"status": "error", "message": f"Requisição inválida: {e}"}
+                ).encode("utf-8")
+            )
+            return
 
         if self.path == "/api/generate-lesson":
             self.handle_generate_lesson(data)
@@ -148,8 +182,15 @@ class RoadmapHandler(http.server.SimpleHTTPRequestHandler):
             self.send_error(404)
 
     def do_DELETE(self):
-        self.send_response(200)
+        # Endpoint de DELETE não possui lógica implementada — retorna 405
+        self.send_response(405)
+        self.send_header("Content-Type", "application/json")
         self.end_headers()
+        self.wfile.write(
+            json.dumps({"status": "error", "message": "Método não suportado"}).encode(
+                "utf-8"
+            )
+        )
 
     def list_roadmaps(self):
         if not os.path.exists(DATA_DIR):
@@ -164,8 +205,14 @@ class RoadmapHandler(http.server.SimpleHTTPRequestHandler):
         self.wfile.write(json.dumps(files).encode("utf-8"))
 
     def load_roadmap(self):
-        filename = self.path.split("/")[-1]
-        filepath = os.path.join(DATA_DIR, filename)
+        # P0: Sanitização de path para prevenir path traversal
+        raw_name = self.path.split("/")[-1]
+        filename = os.path.basename(raw_name)
+        filepath = os.path.realpath(os.path.join(DATA_DIR, filename))
+        # Garante que o caminho resolvido está dentro de DATA_DIR
+        if not filepath.startswith(os.path.realpath(DATA_DIR) + os.sep):
+            self.send_error(403)
+            return
         if os.path.exists(filepath):
             with open(filepath, "r", encoding="utf-8") as f:
                 content = f.read()
@@ -209,8 +256,11 @@ class RoadmapHandler(http.server.SimpleHTTPRequestHandler):
             )
         except Exception as e:
             self.send_response(500)
+            self.send_header("Content-Type", "application/json")
             self.end_headers()
-            self.wfile.write(str(e).encode("utf-8"))
+            self.wfile.write(
+                json.dumps({"status": "error", "message": str(e)}).encode("utf-8")
+            )
 
     def handle_generate_roadmap(self, data):
         try:
@@ -230,23 +280,52 @@ class RoadmapHandler(http.server.SimpleHTTPRequestHandler):
                 raise Exception("Falha na geração pela IA")
         except Exception as e:
             self.send_response(500)
+            self.send_header("Content-Type", "application/json")
             self.end_headers()
-            self.wfile.write(str(e).encode("utf-8"))
+            self.wfile.write(
+                json.dumps({"status": "error", "message": str(e)}).encode("utf-8")
+            )
 
     def handle_save_roadmap(self, data):
         try:
-            filename = data["filename"]
+            # P0: Sanitização de filename para prevenir path traversal
+            raw_name = data.get("filename", "")
+            filename = os.path.basename(raw_name)
+            if not filename.endswith(".json") or not filename:
+                self.send_response(400)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(
+                    json.dumps(
+                        {"status": "error", "message": "Nome de arquivo inválido"}
+                    ).encode("utf-8")
+                )
+                return
             roadmap_dados = data["data"]
-            filepath = os.path.join(DATA_DIR, filename)
+            filepath = os.path.realpath(os.path.join(DATA_DIR, filename))
+            if not filepath.startswith(os.path.realpath(DATA_DIR) + os.sep):
+                self.send_response(403)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(
+                    json.dumps({"status": "error", "message": "Acesso negado"}).encode(
+                        "utf-8"
+                    )
+                )
+                return
             with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(roadmap_dados, f, indent=4, ensure_ascii=False)
             self.send_response(200)
+            self.send_header("Content-Type", "application/json")
             self.end_headers()
             self.wfile.write(json.dumps({"status": "success"}).encode("utf-8"))
         except Exception as e:
             self.send_response(500)
+            self.send_header("Content-Type", "application/json")
             self.end_headers()
-            self.wfile.write(str(e).encode("utf-8"))
+            self.wfile.write(
+                json.dumps({"status": "error", "message": str(e)}).encode("utf-8")
+            )
 
     def handle_diagnosis(self, data):
         try:

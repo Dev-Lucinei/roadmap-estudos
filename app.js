@@ -290,6 +290,19 @@ window.deleteNode = (nodeId) => {
     renderRoadmap();
 };
 
+// P2: editNode estava referenciado em createNodeElement mas nunca implementado
+window.editNode = (nodeId) => {
+    const node = currentRoadmap.nodes.find(n => n.id === nodeId);
+    if (!node) return;
+    const newTitle = prompt(`Editar título do nó:`, node.title);
+    if (newTitle === null) return;
+    const trimmed = newTitle.trim();
+    if (!trimmed) { alert('O título não pode ser vazio.'); return; }
+    node.title = trimmed;
+    renderRoadmap();
+    saveRoadmap();
+};
+
 window.openNewRoadmapModal = () => {
     document.getElementById('modal-overlay').style.display = 'flex';
 };
@@ -354,7 +367,8 @@ function renderQuiz(questions) {
 
 function checkQuizCompletion(questions) {
     const qCount = questions.length;
-    const correctCount = document.querySelectorAll('.quiz-option.correct.selected').length;
+    // P1: Escopo restrito ao quizContainer atual — evita contagem cruzada entre sessões
+    const correctCount = quizContainer.querySelectorAll('.quiz-option.correct.selected').length;
     if (correctCount === qCount) {
         completeNode(currentLessonNode.id);
         renderCompleteStatus();
@@ -449,8 +463,11 @@ function drawLine(x1, y1, x2, y2, isSpine = false) {
 function updateProgressBar() {
     if (!currentRoadmap) return;
     const total = currentRoadmap.nodes.length;
-    const completed = completedNodes.length;
-    const pct = Math.round((completed / total) * 100);
+    // P1: Filtra apenas os nós do roadmap atual, evitando contagem cruzada entre roadmaps
+    const completed = completedNodes.filter(id =>
+        currentRoadmap.nodes.some(n => n.id === id)
+    ).length;
+    const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
     if (progressFill) progressFill.style.width = `${pct}%`;
     const pctEl = document.getElementById('progress-percent');
     if (pctEl) pctEl.innerText = `${pct}%`;
@@ -558,73 +575,76 @@ async function runDiagnostic(node) {
 }
 
 function showReviewModal(data) {
-    // Create modal overlay
     const overlay = document.createElement('div');
     overlay.className = 'review-modal-overlay';
-    overlay.innerHTML = `
-        <div class="review-modal">
-            <div class="review-modal-header">
-                <h3>${data.title}</h3>
-                <button class="review-modal-close" onclick="this.closest('.review-modal-overlay').remove()">×</button>
-            </div>
-            <div class="review-modal-body">
-                <p>${data.message}</p>
-                ${data.tags && data.tags.length > 0 ? `
-                <div class="review-modal-tags">
-                    <strong>Pré-requisitos relacionados:</strong>
-                    <span class="tags">${data.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}</span>
-                </div>
-                ` : ''}
-            </div>
-            <div class="review-modal-footer">
-                ${data.showRetryButton ? `
-                <button class="review-modal-btn retry-btn" onclick="handleReviewRetry(this)">
-                    Tentar novamente
-                </button>
-                ` : ''}
-                <button class="review-modal-btn" onclick="handleReviewClose(this, '${typeof data.onClose === 'function' ? 'function' : 'boolean'}')">
-                    ${typeof data.onClose === 'function' ? 'Revisar novamente' : 'Entendi, continuar'}
-                </button>
-            </div>
-        </div>
-    `;
-    
-    // Store callback functions on the overlay for later use
-    if (data.onRetry) {
-        overlay.dataset.onRetry = 'true';
-        overlay.onRetry = data.onRetry;
+
+    const modal = document.createElement('div');
+    modal.className = 'review-modal';
+
+    // Header
+    const header = document.createElement('div');
+    header.className = 'review-modal-header';
+    const h3 = document.createElement('h3');
+    // P0: textContent em vez de innerHTML — previne XSS com dados do LLM
+    h3.textContent = data.title;
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'review-modal-close';
+    closeBtn.textContent = '×';
+    closeBtn.onclick = () => overlay.remove();
+    header.appendChild(h3);
+    header.appendChild(closeBtn);
+
+    // Body
+    const body = document.createElement('div');
+    body.className = 'review-modal-body';
+    const msgP = document.createElement('p');
+    msgP.textContent = data.message;
+    body.appendChild(msgP);
+
+    if (data.tags && data.tags.length > 0) {
+        const tagsDiv = document.createElement('div');
+        tagsDiv.className = 'review-modal-tags';
+        const label = document.createElement('strong');
+        label.textContent = 'Pré-requisitos relacionados: ';
+        tagsDiv.appendChild(label);
+        data.tags.forEach(tag => {
+            const span = document.createElement('span');
+            span.className = 'tag';
+            span.textContent = tag;
+            tagsDiv.appendChild(span);
+        });
+        body.appendChild(tagsDiv);
     }
-    if (data.onClose) {
-        overlay.onClose = data.onClose;
+
+    // Footer
+    const footer = document.createElement('div');
+    footer.className = 'review-modal-footer';
+
+    if (data.showRetryButton) {
+        const retryBtn = document.createElement('button');
+        retryBtn.className = 'review-modal-btn retry-btn';
+        retryBtn.textContent = 'Tentar novamente';
+        retryBtn.onclick = () => {
+            overlay.remove();
+            if (typeof data.onRetry === 'function') data.onRetry();
+        };
+        footer.appendChild(retryBtn);
     }
-    
+
+    const closeActionBtn = document.createElement('button');
+    closeActionBtn.className = 'review-modal-btn';
+    closeActionBtn.textContent = typeof data.onClose === 'function' ? 'Revisar novamente' : 'Entendi, continuar';
+    closeActionBtn.onclick = () => {
+        overlay.remove();
+        if (typeof data.onClose === 'function') data.onClose();
+    };
+    footer.appendChild(closeActionBtn);
+
+    modal.appendChild(header);
+    modal.appendChild(body);
+    modal.appendChild(footer);
+    overlay.appendChild(modal);
     document.body.appendChild(overlay);
-}
-
-function handleReviewClose(button, callbackType) {
-    const overlay = button.closest('.review-modal-overlay');
-    const callback = overlay.onClose;
-    
-    overlay.remove();
-    
-    if (callbackType === 'function' && typeof callback === 'function') {
-        // User clicked "Revisar novamente" - call the callback
-        callback();
-    }
-    // If callback is true/false or not a function, we just continue
-}
-
-function handleReviewRetry(button) {
-    const overlay = button.closest('.review-modal-overlay');
-    const onRetry = overlay.onRetry;
-    
-    // Remove the modal
-    overlay.remove();
-    
-    // Call the retry callback if it exists
-    if (typeof onRetry === 'function') {
-        onRetry();
-    }
 }
 
 window.toggleZenMode = () => document.body.classList.toggle('zen-mode');
@@ -634,8 +654,9 @@ window.closePanel = () => {
 };
 
 document.addEventListener('DOMContentLoaded', init);
+// P1: Removido setInterval(drawConnections, 5000) — causava layout thrashing periódico
+// drawConnections é chamado apenas após eventos reais (resize, render)
 window.addEventListener('resize', () => requestAnimationFrame(drawConnections));
-setInterval(drawConnections, 5000);
 
 window.loadRoadmap = loadRoadmap;
 window.generateLessonForCurrentNode = generateLessonForCurrentNode;

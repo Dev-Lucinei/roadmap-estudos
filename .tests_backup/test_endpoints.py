@@ -3,12 +3,8 @@
 import os
 import sys
 import json
-import tempfile
-import shutil
-from io import BytesIO
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
-import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from server import RoadmapHandler, DATA_DIR, LICOES_DIR
@@ -205,7 +201,9 @@ class TestGenerateRoadmap:
         with patch("server.gerar_roadmap_ia") as mock_gerar:
             with patch("server.salvar_roadmap") as mock_salvar:
                 mock_gerar.return_value = sample_roadmap
-                mock_salvar.return_value = os.path.join(temp_data_dir, "roadmap_test.json")
+                mock_salvar.return_value = os.path.join(
+                    temp_data_dir, "roadmap_test.json"
+                )
 
                 handler = create_handler(temp_data_dir)
                 data = {"tema": "Python"}
@@ -268,7 +266,10 @@ class TestSaveRoadmap:
         os.chmod(test_dir, 0o444)
 
         handler = create_handler(temp_data_dir)
-        data = {"filename": os.path.join(test_dir, "readonly.json"), "data": {"test": "data"}}
+        data = {
+            "filename": os.path.join(test_dir, "readonly.json"),
+            "data": {"test": "data"},
+        }
         handler.path = "/api/save-roadmap"
         handler.handle_save_roadmap(data)
 
@@ -401,4 +402,5 @@ class TestCORs:
 
 if __name__ == "__main__":
     import unittest
+
     unittest.main()

@@ -7,9 +7,16 @@ from openai import OpenAI
 # Define o diretório base para caminhos relativos
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+# P1: Falha explícita se a chave não estiver configurada — sem fallback silencioso
+_api_key = os.getenv("OPENROUTER_API_KEY")
+if not _api_key:
+    raise EnvironmentError(
+        "OPENROUTER_API_KEY não encontrada. Configure a variável no arquivo .env antes de iniciar o servidor."
+    )
+
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
-    api_key=os.getenv("OPENROUTER_API_KEY", ""),
+    api_key=_api_key,
 )
 
 

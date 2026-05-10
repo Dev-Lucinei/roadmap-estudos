@@ -279,6 +279,14 @@ body.edit-mode .node-actions { opacity: 1; }
     justify-content: center;
 }
 
+/* P2: Classe .glass ausente — referenciada no HTML mas não definida */
+.glass {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+}
+
 .modal-content {
     width: 400px;
     padding: 30px;
@@ -323,6 +331,8 @@ body.edit-mode .node-actions { opacity: 1; }
     left: 0;
     width: 100%;
     height: 100%;
+    /* P2: backdrop ausente corrigido — consistente com .modal-overlay */
+    background: rgba(0, 0, 0, 0.8);
     display: flex;
     align-items: center;
     justify-content: center;

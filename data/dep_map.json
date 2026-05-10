@@ -1,7 +1,4 @@
 {
-  "Python Fundamentos": [],
-  "Análise de Dados": ["Python Fundamentos"],
-  "Machine Learning Básico": ["Python Fundamentos", "Análise de Dados"],
-  "Deep Learning": ["Machine Learning Básico"],
-  "Deploy de Modelos": ["Machine Learning Básico", "Deep Learning"]
+  "Roadmap de Estudos DevOps Completo": [],
+  "Roadmap de Estudos: Análise de Dados": []
 }

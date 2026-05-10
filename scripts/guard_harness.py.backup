@@ -74,43 +74,6 @@ def lock_file(path: Path) -> None:
 BASE_DIR = Path(__file__).resolve().parent.parent
 HASH_FILE = BASE_DIR / ".harness.hash"
 
-
-
-def unlock_all() -> None:
-    """Desbloqueia todos os arquivos protegidos temporariamente."""
-    print("\n🔓 Desbloqueando arquivos protegidos...")
-    print("⚠️  Será solicitada sua senha de usuário\n")
-    for rel_path in PROTECTED_FILES:
-        abs_path = BASE_DIR / rel_path
-        if abs_path.exists():
-            unlock_file(abs_path)
-    if HASH_FILE.exists():
-        unlock_file(HASH_FILE)
-    print("\n✅ Arquivos desbloqueados. Faça suas alterações e execute --seal quando terminar.")
-
-
-def check_seal_status() -> None:
-    """Verifica e exibe o status de bloqueio dos arquivos protegidos."""
-    print("\n🔍 Status dos arquivos protegidos:\n")
-    all_files = PROTECTED_FILES + [".harness.hash"]
-    for rel_path in all_files:
-        abs_path = BASE_DIR / rel_path if rel_path != ".harness.hash" else HASH_FILE
-        if not abs_path.exists():
-            print(f"  ❌ NÃO EXISTE:   {rel_path}")
-            continue
-        try:
-            result = subprocess.run(["lsattr", str(abs_path)], capture_output=True, text=True, check=False)
-            if result.returncode == 0:
-                attrs = result.stdout.split()[0]
-                if "i" in attrs:
-                    print(f"  🔒 SELADO:       {rel_path}")
-                else:
-                    print(f"  🔓 DESBLOQUEADO: {rel_path}")
-            else:
-                print(f"  ⚠️  ERRO:        {rel_path} (não foi possível verificar)")
-        except Exception:
-            print(f"  ⚠️  ERRO:        {rel_path} (lsattr não disponível)")
-    print()
 # Arquivos cujo hash é rastreado e cuja integridade é obrigatória
 PROTECTED_FILES: list[str] = [
     "harness.py",
@@ -393,11 +356,6 @@ def build_report(
                 "Agentes NÃO estão autorizados a modificar arquivos protegidos. "
                 "Qualquer tentativa de edição será detectada e bloqueada."
             ),
-            "seal_workflow": (
-                "REGRA CRÍTICA: Arquivos protegidos só podem ser commitados se estiverem SELADOS. "
-                "Selar = Aprovar com senha. Se arquivos estão desbloqueados, agentes podem ter modificado. "
-                "Workflow correto: --unlock → editar → --seal (aprovar) → commit."
-            ),
             "allowed_actions": [
                 "Executar harness.py para validar",
                 "Ler os relatórios de erro",
@@ -408,11 +366,9 @@ def build_report(
                 "Modificar scripts/guard_harness.py",
                 "Modificar .harness.hash",
                 "Executar --seal sem autorização humana",
-                "Executar --unlock (requer senha interativa)",
                 "Criar bypass de validações",
                 "Alterar testes para fazer passar",
                 "Remover atributo imutável (chattr -i) sem autorização",
-                "Commitar arquivos protegidos desbloqueados",
             ],
         },
     }
@@ -473,29 +429,11 @@ def main() -> None:
         action="store_true",
         help="Saída em JSON estruturado",
     )
-    parser.add_argument(
-        "--unlock",
-        action="store_true",
-        help="Desbloquear arquivos protegidos para edição com chattr -i (requer sudo)",
-    )
-    parser.add_argument(
-        "--status",
-        action="store_true",
-        help="Verificar status de bloqueio (selado/desbloqueado) dos arquivos",
-    )
     args = parser.parse_args()
 
     if args.seal:
         print("\n🔏 Selando arquivos protegidos...\n")
         seal(verbose=True)
-        sys.exit(EXIT_OK)
-
-    if args.unlock:
-        unlock_all()
-        sys.exit(EXIT_OK)
-
-    if args.status:
-        check_seal_status()
         sys.exit(EXIT_OK)
 
     hash_violations = check_hashes()

@@ -1,0 +1,451 @@
+{
+    "title": "Roadmap de Estudos DevOps Completo",
+    "nodes": [
+        {
+            "id": "devops-intro",
+            "title": "Introdução ao DevOps",
+            "type": "central",
+            "group": "Fundamentos DevOps",
+            "children": [
+                "devops-definition",
+                "devops-culture",
+                "devops-pillars",
+                "devops-benefits",
+                "devops-roles",
+                "devops-vs-agile"
+            ],
+            "content": "Compreenda os conceitos essenciais, a cultura e os benefícios da adoção do DevOps.",
+            "difficulty": "easy"
+        },
+        {
+            "id": "devops-definition",
+            "title": "O que é DevOps?",
+            "type": "subtopic",
+            "side": "left",
+            "difficulty": "easy"
+        },
+        {
+            "id": "devops-culture",
+            "title": "Cultura DevOps",
+            "type": "subtopic",
+            "side": "right",
+            "difficulty": "easy"
+        },
+        {
+            "id": "devops-pillars",
+            "title": "Pilares do DevOps (CALMS)",
+            "type": "subtopic",
+            "side": "left",
+            "difficulty": "easy"
+        },
+        {
+            "id": "devops-benefits",
+            "title": "Benefícios do DevOps",
+            "type": "subtopic",
+            "side": "right",
+            "difficulty": "easy"
+        },
+        {
+            "id": "devops-roles",
+            "title": "Papéis e Responsabilidades",
+            "type": "subtopic",
+            "side": "left",
+            "difficulty": "easy"
+        },
+        {
+            "id": "devops-vs-agile",
+            "title": "DevOps vs. Agile",
+            "type": "subtopic",
+            "side": "right",
+            "difficulty": "easy"
+        },
+        {
+            "id": "infra-as-code",
+            "title": "Infraestrutura como Código (IaC)",
+            "type": "central",
+            "group": "Automação e Ferramentas",
+            "children": [
+                "iac-concepts",
+                "terraform",
+                "ansible",
+                "cloudformation",
+                "packer",
+                "iac-benefits",
+                "testing-iac"
+            ],
+            "content": "Domine as práticas e ferramentas para gerenciar a infraestrutura de forma programática.",
+            "difficulty": "medium"
+        },
+        {
+            "id": "iac-concepts",
+            "title": "Conceitos de IaC",
+            "type": "subtopic",
+            "side": "left",
+            "difficulty": "easy"
+        },
+        {
+            "id": "terraform",
+            "title": "Terraform (Provisionamento)",
+            "type": "subtopic",
+            "side": "right",
+            "difficulty": "medium"
+        },
+        {
+            "id": "ansible",
+            "title": "Ansible (Configuração)",
+            "type": "subtopic",
+            "side": "left",
+            "difficulty": "medium"
+        },
+        {
+            "id": "cloudformation",
+            "title": "AWS CloudFormation",
+            "type": "subtopic",
+            "side": "right",
+            "difficulty": "medium"
+        },
+        {
+            "id": "packer",
+            "title": "Packer (Construção de Imagens)",
+            "type": "subtopic",
+            "side": "left",
+            "difficulty": "medium"
+        },
+        {
+            "id": "iac-benefits",
+            "title": "Benefícios da IaC",
+            "type": "subtopic",
+            "side": "right",
+            "difficulty": "easy"
+        },
+        {
+            "id": "testing-iac",
+            "title": "Testes em IaC",
+            "type": "subtopic",
+            "side": "left",
+            "difficulty": "medium"
+        },
+        {
+            "id": "ci-cd-pipeline",
+            "title": "CI/CD Pipeline",
+            "type": "central",
+            "group": "Automação e Ferramentas",
+            "children": [
+                "ci-concepts",
+                "cd-concepts",
+                "jenkins",
+                "gitlab-ci",
+                "github-actions",
+                "cicd-stages",
+                "pipelines-as-code",
+                "security-cicd"
+            ],
+            "content": "Entenda e implemente pipelines de Integração Contínua e Entrega Contínua.",
+            "difficulty": "medium"
+        },
+        {
+            "id": "ci-concepts",
+            "title": "Conceitos de Integração Contínua",
+            "type": "subtopic",
+            "side": "left",
+            "difficulty": "easy"
+        },
+        {
+            "id": "cd-concepts",
+            "title": "Conceitos de Entrega Contínua",
+            "type": "subtopic",
+            "side": "right",
+            "difficulty": "easy"
+        },
+        {
+            "id": "jenkins",
+            "title": "Jenkins",
+            "type": "subtopic",
+            "side": "left",
+            "difficulty": "medium"
+        },
+        {
+            "id": "gitlab-ci",
+            "title": "GitLab CI",
+            "type": "subtopic",
+            "side": "right",
+            "difficulty": "medium"
+        },
+        {
+            "id": "github-actions",
+            "title": "GitHub Actions",
+            "type": "subtopic",
+            "side": "left",
+            "difficulty": "medium"
+        },
+        {
+            "id": "cicd-stages",
+            "title": "Estágios de um Pipeline",
+            "type": "subtopic",
+            "side": "right",
+            "difficulty": "easy"
+        },
+        {
+            "id": "pipelines-as-code",
+            "title": "Pipelines as Code",
+            "type": "subtopic",
+            "side": "left",
+            "difficulty": "medium"
+        },
+        {
+            "id": "security-cicd",
+            "title": "Segurança em CI/CD (DevSecOps)",
+            "type": "subtopic",
+            "side": "right",
+            "difficulty": "medium"
+        },
+        {
+            "id": "containerization-orchestration",
+            "title": "Containerização e Orquestração",
+            "type": "central",
+            "group": "Automação e Ferramentas",
+            "children": [
+                "docker-basics",
+                "docker-compose",
+                "kubernetes-intro",
+                "kubernetes-architecture",
+                "kubernetes-objects",
+                "docker-vs-kubernetes",
+                "helm"
+            ],
+            "content": "Aprenda a empacotar e gerenciar aplicações usando contêineres e orquestradores.",
+            "difficulty": "medium"
+        },
+        {
+            "id": "docker-basics",
+            "title": "Conceitos de Docker",
+            "type": "subtopic",
+            "side": "left",
+            "difficulty": "easy"
+        },
+        {
+            "id": "docker-compose",
+            "title": "Docker Compose",
+            "type": "subtopic",
+            "side": "right",
+            "difficulty": "easy"
+        },
+        {
+            "id": "kubernetes-intro",
+            "title": "Introdução ao Kubernetes",
+            "type": "subtopic",
+            "side": "left",
+            "difficulty": "medium"
+        },
+        {
+            "id": "kubernetes-architecture",
+            "title": "Arquitetura do Kubernetes",
+            "type": "subtopic",
+            "side": "right",
+            "difficulty": "medium"
+        },
+        {
+            "id": "kubernetes-objects",
+            "title": "Objetos do Kubernetes (Pods, Deployments, Services)",
+            "type": "subtopic",
+            "side": "left",
+            "difficulty": "medium"
+        },
+        {
+            "id": "docker-vs-kubernetes",
+            "title": "Docker vs. Kubernetes",
+            "type": "subtopic",
+            "side": "right",
+            "difficulty": "easy"
+        },
+        {
+            "id": "helm",
+            "title": "Helm (Gerenciador de Pacotes K8s)",
+            "type": "subtopic",
+            "side": "left",
+            "difficulty": "medium"
+        },
+        {
+            "id": "cloud-platforms",
+            "title": "Plataformas de Nuvem",
+            "type": "central",
+            "group": "Nuvem e Monitoramento",
+            "children": [
+                "aws-intro",
+                "azure-intro",
+                "gcp-intro",
+                "cloud-architecture",
+                "serverless",
+                "iac-in-cloud"
+            ],
+            "content": "Explore os serviços e arquiteturas das principais nuvens públicas.",
+            "difficulty": "medium"
+        },
+        {
+            "id": "aws-intro",
+            "title": "Introdução à AWS",
+            "type": "subtopic",
+            "side": "left",
+            "difficulty": "medium"
+        },
+        {
+            "id": "azure-intro",
+            "title": "Introdução à Azure",
+            "type": "subtopic",
+            "side": "right",
+            "difficulty": "medium"
+        },
+        {
+            "id": "gcp-intro",
+            "title": "Introdução à Google Cloud Platform",
+            "type": "subtopic",
+            "side": "left",
+            "difficulty": "medium"
+        },
+        {
+            "id": "cloud-architecture",
+            "title": "Padrões de Arquitetura em Nuvem",
+            "type": "subtopic",
+            "side": "right",
+            "difficulty": "medium"
+        },
+        {
+            "id": "serverless",
+            "title": "Computação Serverless",
+            "type": "subtopic",
+            "side": "left",
+            "difficulty": "medium"
+        },
+        {
+            "id": "iac-in-cloud",
+            "title": "IaC em Nuvem",
+            "type": "subtopic",
+            "side": "right",
+            "difficulty": "medium"
+        },
+        {
+            "id": "monitoring-logging",
+            "title": "Monitoramento e Logging",
+            "type": "central",
+            "group": "Nuvem e Monitoramento",
+            "children": [
+                "monitoring-concepts",
+                "prometheus",
+                "grafana",
+                "elk-stack",
+                "aws-cloudwatch",
+                "logging-strategies"
+            ],
+            "content": "Implemente práticas de observabilidade para garantir a saúde das aplicações.",
+            "difficulty": "medium"
+        },
+        {
+            "id": "monitoring-concepts",
+            "title": "Conceitos de Monitoramento",
+            "type": "subtopic",
+            "side": "left",
+            "difficulty": "easy"
+        },
+        {
+            "id": "prometheus",
+            "title": "Prometheus",
+            "type": "subtopic",
+            "side": "right",
+            "difficulty": "medium"
+        },
+        {
+            "id": "grafana",
+            "title": "Grafana",
+            "type": "subtopic",
+            "side": "left",
+            "difficulty": "medium"
+        },
+        {
+            "id": "elk-stack",
+            "title": "ELK Stack (Elasticsearch, Logstash, Kibana)",
+            "type": "subtopic",
+            "side": "right",
+            "difficulty": "medium"
+        },
+        {
+            "id": "aws-cloudwatch",
+            "title": "AWS CloudWatch e Outros Serviços de Logging",
+            "type": "subtopic",
+            "side": "left",
+            "difficulty": "medium"
+        },
+        {
+            "id": "logging-strategies",
+            "title": "Estratégias de Logging Eficazes",
+            "type": "subtopic",
+            "side": "right",
+            "difficulty": "easy"
+        },
+        {
+            "id": "devops-practices",
+            "title": "Práticas Avançadas de DevOps",
+            "type": "central",
+            "group": "Práticas Avançadas e Outros Tópicos",
+            "children": [
+                "site-reliability-engineering",
+                "devsecops-intro",
+                "observability",
+                "chaos-engineering",
+                "api-management",
+                "microservices-architecture",
+                "service-mesh"
+            ],
+            "content": "Explore temas mais avançados e disciplinas relacionadas ao DevOps.",
+            "difficulty": "hard"
+        },
+        {
+            "id": "site-reliability-engineering",
+            "title": "Site Reliability Engineering (SRE)",
+            "type": "subtopic",
+            "side": "left",
+            "difficulty": "hard"
+        },
+        {
+            "id": "devsecops-intro",
+            "title": "Introdução ao DevSecOps",
+            "type": "subtopic",
+            "side": "right",
+            "difficulty": "hard"
+        },
+        {
+            "id": "observability",
+            "title": "Observabilidade (Logs, Métricas, Traces)",
+            "type": "subtopic",
+            "side": "left",
+            "difficulty": "hard"
+        },
+        {
+            "id": "chaos-engineering",
+            "title": "Chaos Engineering",
+            "type": "subtopic",
+            "side": "right",
+            "difficulty": "hard"
+        },
+        {
+            "id": "api-management",
+            "title": "Gerenciamento de APIs",
+            "type": "subtopic",
+            "side": "left",
+            "difficulty": "hard"
+        },
+        {
+            "id": "microservices-architecture",
+            "title": "Arquitetura de Microsserviços",
+            "type": "subtopic",
+            "side": "right",
+            "difficulty": "hard"
+        },
+        {
+            "id": "service-mesh",
+            "title": "Service Mesh (Istio, Linkerd)",
+            "type": "subtopic",
+            "side": "left",
+            "difficulty": "hard"
+        }
+    ]
+}

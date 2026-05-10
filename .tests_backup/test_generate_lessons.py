@@ -2,10 +2,8 @@
 
 import os
 import sys
-import json
 from unittest.mock import Mock, patch
 
-import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -19,14 +17,18 @@ class TestProcessarNode:
             with patch("openai.OpenAI") as mock_openai:
                 mock_client = Mock()
                 mock_response = Mock()
-                mock_response.choices = [Mock(message=Mock(content=sample_lesson_content))]
+                mock_response.choices = [
+                    Mock(message=Mock(content=sample_lesson_content))
+                ]
                 mock_client.chat.completions.create.return_value = mock_response
                 mock_openai.return_value = mock_client
 
                 with patch("generate_lessons.BASE_DIR", temp_output_dir):
                     from generate_lessons import processar_node
 
-                    filepath = processar_node("variaveis", "Variáveis em Python", "subtopic")
+                    filepath = processar_node(
+                        "variaveis", "Variáveis em Python", "subtopic"
+                    )
 
                     assert os.path.exists(filepath)
                     assert "variaveis.md" in filepath
@@ -43,7 +45,9 @@ class TestProcessarNode:
             with patch("openai.OpenAI") as mock_openai:
                 mock_client = Mock()
                 mock_response = Mock()
-                mock_response.choices = [Mock(message=Mock(content=sample_lesson_content))]
+                mock_response.choices = [
+                    Mock(message=Mock(content=sample_lesson_content))
+                ]
                 mock_client.chat.completions.create.return_value = mock_response
                 mock_openai.return_value = mock_client
 
@@ -63,7 +67,9 @@ class TestProcessarNode:
             with patch("openai.OpenAI") as mock_openai:
                 mock_client = Mock()
                 mock_response = Mock()
-                mock_response.choices = [Mock(message=Mock(content=lesson_with_accents))]
+                mock_response.choices = [
+                    Mock(message=Mock(content=lesson_with_accents))
+                ]
                 mock_client.chat.completions.create.return_value = mock_response
                 mock_openai.return_value = mock_client
 
@@ -92,7 +98,9 @@ class TestProcessarNode:
 
                 from generate_lessons import processar_node
 
-                filepath = processar_node("custom", "Custom", "subtopic", output_dir=custom_dir)
+                filepath = processar_node(
+                    "custom", "Custom", "subtopic", output_dir=custom_dir
+                )
 
                 assert os.path.exists(custom_dir)
                 assert os.path.exists(filepath)
@@ -120,7 +128,9 @@ class TestGerarConteudoIA:
             with patch("openai.OpenAI") as mock_openai:
                 mock_client = Mock()
                 mock_response = Mock()
-                mock_response.choices = [Mock(message=Mock(content="# Título\n\nConteúdo"))]
+                mock_response.choices = [
+                    Mock(message=Mock(content="# Título\n\nConteúdo"))
+                ]
                 mock_client.chat.completions.create.return_value = mock_response
                 mock_openai.return_value = mock_client
 
@@ -169,4 +179,5 @@ class TestGerarConteudoIA:
 
 if __name__ == "__main__":
     import unittest
+
     unittest.main()

@@ -61,7 +61,7 @@ class TestSalvarRoadmap:
 
             roadmap_with_accents = {
                 "title": "Código Português: ããõõ éíüü",
-                "nodes": [{"id": "n1", "title": "Tópico: não"}]
+                "nodes": [{"id": "n1", "title": "Tópico: não"}],
             }
             filepath = salvar_roadmap("unicode", roadmap_with_accents)
 
@@ -110,7 +110,9 @@ class TestGerarRoadmapIA:
             with patch("openai.OpenAI") as mock_openai:
                 mock_client = Mock()
                 mock_response = Mock()
-                mock_response.choices = [Mock(message=Mock(content=json.dumps(sample_roadmap)))]
+                mock_response.choices = [
+                    Mock(message=Mock(content=json.dumps(sample_roadmap)))
+                ]
                 mock_client.chat.completions.create.return_value = mock_response
                 mock_openai.return_value = mock_client
 
@@ -127,7 +129,9 @@ class TestGerarRoadmapIA:
             with patch("openai.OpenAI") as mock_openai:
                 mock_client = Mock()
                 mock_response = Mock()
-                mock_response.choices = [Mock(message=Mock(content="Não é JSON válido"))]
+                mock_response.choices = [
+                    Mock(message=Mock(content="Não é JSON válido"))
+                ]
                 mock_client.chat.completions.create.return_value = mock_response
                 mock_openai.return_value = mock_client
 
@@ -192,4 +196,5 @@ class TestGerarRoadmapIA:
 
 if __name__ == "__main__":
     import unittest
+
     unittest.main()

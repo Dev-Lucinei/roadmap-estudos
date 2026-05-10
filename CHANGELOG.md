@@ -2,6 +2,26 @@
 
 Este documento registra a evolução, decisões técnicas e soluções de problemas do projeto **Roadmap-Estudos**.
 
+## [v2.3.0] - 2026-05-10
+### Adicionado
+- **Sistema de Proteção com Imutabilidade**: Implementado sistema consolidado de bloqueio de arquivos críticos usando `chattr +i` (imutabilidade no nível do kernel Linux) integrado ao `guard_harness.py`.
+- **Comandos de Gerenciamento no guard_harness.py**:
+  - `--seal` - Gera/atualiza hashes e sela arquivos com imutabilidade (requer sudo)
+  - `--unlock` - Remove imutabilidade para edição (requer sudo)
+  - `--status` - Verifica status de bloqueio dos arquivos
+- **Hook Pre-Commit Atualizado**: Validação baseada em status de imutabilidade dos arquivos via `lsattr`, permitindo commits apenas quando arquivos foram explicitamente desbloqueados com senha.
+- **Documentação Simplificada**: `GUIA_RAPIDO_SEAL.md` com workflow consolidado usando apenas o `guard_harness.py`.
+
+### Alterado
+- **Arquivos Protegidos**: `harness.py`, `scripts/guard_harness.py`, `.harness.hash` agora são protegidos por imutabilidade do sistema operacional.
+- **Workflow de Modificação**: Requer desbloqueio explícito com senha antes de editar (`--unlock`), e selagem após commit (`--seal`).
+- **Consolidação**: Removidos scripts bash redundantes (`seal_protected.sh`, `unseal_protected.sh`, `check_seal_status.sh`) - toda funcionalidade agora está no `guard_harness.py`.
+
+### Memória Técnica
+- O atributo `chattr +i` é uma proteção no nível do kernel que impede qualquer modificação (escrita, remoção, renomeação) mesmo para o dono do arquivo. Apenas `sudo chattr -i` pode remover a proteção, garantindo que agentes IA não possam modificar arquivos críticos sem intervenção humana com senha.
+- A solução anterior com `touch .git/COMMIT_AUTHORIZED` era vulnerável pois agentes poderiam criar o arquivo de bypass. A nova abordagem requer privilégios de root para qualquer modificação.
+- Consolidar tudo no `guard_harness.py` simplifica o workflow e reduz a superfície de ataque (menos arquivos para gerenciar).
+
 ## [v2.2.0] - 2026-05-10
 ### Corrigido
 - **[P0] Path Traversal em `load_roadmap` e `handle_save_roadmap`** (`server.py`): Adicionado `os.path.basename` + `os.path.realpath` com verificação de prefixo para garantir que nenhum filename vindo da URL ou do body POST possa escapar de `DATA_DIR`. Requisições fora do diretório retornam 403.

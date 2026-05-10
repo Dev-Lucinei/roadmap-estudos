@@ -1,0 +1,27 @@
+{
+    "title": "Test Roadmap",
+    "nodes": [
+        {
+            "id": "node1",
+            "title": "Central Node",
+            "type": "central",
+            "group": "Fundamentos",
+            "children": [
+                "node2",
+                "node3"
+            ]
+        },
+        {
+            "id": "node2",
+            "title": "Subtopic Left",
+            "type": "subtopic",
+            "side": "left"
+        },
+        {
+            "id": "node3",
+            "title": "Subtopic Right",
+            "type": "subtopic",
+            "side": "right"
+        }
+    ]
+}

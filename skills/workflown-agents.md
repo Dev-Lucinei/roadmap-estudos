@@ -5,13 +5,6 @@ Sempre que este agente for acionado, ele deve exibir no início da execução:
 ```
 Isto garante rastreabilidade em tempo real de qual skill está ativa.
 
-## ⚡ Instrução de Autoidentificação
-Sempre que este agente for acionado, ele deve exibir no início da execução:
-```
-⚡ EXECUTANDO: [Workflown Agents]
-```
-Isto garante rastreabilidade em tempo real de qual skill está ativa.
-
 # 🔄 Workflow de Orquestração: [Roadmap-Estudos]
 
 Ative este protocolo sempre que uma nova funcionalidade, alteração estrutural ou bug for detectado.
@@ -30,11 +23,7 @@ graph TD
     D -- "Gera Conteúdo" --> E[Skill: UI/UX Guardian]
     
     E -- "Refina Interface" --> F[Fim: Nova Feature Online]
-    
-    style B fill:#f1c40f,stroke:#333,stroke-width:2px
-    style C fill:#f96,stroke:#333,stroke-width:2px
-    style D fill:#6cf,stroke:#333,stroke-width:2px
-    style E fill:#9f9,stroke:#333,stroke-width:2px
+
 ```
 
 ### 2. Definição de Responsabilidades por Skill
