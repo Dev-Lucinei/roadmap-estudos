@@ -315,3 +315,114 @@ body.edit-mode .node-actions { opacity: 1; }
 
 /* Mermaid Diagrams */
 .mermaid { background: white; border-radius: 8px; padding: 15px; margin: 25px 0; color: #333; }
+
+/* Review Modal Styles */
+.review-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2001;
+}
+
+.review-modal {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 24px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+    color: #fff;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.review-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.review-modal-header h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.review-modal-close {
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 1.5rem;
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.review-modal-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.review-modal-body {
+    margin-bottom: 24px;
+    line-height: 1.6;
+}
+
+.review-modal-body p {
+    margin-bottom: 16px;
+}
+
+.review-modal-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.tag {
+    background: rgba(74, 158, 255, 0.2);
+    border: 1px solid rgba(74, 158, 255, 0.3);
+    color: #4a9eff;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+}
+
+.review-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.review-modal-btn {
+    background: rgba(74, 158, 255, 0.3);
+    border: 1px solid rgba(74, 158, 255, 0.5);
+    color: #fff;
+    padding: 10px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.review-modal-btn:hover {
+    background: rgba(74, 158, 255, 0.4);
+    transform: translateY(-2px);
+}
+
+.review-modal-btn:active {
+    transform: translateY(0);
+}
