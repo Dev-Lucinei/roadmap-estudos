@@ -1,0 +1,435 @@
+#!/usr/bin/env python3
+"""
+Guard Harness — Verificador de Integridade dos Arquivos Protegidos.
+
+Responsabilidades:
+  1. Verificar SHA256 do harness.py contra .harness.hash
+  2. Verificar integridade de todos os arquivos protegidos
+  3. Detectar alterações via git em arquivos protegidos
+  4. Bloquear execução se qualquer violação for encontrada
+  5. Emitir relatório JSON com evidências para auditoria
+
+Uso:
+    python scripts/guard_harness.py          → verifica e imprime resultado
+    python scripts/guard_harness.py --seal   → gera/atualiza .harness.hash
+    python scripts/guard_harness.py --json   → saída JSON para agentes
+
+Política:
+    - Este script NÃO pode ser modificado por agentes
+    - O hash deste script também é verificado
+    - Qualquer violação encerra o processo com exit code 2
+"""
+
+import argparse
+import hashlib
+import json
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+
+def run_sudo_command(command: list[str]) -> None:
+    """
+    Executa comando com sudo solicitando senha.
+    """
+    try:
+        subprocess.run(["sudo", "-v"], check=True)  # valida sessão sudo
+        subprocess.run(["sudo"] + command, check=True)
+    except subprocess.CalledProcessError:
+        print("❌ Falha ao executar comando sudo:", " ".join(command))
+        sys.exit(EXIT_VIOLATION)
+
+
+def unlock_file(path: Path) -> None:
+    """Remove atributo imutável (chattr -i)."""
+    run_sudo_command(["chattr", "-i", str(path)])
+
+
+def lock_file(path: Path) -> None:
+    """Aplica atributo imutável (chattr +i)."""
+    run_sudo_command(["chattr", "+i", str(path)])
+
+
+# =============================================================================
+# CONFIGURAÇÃO — Lista de arquivos protegidos e seus hashes esperados
+# =============================================================================
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+HASH_FILE = BASE_DIR / ".harness.hash"
+
+# Arquivos cujo hash é rastreado e cuja integridade é obrigatória
+PROTECTED_FILES: list[str] = [
+    "harness.py",
+    "scripts/guard_harness.py",
+]
+
+# Arquivos que nunca podem ter diff aberto no git (nem staged, nem unstaged)
+GIT_IMMUTABLE_FILES: list[str] = [
+    "harness.py",
+    "scripts/guard_harness.py",
+    ".harness.hash",
+]
+
+EXIT_OK = 0
+EXIT_VIOLATION = 2  # código distinto para facilitar detecção em CI
+
+
+# =============================================================================
+# HASHING
+# =============================================================================
+
+
+def sha256_file(path: Path) -> str:
+    """Calcula SHA256 de um arquivo em chunks (seguro para arquivos grandes)."""
+    h = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(65536), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+# =============================================================================
+# SEAL — Gera / atualiza o arquivo de hashes
+# =============================================================================
+
+
+def _process_file_hashes(verbose: bool, hashes: dict[str, str]) -> None:
+    for rel_path in PROTECTED_FILES:
+        abs_path = BASE_DIR / rel_path
+        if not abs_path.exists():
+            if verbose:
+                print(f"⚠️  Arquivo não encontrado, pulando: {rel_path}")
+            continue
+        unlock_file(abs_path)
+        digest = sha256_file(abs_path)
+        hashes[rel_path] = digest
+        if verbose:
+            print(f"  ✔ {rel_path}\\n    {digest}")
+
+
+def _reapply_protection(verbose: bool) -> None:
+    if verbose:
+        print("\\n🔒 Reaplicando proteção...")
+    lock_file(HASH_FILE)
+    for rel_path in PROTECTED_FILES:
+        abs_path = BASE_DIR / rel_path
+        if abs_path.exists():
+            lock_file(abs_path)
+
+
+def seal(verbose: bool = True) -> dict[str, str]:
+    """Calcula e persiste o hash de todos os arquivos protegidos."""
+    hashes: dict[str, str] = {}
+    if verbose:
+        print("🔐 Preparando ambiente (desbloqueando arquivos)...")
+    if HASH_FILE.exists():
+        unlock_file(HASH_FILE)
+
+    _process_file_hashes(verbose, hashes)
+
+    hashes["_sealed_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    hashes["_sealed_by"] = "guard_harness --seal"
+    HASH_FILE.write_text(json.dumps(hashes, indent=2, ensure_ascii=False))
+
+    _reapply_protection(verbose)
+
+    if verbose:
+        print("\\n✅ Sistema selado com sucesso.")
+        print(f"📁 Hash salvo em: {HASH_FILE.relative_to(BASE_DIR)}")
+    return hashes
+
+
+# =============================================================================
+# VERIFY — Verifica integridade
+# =============================================================================
+
+
+def load_expected_hashes() -> dict[str, str] | None:
+    """Carrega hashes esperados do arquivo .harness.hash."""
+    if not HASH_FILE.exists():
+        return None
+    try:
+        return json.loads(HASH_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
+def check_hashes() -> list[dict]:
+    """
+    Compara hashes atuais com os esperados.
+
+    Retorna lista de violações encontradas.
+    """
+    violations: list[dict] = []
+    expected = load_expected_hashes()
+
+    if expected is None:
+        violations.append(
+            {
+                "type": "hash_file_missing",
+                "file": ".harness.hash",
+                "severity": "CRITICAL",
+                "message": "Arquivo .harness.hash não encontrado",
+                "instruction": (
+                    "Executar 'python scripts/guard_harness.py --seal' "
+                    "para gerar o arquivo de hashes inicial. "
+                    "Este passo deve ser feito pelo mantenedor humano."
+                ),
+            }
+        )
+        return violations
+
+    for rel_path in PROTECTED_FILES:
+        abs_path = BASE_DIR / rel_path
+
+        if not abs_path.exists():
+            violations.append(
+                {
+                    "type": "file_missing",
+                    "file": rel_path,
+                    "severity": "CRITICAL",
+                    "message": f"Arquivo protegido não encontrado: {rel_path}",
+                    "instruction": (
+                        f"Restaurar {rel_path} a partir do repositório: "
+                        f"git checkout HEAD -- {rel_path}"
+                    ),
+                }
+            )
+            continue
+
+        current_hash = sha256_file(abs_path)
+        expected_hash = expected.get(rel_path)
+
+        if expected_hash is None:
+            violations.append(
+                {
+                    "type": "hash_not_registered",
+                    "file": rel_path,
+                    "severity": "WARNING",
+                    "current_hash": current_hash,
+                    "message": f"Arquivo não registrado no .harness.hash: {rel_path}",
+                    "instruction": (
+                        "Executar 'python scripts/guard_harness.py --seal' "
+                        "para registrar o arquivo. "
+                        "Apenas o mantenedor humano deve fazer isso."
+                    ),
+                }
+            )
+        elif current_hash != expected_hash:
+            violations.append(
+                {
+                    "type": "hash_mismatch",
+                    "file": rel_path,
+                    "severity": "CRITICAL",
+                    "expected_hash": expected_hash,
+                    "current_hash": current_hash,
+                    "message": f"VIOLAÇÃO DE INTEGRIDADE: {rel_path} foi modificado",
+                    "instruction": (
+                        f"Arquivo protegido foi alterado sem autorização. "
+                        f"Restaurar com: git checkout HEAD -- {rel_path}\n"
+                        f"  Hash esperado: {expected_hash}\n"
+                        f"  Hash atual:    {current_hash}"
+                    ),
+                    # Contexto para auditoria forense
+                    "forensics": {
+                        "restore_command": f"git checkout HEAD -- {rel_path}",
+                        "diff_command": f"git diff HEAD -- {rel_path}",
+                        "log_command": f"git log --oneline -5 -- {rel_path}",
+                    },
+                }
+            )
+
+    return violations
+
+
+def check_git_status() -> list[dict]:
+    """
+    Verifica se arquivos imutáveis têm alterações abertas no git.
+
+    Detecta tanto alterações staged quanto unstaged.
+    """
+    violations: list[dict] = []
+
+    try:
+        result = subprocess.run(
+            ["git", "status", "--porcelain"],
+            capture_output=True,
+            text=True,
+            cwd=BASE_DIR,
+        )
+    except FileNotFoundError:
+        # git não disponível — não é violação, apenas aviso
+        return [
+            {
+                "type": "git_unavailable",
+                "file": "N/A",
+                "severity": "WARNING",
+                "message": "git não disponível — verificação ignorada",
+                "instruction": "Instalar git para habilitar verificação de status",
+            }
+        ]
+
+    if result.returncode != 0:
+        return []  # não é repositório git — ignorar silenciosamente
+
+    for line in result.stdout.splitlines():
+        if len(line) < 4:
+            continue
+        status_code = line[:2].strip()
+        changed_file = line[3:].strip()
+
+        # Remover aspas que o git adiciona em nomes com espaços
+        changed_file = changed_file.strip('"')
+
+        if changed_file in GIT_IMMUTABLE_FILES and status_code not in ("??",):
+            violations.append(
+                {
+                    "type": "git_dirty_protected_file",
+                    "file": changed_file,
+                    "severity": "CRITICAL",
+                    "git_status": status_code,
+                    "message": (
+                        f"Arquivo protegido com alteração aberta no git: "
+                        f"{changed_file} (status: {status_code})"
+                    ),
+                    "instruction": (
+                        f"Reverter alteração: git checkout HEAD -- {changed_file}\n"
+                        "Arquivos protegidos só podem ser modificados pelo mantenedor "
+                        "humano e com novo --seal após a alteração."
+                    ),
+                    "forensics": {
+                        "restore_command": f"git checkout HEAD -- {changed_file}",
+                        "diff_command": f"git diff HEAD -- {changed_file}",
+                    },
+                }
+            )
+
+    return violations
+
+
+# =============================================================================
+# RELATÓRIO
+# =============================================================================
+
+
+def build_report(
+    hash_violations: list[dict],
+    git_violations: list[dict],
+) -> dict:
+    """Monta relatório completo de integridade."""
+    all_violations = hash_violations + git_violations
+    critical = [v for v in all_violations if v.get("severity") == "CRITICAL"]
+
+    return {
+        "schema": "guard_harness/1.0",
+        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "status": "VIOLATED" if critical else ("WARNING" if all_violations else "INTACT"),
+        "protected_files": PROTECTED_FILES,
+        "hash_file": str(HASH_FILE.relative_to(BASE_DIR)),
+        "summary": {
+            "total_violations": len(all_violations),
+            "critical": len(critical),
+            "warnings": len(all_violations) - len(critical),
+        },
+        "violations": all_violations,
+        "agent_policy": {
+            "description": (
+                "Agentes NÃO estão autorizados a modificar arquivos protegidos. "
+                "Qualquer tentativa de edição deve ser revertida imediatamente."
+            ),
+            "allowed_actions": [
+                "Executar harness.py para validar",
+                "Ler os relatórios de erro",
+                "Corrigir erros em src/ e tests/",
+            ],
+            "forbidden_actions": [
+                "Modificar harness.py",
+                "Modificar scripts/guard_harness.py",
+                "Modificar .harness.hash",
+                "Executar --seal sem autorização humana",
+                "Criar bypass de validações",
+                "Alterar testes para fazer passar",
+            ],
+        },
+    }
+
+
+def print_human_report(report: dict) -> None:
+    """Imprime relatório formatado para leitura humana."""
+    status = report["status"]
+    icons = {"INTACT": "✅", "WARNING": "⚠️ ", "VIOLATED": "🚨"}
+    icon = icons.get(status, "❓")
+
+    print("\n" + "═" * 60)
+    print("  GUARD HARNESS — VERIFICAÇÃO DE INTEGRIDADE")
+    print("═" * 60)
+    print(f"\n{icon} STATUS: {status}")
+
+    if not report["violations"]:
+        print("\n  Todos os arquivos protegidos estão íntegros.")
+    else:
+        print(
+            f"\n  {report['summary']['critical']} violações críticas · "
+            f"{report['summary']['warnings']} avisos\n"
+        )
+
+        for v in report["violations"]:
+            sev_icon = "🔴" if v["severity"] == "CRITICAL" else "🟡"
+            print(f"  {sev_icon} [{v['type']}] {v['file']}")
+            print(f"     {v['message']}")
+            print(f"     → {v['instruction']}")
+            if "forensics" in v:
+                print(f"     🔍 Diagnóstico: {v['forensics'].get('diff_command', '')}")
+            print()
+
+    print("═" * 60 + "\n")
+    print("Para desbloquear o guard harness, rode o comando:")
+    print("        sudo chown root:root scripts/guard_harness.py")
+    print("        sudo chmod 644 scripts/guard_harness.py")
+    print("        sudo chattr -i scripts/guard_harness.py")
+    print("═" * 60 + "\n")
+
+
+# =============================================================================
+# ENTRY POINT
+# =============================================================================
+
+
+def main() -> None:
+    """Ponto de entrada CLI."""
+    parser = argparse.ArgumentParser(description="Guard Harness — Verificador de Integridade")
+    parser.add_argument(
+        "--seal",
+        action="store_true",
+        help="Gerar/atualizar .harness.hash com hashes atuais (apenas mantenedor)",
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Saída em JSON estruturado",
+    )
+    args = parser.parse_args()
+
+    if args.seal:
+        print("\n🔏 Selando arquivos protegidos...\n")
+        seal(verbose=True)
+        sys.exit(EXIT_OK)
+
+    hash_violations = check_hashes()
+    git_violations = check_git_status()
+    report = build_report(hash_violations, git_violations)
+
+    if args.json:
+        print(json.dumps(report, indent=2, ensure_ascii=False))
+    else:
+        print_human_report(report)
+
+    # Exit code 2 para violações críticas (diferente de 1 para facilitar CI)
+    if report["status"] == "VIOLATED":
+        sys.exit(EXIT_VIOLATION)
+    sys.exit(EXIT_OK)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,102 @@
+# Análise de Problemas de Lógica no Projeto Roadmap-Estudos
+
+## Introdução
+
+Este relatório detalha uma análise aprofundada do projeto "Roadmap-Estudos", com foco na identificação de problemas de lógica que podem impactar a funcionalidade, a manutenibilidade e a experiência do usuário. A análise foi realizada com base nos arquivos fornecidos, incluindo código-fonte (Python e JavaScript), arquivos de configuração, testes e documentação de requisitos e design.
+
+## Metodologia
+
+A metodologia empregada consistiu na revisão cruzada de diferentes artefatos do projeto:
+
+1.  **Mapeamento da Estrutura:** Inicialmente, foi realizada a extração e o mapeamento da estrutura de arquivos para compreender a organização do projeto.
+2.  **Análise de Código:** Os principais arquivos de lógica (`server.py`, `generate_roadmap.py`, `generate_lessons.py`, `app.js`) foram examinados para entender o fluxo de execução e as implementações.
+3.  **Confronto com Documentação:** Os requisitos (`requirements.md`) e o documento de design (`design.md`) do módulo de diagnóstico de lacunas foram comparados com a implementação real para identificar inconsistências e desvios.
+4.  **Revisão de Testes:** Os arquivos de teste (`test_api.py`, `test_diagnosis.py`, `test_diagnosis_logic.py`) foram analisados para verificar a cobertura e a validade das asserções em relação à lógica de negócio.
+
+## Problemas de Lógica Identificados
+
+A seguir, são apresentados os problemas de lógica encontrados, categorizados por área e com referências aos arquivos relevantes.
+
+### 1. Inconsistência no Modelo de Dados e Ativação do Diagnóstico
+
+**Descrição:** O frontend (`app.js`) espera um campo `node.prereqs` para determinar se um nó possui pré-requisitos e, consequentemente, se o diagnóstico deve ser ativado. No entanto, os arquivos de dados de roadmap (`roadmap_data.js`, `data/python_fundamentos.json`) não contêm esse campo nos objetos de nó. Isso impede que a lógica de bloqueio e diagnóstico seja efetivamente acionada no frontend, mesmo que o backend (`server.py`) possua um `dep_map.json` com as dependências definidas.
+
+**Impacto:** A funcionalidade central de "diagnóstico de lacunas" não é ativada conforme o esperado, permitindo que usuários avancem para tópicos sem os pré-requisitos necessários, contrariando o requisito 5.1 de "Bloqueio em Falha de Diagnóstico" [1].
+
+**Referências:**
+*   `app.js`: Linha 177 (`if (node.prereqs && node.prereqs.some(id => !completedNodes.includes(id)))`)
+*   `roadmap_data.js`: Ausência do campo `prereqs` nos nós.
+*   `data/python_fundamentos.json`: Ausência do campo `prereqs` nos nós.
+*   `data/dep_map.json`: Contém o mapeamento de dependências, mas não é consumido diretamente pelo frontend para a ativação do diagnóstico.
+
+### 2. Lógica de Bloqueio e Fluxo do Usuário no Frontend
+
+**Descrição:** A implementação da lógica de bloqueio no `app.js` apresenta um fluxo potencialmente confuso para o usuário. Se o diagnóstico falhar (`runDiagnostic` retornar `false`), um `alert` genérico é exibido, e a função `showLesson` retorna. No entanto, o `showReviewModal` é chamado, e seu callback `onClose` tenta reexecutar `runDiagnostic(node)`. Isso pode criar um ciclo vicioso onde o usuário é repetidamente diagnosticado e bloqueado sem uma clara indicação de como progredir.
+
+**Impacto:** Experiência do usuário prejudicada, com mensagens genéricas e um fluxo de interação que não guia o usuário de forma eficaz para remediar as lacunas de conhecimento. O requisito 8.1 de "Alertas Não Excessivos" [1] e a clareza na remediação de lacunas não são totalmente atendidos.
+
+**Referências:**
+*   `app.js`: Linhas 177-183 (ativação do diagnóstico e `alert`)
+*   `app.js`: Linhas 513-524 (lógica de `hasGap` e `showReviewModal` com `onClose` recursivo)
+
+### 3. Inconsistência no Contrato da API de Diagnóstico
+
+**Descrição:** O documento de design (`design.md`) especifica que o endpoint `POST /api/diagnose` deve receber um parâmetro `user_answer` [2]. Contudo, a implementação no `server.py` (linha 132) espera um parâmetro `answer`, e os testes de integração (`test_api.py`) enviam `answer` [3]. Embora o código funcione devido a essa correspondência entre implementação e teste, há uma clara divergência em relação à documentação oficial.
+
+**Impacto:** Potencial para confusão e erros em futuras integrações ou manutenções, caso desenvolvedores sigam a documentação de design em vez da implementação real.
+
+**Referências:**
+*   `design.md`: Linha 50 (`POST /api/diagnose` (topic: string, user_answer: string))
+*   `server.py`: Linha 132 (`user_answer = data.get('answer', '')`)
+*   `test_api.py`: Linha 45 (payload de teste com `answer`)
+
+### 4. Tratamento Inadequado de Erros no Backend
+
+**Descrição:** O documento de design (`design.md`) estabelece códigos de status HTTP específicos para diferentes tipos de erro no endpoint `/api/diagnose`: `400` para parâmetros inválidos, `502` para falha na chamada LLM e `500` para erro interno [2]. A implementação no `server.py` retorna `500` para falhas na obtenção da chave de API (linhas 165-172) e para exceções gerais (linhas 231-238), o que não está alinhado com a especificação de `502` para falhas relacionadas à LLM.
+
+**Impacto:** Dificulta a depuração e o monitoramento de erros, pois diferentes causas de falha são agrupadas sob um código de status genérico `500`, contrariando a granularidade definida no design.
+
+**Referências:**
+*   `design.md`: Linhas 51-54 (Erros tratados na interface pública do backend)
+*   `server.py`: Linhas 165-172 (retorno `500` para API key ausente)
+*   `server.py`: Linhas 231-238 (retorno `500` para exceções gerais)
+
+### 5. Ausência de Atualização Automática do Mapa de Dependências
+
+**Descrição:** O requisito 1.2 de "Mapeamento de Dependências Critical" [1] estabelece que o mapa de dependências (`dep_map.json`) "deve ser atualizado automaticamente ao adicionar ou remover tópicos". No entanto, o documento de design (`design.md`) contraditoriamente afirma que o `data/dep_map.json` é "mantido manualmente pelo mantenedor" [2]. A implementação atual não inclui nenhuma lógica para atualização automática deste arquivo.
+
+**Impacto:** A manutenção do mapa de dependências se torna um processo manual propenso a erros e desatualizações, o que pode levar a diagnósticos incorretos ou incompletos, comprometendo a integridade do sistema de pré-requisitos.
+
+**Referências:**
+*   `requirements.md`: Critério de Aceitação 1.2
+*   `design.md`: Linha 39 (`data/dep_map.json` mantido manualmente)
+
+### 6. Duplicação de Código no `app.js`
+
+**Descrição:** Foi observada uma duplicação de código no arquivo `app.js` relacionada à função `completeNode(...)`. Um trecho de código idêntico ou muito similar aparece em duas partes distintas do arquivo, fora de uma função encapsuladora. Isso foi notado durante a análise do arquivo `app.js`.
+
+**Impacto:** Viola o princípio DRY (Don't Repeat Yourself), aumentando a complexidade do código, dificultando a manutenção e introduzindo o risco de inconsistências se uma das cópias for atualizada e a outra não. Embora não seja um problema de lógica funcional que impeça o sistema de rodar, é uma falha de lógica de arquitetura e boas práticas de programação.
+
+**Referências:**
+*   `app.js`: Trecho duplicado de `completeNode(...)` (observado durante a leitura, não referenciado por número de linha específico devido à truncagem, mas presente no contexto de análise).
+
+## Conclusão e Recomendações
+
+O projeto "Roadmap-Estudos" apresenta uma arquitetura interessante com a integração de LLMs para geração de conteúdo e diagnóstico. No entanto, a análise revelou diversas inconsistências lógicas e desvios em relação aos requisitos e ao design, principalmente no módulo de diagnóstico de lacunas. A tabela abaixo resume os problemas e sugere ações corretivas.
+
+| Problema de Lógica | Impacto Principal | Recomendação | Prioridade |
+| :----------------- | :---------------- | :----------- | :--------- |
+| Inconsistência no Modelo de Dados e Ativação do Diagnóstico | Funcionalidade central de diagnóstico inativa | Modificar o modelo de dados dos nós para incluir `prereqs` e atualizar a lógica do `app.js` para consumir essa informação. | Alta |
+| Lógica de Bloqueio e Fluxo do Usuário no Frontend | Experiência do usuário prejudicada | Refatorar a lógica de `showReviewModal` e `runDiagnostic` para um fluxo mais claro, com mensagens informativas e opções explícitas para o usuário. | Média |
+| Inconsistência no Contrato da API de Diagnóstico | Risco de erros em futuras integrações | Alinhar o nome do parâmetro (`answer` ou `user_answer`) entre `design.md`, `server.py` e `test_api.py`. | Baixa |
+| Tratamento Inadequado de Erros no Backend | Dificuldade na depuração e monitoramento | Implementar os códigos de status HTTP `502` e `500` conforme especificado no `design.md` para falhas de LLM e erros internos, respectivamente. | Média |
+| Ausência de Atualização Automática do Mapa de Dependências | Manutenção manual e risco de desatualização | Desenvolver uma rotina ou ferramenta para atualizar automaticamente `dep_map.json` com base nos roadmaps existentes. | Alta |
+| Duplicação de Código no `app.js` | Dificuldade de manutenção, violação DRY | Refatorar o código duplicado de `completeNode(...)` em uma função reutilizável. | Baixa |
+
+Abordar esses problemas de lógica é crucial para garantir que o projeto funcione conforme o esperado, ofereça uma experiência de usuário consistente e seja mais fácil de manter e expandir no futuro.
+
+## Referências
+
+[1] Requisitos do Módulo de Diagnóstico de Lacunas. Disponível em: `/home/ubuntu/roadmap-estudos/roadmap-estudos/.kiro/specs/diagnostico-lacunas/requirements.md`
+[2] Documento de Design do Módulo de Diagnóstico de Lacunas. Disponível em: `/home/ubuntu/roadmap-estudos/roadmap-estudos/.kiro/specs/diagnostico-lacunas/design.md`
+[3] Testes de API do Módulo de Diagnóstico. Disponível em: `/home/ubuntu/roadmap-estudos/roadmap-estudos/tests/test_api.py`

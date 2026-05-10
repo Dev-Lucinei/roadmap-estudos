@@ -1,0 +1,7 @@
+{
+  "Python Fundamentos": [],
+  "Análise de Dados": ["Python Fundamentos"],
+  "Machine Learning Básico": ["Python Fundamentos", "Análise de Dados"],
+  "Deep Learning": ["Machine Learning Básico"],
+  "Deploy de Modelos": ["Machine Learning Básico", "Deep Learning"]
+}
