@@ -6,8 +6,9 @@ import json
 import os
 import sys
 import unittest
+import tempfile
+import shutil
 
-# Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
@@ -16,12 +17,23 @@ class TestDiagnosisLogic(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures."""
-        self.test_data_dir = os.path.join(os.path.dirname(__file__), "..", "data")
+        self.test_data_dir = tempfile.mkdtemp()
         self.dep_map_path = os.path.join(self.test_data_dir, "dep_map.json")
 
-        # Load test dependency map
+        test_dep_map = {
+            "Python Fundamentos": [],
+            "Análise de Dados": ["Python Fundamentos"],
+            "Machine Learning": ["Python Fundamentos", "Análise de Dados"],
+        }
+        with open(self.dep_map_path, "w", encoding="utf-8") as f:
+            json.dump(test_dep_map, f)
+
         with open(self.dep_map_path, "r", encoding="utf-8") as f:
             self.dep_map = json.load(f)
+
+    def tearDown(self):
+        """Clean up test files."""
+        shutil.rmtree(self.test_data_dir, ignore_errors=True)
 
     def test_load_dependency_map(self):
         """Test that dependency map loads correctly."""
@@ -35,16 +47,13 @@ class TestDiagnosisLogic(unittest.TestCase):
 
     def test_prerequisites_extraction(self):
         """Test extraction of prerequisites for topics."""
-        # Test topic with no prerequisites
         python_fund_prereqs = self.dep_map.get("Python Fundamentos", [])
         self.assertEqual(python_fund_prereqs, [])
 
-        # Test topic with prerequisites
         analytics_prereqs = self.dep_map.get("Análise de Dados", [])
         self.assertEqual(analytics_prereqs, ["Python Fundamentos"])
 
-        # Test topic with multiple prerequisites
-        ml_prereqs = self.dep_map.get("Machine Learning Básico", [])
+        ml_prereqs = self.dep_map.get("Machine Learning", [])
         self.assertEqual(ml_prereqs, ["Python Fundamentos", "Análise de Dados"])
 
     def test_gap_detection_logic(self):
