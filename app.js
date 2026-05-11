@@ -14,6 +14,7 @@ const view = document.getElementById('roadmap-view');
 const roadmapSelector = document.getElementById('roadmap-selector');
 const editModeBtn = document.getElementById('edit-mode-btn');
 const genQuizBtn = document.getElementById('gen-quiz-btn');
+const generateQuizBtn = document.getElementById('generate-quiz-btn');
 
 // Estado Global
 let currentRoadmap = null;
@@ -25,6 +26,7 @@ let isEditMode = false;
 let lessonStartTimes = {};
 let userXP = parseInt(localStorage.getItem('userXP') || '0');
 let depMap = {};  // Cache do mapa de dependências
+let currentQuizData = null;  // Armazena o quiz gerado
 
 
 // Inicialização Mermaid
@@ -425,6 +427,212 @@ window.submitGenerateRoadmap = async () => {
 
 // --- QUIZ E STREAKS ---
 
+async function generateQuizForCurrentLesson() {
+    if (!currentLessonNode) {
+        alert('Nenhuma lição selecionada.');
+        return;
+    }
+
+    const btn = generateQuizBtn;
+    const originalText = btn.innerText;
+    btn.innerText = "🧠 Gerando quiz...";
+    btn.disabled = true;
+
+    try {
+        const response = await fetch(`${API_URL}/generate-quiz`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                node_id: currentLessonNode.id,
+                title: currentLessonNode.title
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            currentQuizData = result.quiz;
+            renderGeneratedQuiz(result.quiz);
+        } else {
+            throw new Error(result.message || 'Erro ao gerar quiz');
+        }
+    } catch (e) {
+        console.error('Erro ao gerar quiz:', e);
+        alert(`Erro ao gerar quiz: ${e.message}`);
+    } finally {
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }
+}
+
+function renderGeneratedQuiz(questions) {
+    quizContainer.innerHTML = '<h3>🧠 Quiz de Avaliação</h3>';
+    quizContainer.style.display = 'block';
+
+    const form = document.createElement('form');
+    form.id = 'quiz-form';
+    form.onsubmit = (e) => {
+        e.preventDefault();
+        submitQuizAnswers();
+    };
+
+    questions.forEach((q, idx) => {
+        const qDiv = document.createElement('div');
+        qDiv.className = 'quiz-question';
+        
+        const questionText = document.createElement('p');
+        questionText.innerHTML = `<strong>${idx + 1}. ${q.question}</strong>`;
+        qDiv.appendChild(questionText);
+
+        q.options.forEach((opt, optIdx) => {
+            const label = document.createElement('label');
+            label.className = 'quiz-option-label';
+            
+            const radio = document.createElement('input');
+            radio.type = 'radio';
+            radio.name = `question-${idx}`;
+            radio.value = optIdx;
+            radio.required = true;
+            
+            label.appendChild(radio);
+            label.appendChild(document.createTextNode(` ${opt}`));
+            qDiv.appendChild(label);
+        });
+
+        form.appendChild(qDiv);
+    });
+
+    const submitBtn = document.createElement('button');
+    submitBtn.type = 'submit';
+    submitBtn.className = 'quiz-submit';
+    submitBtn.innerText = 'Enviar Respostas';
+    form.appendChild(submitBtn);
+
+    quizContainer.appendChild(form);
+}
+
+async function submitQuizAnswers() {
+    if (!currentQuizData || !currentLessonNode) return;
+
+    const form = document.getElementById('quiz-form');
+    const formData = new FormData(form);
+    
+    // Coleta respostas do usuário
+    const userAnswers = {};
+    currentQuizData.forEach((q, idx) => {
+        const answer = formData.get(`question-${idx}`);
+        if (answer !== null) {
+            userAnswers[idx] = parseInt(answer);
+        }
+    });
+
+    // Verifica se todas as perguntas foram respondidas
+    if (Object.keys(userAnswers).length !== currentQuizData.length) {
+        alert('Por favor, responda todas as perguntas.');
+        return;
+    }
+
+    const submitBtn = form.querySelector('.quiz-submit');
+    submitBtn.innerText = '⏳ Avaliando...';
+    submitBtn.disabled = true;
+
+    try {
+        const response = await fetch(`${API_URL}/evaluate-quiz`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                node_id: currentLessonNode.id,
+                title: currentLessonNode.title,
+                quiz_data: currentQuizData,
+                user_answers: userAnswers
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            displayQuizEvaluation(result.evaluation, userAnswers);
+        } else {
+            throw new Error(result.message || 'Erro ao avaliar quiz');
+        }
+    } catch (e) {
+        console.error('Erro ao avaliar quiz:', e);
+        alert(`Erro ao avaliar quiz: ${e.message}`);
+        submitBtn.innerText = 'Enviar Respostas';
+        submitBtn.disabled = false;
+    }
+}
+
+function displayQuizEvaluation(evaluation, userAnswers) {
+    quizContainer.innerHTML = '<h3>📊 Resultado da Avaliação</h3>';
+
+    // Score e status
+    const scoreDiv = document.createElement('div');
+    scoreDiv.className = `quiz-score ${evaluation.passed ? 'passed' : 'failed'}`;
+    scoreDiv.innerHTML = `
+        <div class="score-value">${evaluation.score}%</div>
+        <div class="score-status">${evaluation.passed ? '✅ Aprovado!' : '❌ Precisa revisar'}</div>
+    `;
+    quizContainer.appendChild(scoreDiv);
+
+    // Feedback geral
+    const feedbackDiv = document.createElement('div');
+    feedbackDiv.className = 'quiz-feedback';
+    feedbackDiv.innerHTML = `<p><strong>Feedback:</strong> ${evaluation.feedback}</p>`;
+    quizContainer.appendChild(feedbackDiv);
+
+    // Detalhes por questão
+    if (evaluation.details && evaluation.details.length > 0) {
+        const detailsDiv = document.createElement('div');
+        detailsDiv.className = 'quiz-details';
+        
+        evaluation.details.forEach((detail) => {
+            const detailItem = document.createElement('div');
+            detailItem.className = `quiz-detail-item ${detail.correct ? 'correct' : 'incorrect'}`;
+            
+            const question = currentQuizData[detail.question_index];
+            const userAnswerIdx = userAnswers[detail.question_index];
+            
+            detailItem.innerHTML = `
+                <p><strong>Questão ${detail.question_index + 1}:</strong> ${question.question}</p>
+                <p class="user-answer">Sua resposta: ${question.options[userAnswerIdx]}</p>
+                <p class="correct-answer">Resposta correta: ${question.options[question.answer]}</p>
+                <p class="detail-note">${detail.note}</p>
+            `;
+            
+            detailsDiv.appendChild(detailItem);
+        });
+        
+        quizContainer.appendChild(detailsDiv);
+    }
+
+    // Botões de ação
+    const actionsDiv = document.createElement('div');
+    actionsDiv.className = 'quiz-actions';
+    
+    const retryBtn = document.createElement('button');
+    retryBtn.className = 'quiz-btn retry';
+    retryBtn.innerText = '🔄 Tentar Novamente';
+    retryBtn.onclick = () => generateQuizForCurrentLesson();
+    
+    const continueBtn = document.createElement('button');
+    continueBtn.className = 'quiz-btn continue';
+    continueBtn.innerText = evaluation.passed ? '✅ Marcar como Concluído' : '📖 Revisar Lição';
+    continueBtn.onclick = () => {
+        if (evaluation.passed) {
+            completeNode(currentLessonNode.id);
+            renderCompleteStatus();
+        } else {
+            // Rola para o topo da lição
+            lessonContent.scrollIntoView({ behavior: 'smooth' });
+        }
+    };
+    
+    actionsDiv.appendChild(retryBtn);
+    actionsDiv.appendChild(continueBtn);
+    quizContainer.appendChild(actionsDiv);
+}
+
 function renderQuiz(questions) {
     quizContainer.innerHTML = '<h3>🧠 Quiz de Validação</h3>';
     quizContainer.style.display = 'block';
@@ -578,300 +786,159 @@ function updateStreakUI() {
 // --- DIAGNÓSTICO DE LACUNAS ---
 
 async function runDiagnostic(node) {
-    return new Promise((resolve) => {
-        showDiagnosticModal(node, resolve);
-    });
+    try {
+        // Show loading state
+        lessonContent.innerHTML = `<p style="color: #888;">Executando diagnóstico de <strong>${node.title}</strong>...</p>`;
+        
+        // Get user's self-assessment (in a real app, this could be more sophisticated)
+        // For now, we'll use a simple prompt asking the user to explain the concept
+        const userAnswer = prompt(
+            `Para acessar "${node.title}", por favor explique brevemente o que você sabe sobre este tópico:\n\nSeja específico sobre fórmulas, regras ou conceitos-chave que você entende.`
+        );
+        
+        if (userAnswer === null) {
+            // User cancelled
+            return false;
+        }
+        
+        if (!userAnswer.trim()) {
+            alert('Por favor, forneça uma resposta para continuar com o diagnóstico.');
+            return false;
+        }
+        
+        // Call diagnostic API
+        const response = await fetch(`${API_URL}/diagnose`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                topic: node.title,
+                user_answer: userAnswer
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Erro no diagnóstico: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.status === "error") {
+            throw new Error(result.message || 'Erro desconhecido no diagnóstico');
+        }
+        
+        // Show result to user
+        const hasGap = result.has_gap || result.status === "miss";
+        
+        if (hasGap) {
+            // Show review modal with the diagnosis - user needs to review before proceeding
+            showReviewModal({
+                title: `Revisão necessária: ${node.title}`,
+                message: result.message,
+                tags: result.tags || [],
+                showRetryButton: true,  // User can retry after reviewing
+                onRetry: () => {
+                    // Close modal and retry diagnostic
+                    closeModal();
+                    setTimeout(() => runDiagnostic(node), 100);
+                },
+                onClose: () => {
+                    // User closed without retry - stay on current lesson
+                    return false;
+                }
+            });
+            return false; // Block access for now
+        } else {
+            // Show success message and grant access
+            showReviewModal({
+                title: `Acesso liberado: ${node.title}`,
+                message: result.message,
+                tags: result.tags || [],
+                onClose: () => true
+            });
+            return true; // Grant access
+        }
+    } catch (error) {
+        console.error('Erro no diagnóstico:', error);
+        // In case of error, allow access to avoid blocking the user
+        alert('Não foi possível executar o diagnóstico. Permitindo acesso como medida de segurança.');
+        return true;
+    }
 }
 
-function showDiagnosticModal(node, onComplete) {
+function showReviewModal(data) {
     const overlay = document.createElement('div');
-    overlay.className = 'diagnostic-modal-overlay';
+    overlay.className = 'review-modal-overlay';
 
     const modal = document.createElement('div');
-    modal.className = 'diagnostic-modal';
+    modal.className = 'review-modal';
 
     // Header
     const header = document.createElement('div');
-    header.className = 'diagnostic-modal-header';
+    header.className = 'review-modal-header';
     const h3 = document.createElement('h3');
-    h3.textContent = `Avaliação: ${node.title}`;
+    // P0: textContent em vez de innerHTML — previne XSS com dados do LLM
+    h3.textContent = data.title;
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'review-modal-close';
+    closeBtn.textContent = '×';
+    closeBtn.onclick = () => overlay.remove();
     header.appendChild(h3);
+    header.appendChild(closeBtn);
 
     // Body
     const body = document.createElement('div');
-    body.className = 'diagnostic-modal-body';
+    body.className = 'review-modal-body';
+    const msgP = document.createElement('p');
+    msgP.textContent = data.message;
+    body.appendChild(msgP);
 
-    // Tabs
-    const tabs = document.createElement('div');
-    tabs.className = 'diagnostic-tabs';
-    tabs.innerHTML = `
-        <button class="diagnostic-tab active" data-tab="checklist">📋 Auto-avaliação</button>
-        <button class="diagnostic-tab" data-tab="quiz">🧠 Quiz IA</button>
-    `;
+    if (data.tags && data.tags.length > 0) {
+        const tagsDiv = document.createElement('div');
+        tagsDiv.className = 'review-modal-tags';
+        const label = document.createElement('strong');
+        label.textContent = 'Pré-requisitos relacionados: ';
+        tagsDiv.appendChild(label);
+        data.tags.forEach(tag => {
+            const span = document.createElement('span');
+            span.className = 'tag';
+            span.textContent = tag;
+            tagsDiv.appendChild(span);
+        });
+        body.appendChild(tagsDiv);
+    }
 
-    // Tab contents
-    const tabContents = document.createElement('div');
-    tabContents.className = 'diagnostic-tab-contents';
+    // Footer
+    const footer = document.createElement('div');
+    footer.className = 'review-modal-footer';
 
-    // Checklist tab
-    const checklistTab = document.createElement('div');
-    checklistTab.className = 'diagnostic-tab-content active';
-    checklistTab.id = 'tab-checklist';
-    checklistTab.innerHTML = `
-        <p class="diagnostic-intro">Marque os itens que você domina sobre <strong>${node.title}</strong>:</p>
-        <div id="checklist-items"></div>
-        <div class="diagnostic-actions">
-            <button class="diagnostic-btn secondary" onclick="this.closest('.diagnostic-modal-overlay').remove()">Cancelar</button>
-            <button class="diagnostic-btn primary" id="checklist-submit">Avaliar</button>
-        </div>
-    `;
+    if (data.showRetryButton) {
+        const retryBtn = document.createElement('button');
+        retryBtn.className = 'review-modal-btn retry-btn';
+        retryBtn.textContent = 'Tentar novamente';
+        retryBtn.onclick = () => {
+            overlay.remove();
+            if (typeof data.onRetry === 'function') data.onRetry();
+        };
+        footer.appendChild(retryBtn);
+    }
 
-    // Quiz tab
-    const quizTab = document.createElement('div');
-    quizTab.className = 'diagnostic-tab-content';
-    quizTab.id = 'tab-quiz';
-    quizTab.innerHTML = `
-        <p class="diagnostic-intro">Responda às perguntas geradas pela IA sobre <strong>${node.title}</strong>:</p>
-        <div id="quiz-generation">
-            <button class="diagnostic-btn primary" id="generate-quiz-btn">🤖 Gerar Quiz</button>
-        </div>
-        <div id="quiz-questions" style="display: none;"></div>
-        <div id="quiz-actions" style="display: none;" class="diagnostic-actions">
-            <button class="diagnostic-btn secondary" onclick="this.closest('.diagnostic-modal-overlay').remove()">Cancelar</button>
-            <button class="diagnostic-btn primary" id="quiz-submit">Enviar Respostas</button>
-        </div>
-    `;
-
-    tabContents.appendChild(checklistTab);
-    tabContents.appendChild(quizTab);
-    body.appendChild(tabs);
-    body.appendChild(tabContents);
+    const closeActionBtn = document.createElement('button');
+    closeActionBtn.className = 'review-modal-btn';
+    closeActionBtn.textContent = typeof data.onClose === 'function' ? 'Revisar novamente' : 'Entendi, continuar';
+    closeActionBtn.onclick = () => {
+        overlay.remove();
+        if (typeof data.onClose === 'function') data.onClose();
+    };
+    footer.appendChild(closeActionBtn);
 
     modal.appendChild(header);
     modal.appendChild(body);
-    overlay.appendChild(modal);
-    document.body.appendChild(overlay);
-
-    // Tab switching
-    tabs.querySelectorAll('.diagnostic-tab').forEach(tab => {
-        tab.onclick = () => {
-            tabs.querySelectorAll('.diagnostic-tab').forEach(t => t.classList.remove('active'));
-            tabContents.querySelectorAll('.diagnostic-tab-content').forEach(c => c.classList.remove('active'));
-            tab.classList.add('active');
-            document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
-        };
-    });
-
-    // Load checklist items
-    loadChecklistItems(node);
-
-    // Checklist submit
-    document.getElementById('checklist-submit').onclick = async () => {
-        const result = await evaluateChecklist(node);
-        overlay.remove();
-        onComplete(result.passed);
-    };
-
-    // Quiz generation
-    document.getElementById('generate-quiz-btn').onclick = async () => {
-        await generateDiagnosticQuiz(node);
-    };
-
-    // Quiz submit
-    document.getElementById('quiz-submit').onclick = async () => {
-        const result = await evaluateQuizAnswers(node);
-        overlay.remove();
-        onComplete(result.passed);
-    };
-}
-
-async function loadChecklistItems(node) {
-    const container = document.getElementById('checklist-items');
-    container.innerHTML = '<p style="color: #888;">Carregando checklist...</p>';
-
-    try {
-        const response = await fetch(`${API_URL}/generate-checklist`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ topic: node.title })
-        });
-
-        if (!response.ok) throw new Error('Falha ao gerar checklist');
-
-        const data = await response.json();
-        const items = data.items || [];
-
-        container.innerHTML = '';
-        items.forEach((item, idx) => {
-            const div = document.createElement('div');
-            div.className = 'checklist-item';
-            div.innerHTML = `
-                <input type="checkbox" id="check-${idx}" />
-                <label for="check-${idx}">${item}</label>
-            `;
-            container.appendChild(div);
-        });
-    } catch (error) {
-        console.error('Erro ao carregar checklist:', error);
-        container.innerHTML = '<p style="color: red;">Erro ao carregar checklist. Tente o Quiz IA.</p>';
-    }
-}
-
-async function evaluateChecklist(node) {
-    const checkboxes = document.querySelectorAll('#checklist-items input[type="checkbox"]');
-    const total = checkboxes.length;
-    const checked = Array.from(checkboxes).filter(cb => cb.checked).length;
-    const percentage = total > 0 ? (checked / total) * 100 : 0;
-
-    const passed = percentage >= 70;
-
-    showResultModal({
-        title: passed ? '✅ Aprovado!' : '⚠️ Revisão Recomendada',
-        message: passed 
-            ? `Você marcou ${checked}/${total} itens (${percentage.toFixed(0)}%). Pode prosseguir!`
-            : `Você marcou apenas ${checked}/${total} itens (${percentage.toFixed(0)}%). Recomendamos revisar o conteúdo antes de avançar.`,
-        passed: passed,
-        topic: node.title
-    });
-
-    return { passed };
-}
-
-async function generateDiagnosticQuiz(node) {
-    const btn = document.getElementById('generate-quiz-btn');
-    const container = document.getElementById('quiz-questions');
-    const actions = document.getElementById('quiz-actions');
-
-    btn.disabled = true;
-    btn.textContent = '⏳ Gerando...';
-
-    try {
-        const response = await fetch(`${API_URL}/generate-diagnostic-quiz`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ topic: node.title })
-        });
-
-        if (!response.ok) throw new Error('Falha ao gerar quiz');
-
-        const data = await response.json();
-        const questions = data.questions || [];
-
-        container.innerHTML = '';
-        questions.forEach((q, idx) => {
-            const div = document.createElement('div');
-            div.className = 'quiz-question-diagnostic';
-            div.innerHTML = `
-                <p class="question-text"><strong>${idx + 1}.</strong> ${q.question}</p>
-                <textarea 
-                    id="answer-${idx}" 
-                    class="quiz-answer-input" 
-                    placeholder="Digite sua resposta aqui..."
-                    maxlength="500"
-                ></textarea>
-                <small class="char-count">0/500 caracteres</small>
-            `;
-            container.appendChild(div);
-
-            // Character counter
-            const textarea = div.querySelector('textarea');
-            const counter = div.querySelector('.char-count');
-            textarea.oninput = () => {
-                counter.textContent = `${textarea.value.length}/500 caracteres`;
-            };
-        });
-
-        document.getElementById('quiz-generation').style.display = 'none';
-        container.style.display = 'block';
-        actions.style.display = 'flex';
-    } catch (error) {
-        console.error('Erro ao gerar quiz:', error);
-        alert('Erro ao gerar quiz. Tente novamente ou use a auto-avaliação.');
-    } finally {
-        btn.disabled = false;
-        btn.textContent = '🤖 Gerar Quiz';
-    }
-}
-
-async function evaluateQuizAnswers(node) {
-    const textareas = document.querySelectorAll('.quiz-answer-input');
-    const answers = Array.from(textareas).map(ta => ta.value.trim());
-
-    // Validação: todas as respostas devem estar preenchidas
-    if (answers.some(a => !a)) {
-        alert('Por favor, responda todas as perguntas antes de enviar.');
-        return { passed: false };
-    }
-
-    const submitBtn = document.getElementById('quiz-submit');
-    submitBtn.disabled = true;
-    submitBtn.textContent = '⏳ Avaliando...';
-
-    try {
-        const response = await fetch(`${API_URL}/evaluate-quiz`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                topic: node.title,
-                answers: answers
-            })
-        });
-
-        if (!response.ok) throw new Error('Falha ao avaliar respostas');
-
-        const result = await response.json();
-
-        showResultModal({
-            title: result.passed ? '✅ Aprovado!' : '⚠️ Revisão Recomendada',
-            message: result.feedback,
-            passed: result.passed,
-            topic: node.title,
-            score: result.score
-        });
-
-        return { passed: result.passed };
-    } catch (error) {
-        console.error('Erro ao avaliar quiz:', error);
-        alert('Erro ao avaliar respostas. Permitindo acesso por segurança.');
-        return { passed: true };
-    } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Enviar Respostas';
-    }
-}
-
-function showResultModal(data) {
-    const overlay = document.createElement('div');
-    overlay.className = 'result-modal-overlay';
-
-    const modal = document.createElement('div');
-    modal.className = 'result-modal';
-
-    const icon = data.passed ? '✅' : '⚠️';
-    const color = data.passed ? '#4caf50' : '#ff9800';
-
-    modal.innerHTML = `
-        <div class="result-modal-header" style="background: ${color};">
-            <span class="result-icon">${icon}</span>
-            <h3>${data.title}</h3>
-        </div>
-        <div class="result-modal-body">
-            <p>${data.message}</p>
-            ${data.score ? `<p class="result-score">Pontuação: ${data.score}%</p>` : ''}
-            ${!data.passed ? `<p class="result-tip">💡 Dica: Revise o conteúdo de <strong>${data.topic}</strong> antes de avançar.</p>` : ''}
-        </div>
-        <div class="result-modal-footer">
-            <button class="diagnostic-btn primary" onclick="this.closest('.result-modal-overlay').remove()">
-                ${data.passed ? 'Continuar' : 'Entendi'}
-            </button>
-        </div>
-    `;
-
+    modal.appendChild(footer);
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
 }
-
-// Função removida - substituída por showResultModal
 
 window.toggleZenMode = () => document.body.classList.toggle('zen-mode');
 window.closePanel = () => {
@@ -939,6 +1006,7 @@ window.loadRoadmap = loadRoadmap;
 window.expandAllNodes = expandAllNodes;
 window.collapseAllNodes = collapseAllNodes;
 window.generateLessonForCurrentNode = generateLessonForCurrentNode;
+window.generateQuizForCurrentLesson = generateQuizForCurrentLesson;
 window.regenerateDepMap = async () => {
     try {
         const response = await fetch(`${API_URL}/regenerate-dep-map`, { method: 'POST' });

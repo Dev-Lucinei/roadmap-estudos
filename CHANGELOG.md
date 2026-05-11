@@ -4,37 +4,28 @@ Este documento registra a evolução, decisões técnicas e soluções de proble
 
 ## [v2.9.0] - 2026-05-10
 ### Adicionado
-- **Sistema de Avaliação de Conhecimento Refatorado**: Implementação completa de diagnóstico assertivo antes de avançar nos tópicos.
-  - **Checklist de Auto-avaliação**: 5 itens gerados por IA, aprovação com 70%+ marcados
-  - **Quiz Diagnóstico IA**: 3-5 perguntas dissertativas curtas com avaliação automática
-  - **Modal com Tabs**: Interface unificada para escolher entre checklist ou quiz
-  - **Proteção contra Prompt Injection**: Sanitização de entrada (500 chars max, apenas printable)
-  - **Limite de Tokens**: Respostas limitadas a 500 chars, prompts otimizados
-  - **Fallback Inteligente**: Se IA falhar, usa checklist genérico ou avaliação por tamanho
+- **Sistema de Avaliação de Conhecimento via Quiz IA**: Implementado fluxo completo de geração e avaliação de quizzes.
+  - Botão "🧠 Gerar Quiz" no painel de lições
+  - Backend: `QuizService` com métodos `generate_quiz()` e `evaluate_quiz()`
+  - Endpoints API: `/api/generate-quiz` e `/api/evaluate-quiz`
+  - Frontend: Interface de quiz com radio buttons e validação de respostas
+  - Avaliação assertiva via IA com feedback detalhado por questão
+  - Sistema de pontuação (0-100%) e status aprovado/reprovado
+  - Proteção contra prompt injection e desvio de contexto
 
 ### Alterado
-- **DiagnosisService**: Refatorado de diagnóstico único para 3 métodos especializados
-  - `generate_checklist()`: Gera 5 itens de auto-avaliação
-  - `generate_quiz()`: Gera 4 perguntas com contexto da lição
-  - `evaluate_quiz()`: Avalia respostas com score 0-100 e feedback
-- **Endpoints API**: Removido `/api/diagnose`, adicionados:
-  - `POST /api/generate-checklist` - Gera checklist
-  - `POST /api/generate-diagnostic-quiz` - Gera quiz
-  - `POST /api/evaluate-quiz` - Avalia respostas
-- **Frontend**: Substituído `prompt()` por modal interativo com tabs
-
-### Corrigido
-- **Segurança**: Sanitização de inputs previne injection de prompts maliciosos
-- **Performance**: Limite de 500 chars por resposta reduz consumo de tokens
-- **UX**: Modal com feedback visual claro (aprovado/reprovado com cores)
+- **Geração de Perguntas**: Quiz gerado exclusivamente com base no conteúdo da lição atual (máx 2000 chars)
+- **Formato de Resposta**: Múltipla escolha com 4 alternativas por questão
+- **Feedback Otimizado**: Limitado a 150 palavras para economia de tokens
+- **Interface de Avaliação**: Exibe score, feedback geral e detalhes por questão com respostas corretas
 
 ### Memória Técnica
-- **Problema Original**: Sistema usava `prompt()` com texto livre, vulnerável a injection e consumo excessivo
-- **Solução**: Modal com 2 opções (checklist rápido ou quiz IA) + sanitização rigorosa
-- **Sanitização**: Remove caracteres não-printable, limita tamanho, valida JSON da IA
-- **Fallback**: Se IA falhar, usa checklist genérico baseado no tópico
-- **Contexto da Lição**: Carrega primeiros 500 chars do `.md` para gerar perguntas mais relevantes
-- **Avaliação**: IA retorna JSON com score/passed/feedback, validado no backend
+- Problema: Necessidade de avaliar conhecimento do usuário antes de avançar no roadmap
+- Solução: Sistema de quiz gerado dinamicamente pela IA baseado no conteúdo específico da lição
+- Segurança: Prompts restritivos que bloqueiam tentativas de manipulação ou desvio de contexto
+- Validação: Backend valida estrutura JSON e frontend valida preenchimento completo
+- UX: Botões de "Tentar Novamente" e "Marcar como Concluído" (apenas se aprovado)
+- Resultado: Experiência fluida de teste de conhecimento com feedback construtivo e seguro
 
 ## [v2.8.6] - 2026-05-10
 ### Corrigido
