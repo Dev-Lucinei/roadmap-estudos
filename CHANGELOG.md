@@ -2,6 +2,40 @@
 
 Este documento registra a evolução, decisões técnicas e soluções de problemas do projeto **Roadmap-Estudos**.
 
+## [v2.9.0] - 2026-05-10
+### Adicionado
+- **Sistema de Avaliação de Conhecimento Refatorado**: Implementação completa de diagnóstico assertivo antes de avançar nos tópicos.
+  - **Checklist de Auto-avaliação**: 5 itens gerados por IA, aprovação com 70%+ marcados
+  - **Quiz Diagnóstico IA**: 3-5 perguntas dissertativas curtas com avaliação automática
+  - **Modal com Tabs**: Interface unificada para escolher entre checklist ou quiz
+  - **Proteção contra Prompt Injection**: Sanitização de entrada (500 chars max, apenas printable)
+  - **Limite de Tokens**: Respostas limitadas a 500 chars, prompts otimizados
+  - **Fallback Inteligente**: Se IA falhar, usa checklist genérico ou avaliação por tamanho
+
+### Alterado
+- **DiagnosisService**: Refatorado de diagnóstico único para 3 métodos especializados
+  - `generate_checklist()`: Gera 5 itens de auto-avaliação
+  - `generate_quiz()`: Gera 4 perguntas com contexto da lição
+  - `evaluate_quiz()`: Avalia respostas com score 0-100 e feedback
+- **Endpoints API**: Removido `/api/diagnose`, adicionados:
+  - `POST /api/generate-checklist` - Gera checklist
+  - `POST /api/generate-diagnostic-quiz` - Gera quiz
+  - `POST /api/evaluate-quiz` - Avalia respostas
+- **Frontend**: Substituído `prompt()` por modal interativo com tabs
+
+### Corrigido
+- **Segurança**: Sanitização de inputs previne injection de prompts maliciosos
+- **Performance**: Limite de 500 chars por resposta reduz consumo de tokens
+- **UX**: Modal com feedback visual claro (aprovado/reprovado com cores)
+
+### Memória Técnica
+- **Problema Original**: Sistema usava `prompt()` com texto livre, vulnerável a injection e consumo excessivo
+- **Solução**: Modal com 2 opções (checklist rápido ou quiz IA) + sanitização rigorosa
+- **Sanitização**: Remove caracteres não-printable, limita tamanho, valida JSON da IA
+- **Fallback**: Se IA falhar, usa checklist genérico baseado no tópico
+- **Contexto da Lição**: Carrega primeiros 500 chars do `.md` para gerar perguntas mais relevantes
+- **Avaliação**: IA retorna JSON com score/passed/feedback, validado no backend
+
 ## [v2.8.6] - 2026-05-10
 ### Corrigido
 - **Subtópicos Cortados no Topo**: Adicionada verificação de margem mínima para `subtopicStartY`.

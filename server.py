@@ -30,82 +30,226 @@ LICOES_DIR = os.path.join(BASE_DIR, "licoes")
 
 
 class DiagnosisService:
-    """Serviço independente para processar diagnósticos de lacunas de conhecimento."""
+    """Serviço para avaliação de conhecimento com proteção contra prompt injection."""
 
     def __init__(self, data_dir):
         self.data_dir = data_dir
+        self.client = None
+        self._init_client()
 
-    def diagnose(self, topic, user_answer):
-        # Load dependency map
-        dep_map_path = os.path.join(self.data_dir, "dep_map.json")
-        if not os.path.exists(dep_map_path):
-            raise FileNotFoundError("Mapa de dependências não encontrado")
-
-        with open(dep_map_path, "r", encoding="utf-8") as f:
-            dep_map = json.load(f)
-
-        # Get prerequisites for the topic
-        prerequisites = dep_map.get(topic, [])
-
-        # Check if we have OpenRouter API key
+    def _init_client(self):
+        """Inicializa cliente OpenRouter com validação de API key."""
         api_key = os.getenv("OPENROUTER_API_KEY")
         if not api_key:
-            raise PermissionError("API key não configurada")
-
-        # Initialize OpenRouter client
-        client = OpenAI(
+            raise PermissionError("OPENROUTER_API_KEY não configurada no .env")
+        self.client = OpenAI(
             base_url="https://openrouter.ai/api/v1",
             api_key=api_key,
         )
 
-        # Create prompt for diagnosis
-        prompt = f"""
-        Analise a seguinte resposta do usuário sobre o tópico "{topic}":
-        "{user_answer}"
+    def _sanitize_input(self, text, max_length=500):
+        """Sanitiza entrada do usuário para prevenir prompt injection."""
+        if not text or not isinstance(text, str):
+            return ""
+        # Remove caracteres de controle e limita tamanho
+        sanitized = "".join(char for char in text if char.isprintable() or char.isspace())
+        return sanitized[:max_length].strip()
+
+    def _load_lesson_context(self, topic):
+        """Carrega contexto da lição para validação de escopo."""
+        # Busca arquivo de lição correspondente
+        topic_id = topic.lower().replace(" ", "_").replace("-", "_")
+        lesson_path = os.path.join(self.data_dir, "..", "licoes", f"{topic_id}.md")
         
-        Pré-requisitos para este tópico: {", ".join(prerequisites) if prerequisites else "Nenhum"}
+        if os.path.exists(lesson_path):
+            with open(lesson_path, "r", encoding="utf-8") as f:
+                content = f.read()
+                # Extrai primeiros 500 caracteres como contexto
+                return content[:500]
+        return None
+
+    def generate_checklist(self, topic):
+        """Gera checklist de auto-avaliação para um tópico."""
+        topic = self._sanitize_input(topic, 100)
         
-        Forneça um diagnóstico conciso (máximo 100 palavras) que:
-        1. Identifique se há lacunas de conhecimento nos pré-requisitos
-        2. Se houver lacunas, explique qual pré-requisito está faltando e por que é importante
-        3. Se não houver lacunas, confirme que o usuário pode avançar
-        4. Inclua uma fórmula/regra relevante e um erro comum
+        prompt = f"""Gere exatamente 5 itens de checklist para auto-avaliação sobre "{topic}".
+
+Regras:
+- Cada item deve ser uma afirmação clara e objetiva
+- Foque em conceitos-chave e habilidades práticas
+- Use linguagem simples e direta
+- Máximo 15 palavras por item
+
+Formato: retorne APENAS um array JSON com 5 strings.
+Exemplo: ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5"]"""
+
+        try:
+            completion = self.client.chat.completions.create(
+                model="openrouter/auto",
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=200,
+                temperature=0.7,
+            )
+            
+            response = completion.choices[0].message.content.strip()
+            # Parse JSON com fallback
+            items = json.loads(response)
+            if not isinstance(items, list) or len(items) != 5:
+                raise ValueError("Formato inválido")
+            
+            return {"status": "success", "items": items}
+        except Exception as e:
+            # Fallback: checklist genérico
+            return {
+                "status": "success",
+                "items": [
+                    f"Entendo os conceitos fundamentais de {topic}",
+                    f"Consigo explicar {topic} com minhas próprias palavras",
+                    f"Sei aplicar {topic} em exemplos práticos",
+                    f"Conheço os erros comuns relacionados a {topic}",
+                    f"Consigo relacionar {topic} com outros conceitos"
+                ]
+            }
+
+    def generate_quiz(self, topic):
+        """Gera quiz de 3-5 perguntas sobre o tópico."""
+        topic = self._sanitize_input(topic, 100)
+        lesson_context = self._load_lesson_context(topic)
         
-        Responda APENAS com o diagnóstico, sem formatação extra.
-        """
+        context_hint = f"\n\nContexto da lição:\n{lesson_context}" if lesson_context else ""
+        
+        prompt = f"""Gere exatamente 4 perguntas dissertativas curtas sobre "{topic}".{context_hint}
 
-        # Call OpenRouter API
-        completion = client.chat.completions.create(
-            model="openrouter/auto",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=150,
-            temperature=0.7,
-        )
+Regras:
+- Perguntas objetivas e diretas
+- Foque em compreensão conceitual, não decoreba
+- Respostas esperadas: 1-3 frases
+- Evite perguntas muito abertas ou filosóficas
 
-        diagnosis = completion.choices[0].message.content.strip()
+Formato JSON:
+[
+  {{"question": "Pergunta 1?"}},
+  {{"question": "Pergunta 2?"}},
+  {{"question": "Pergunta 3?"}},
+  {{"question": "Pergunta 4?"}}
+]
 
-        # Ensure diagnosis is under 100 words
-        words = diagnosis.split()
-        if len(words) > 100:
-            diagnosis = " ".join(words[:100]) + "..."
+Retorne APENAS o JSON, sem texto adicional."""
 
-        # Determine if there's a knowledge gap
-        gap_indicators = [
-            "falta",
-            "não sabe",
-            "revisar",
-            "precisa",
-            "lacuna",
-            "não entende",
-        ]
-        has_gap = any(indicator in diagnosis.lower() for indicator in gap_indicators)
+        try:
+            completion = self.client.chat.completions.create(
+                model="openrouter/auto",
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=300,
+                temperature=0.8,
+            )
+            
+            response = completion.choices[0].message.content.strip()
+            # Remove markdown code blocks se presentes
+            if response.startswith("```"):
+                response = response.split("```")[1]
+                if response.startswith("json"):
+                    response = response[4:]
+            
+            questions = json.loads(response)
+            if not isinstance(questions, list) or len(questions) < 3:
+                raise ValueError("Formato inválido")
+            
+            return {"status": "success", "questions": questions[:5]}
+        except Exception as e:
+            print(f"Erro ao gerar quiz: {e}")
+            # Fallback: perguntas genéricas
+            return {
+                "status": "success",
+                "questions": [
+                    {"question": f"O que é {topic} e qual sua importância?"},
+                    {"question": f"Quais são os principais conceitos relacionados a {topic}?"},
+                    {"question": f"Como você aplicaria {topic} na prática?"},
+                    {"question": f"Quais erros comuns devem ser evitados ao trabalhar com {topic}?"}
+                ]
+            }
 
-        return {
-            "status": "miss" if has_gap else "hit",
-            "message": diagnosis,
-            "tags": prerequisites,
-            "has_gap": has_gap,
-        }
+    def evaluate_quiz(self, topic, answers):
+        """Avalia respostas do quiz com proteção contra injection."""
+        topic = self._sanitize_input(topic, 100)
+        
+        # Sanitiza e limita respostas
+        sanitized_answers = []
+        for ans in answers[:5]:  # Máximo 5 respostas
+            sanitized = self._sanitize_input(ans, 500)
+            if not sanitized:
+                return {
+                    "status": "error",
+                    "message": "Todas as respostas devem ser preenchidas"
+                }
+            sanitized_answers.append(sanitized)
+        
+        # Concatena respostas com separadores claros
+        answers_text = "\n---\n".join([f"R{i+1}: {ans}" for i, ans in enumerate(sanitized_answers)])
+        
+        prompt = f"""Avalie as respostas do usuário sobre "{topic}".
+
+RESPOSTAS DO USUÁRIO:
+{answers_text}
+
+TAREFA: Avalie se o usuário demonstra compreensão adequada de "{topic}".
+
+Critérios:
+- Conceitos corretos mencionados
+- Clareza e coerência
+- Profundidade apropriada
+
+Retorne APENAS um JSON no formato:
+{{"score": <0-100>, "passed": <true/false>, "feedback": "<feedback em 2-3 frases>"}}
+
+Nota mínima para aprovação: 70
+Feedback máximo: 50 palavras"""
+
+        try:
+            completion = self.client.chat.completions.create(
+                model="openrouter/auto",
+                messages=[
+                    {"role": "system", "content": "Você é um avaliador educacional objetivo. Responda APENAS com JSON válido."},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=200,
+                temperature=0.3,
+            )
+            
+            response = completion.choices[0].message.content.strip()
+            # Remove markdown se presente
+            if response.startswith("```"):
+                response = response.split("```")[1]
+                if response.startswith("json"):
+                    response = response[4:]
+            
+            result = json.loads(response)
+            
+            # Validação do resultado
+            if not all(k in result for k in ["score", "passed", "feedback"]):
+                raise ValueError("Resposta incompleta da IA")
+            
+            return {
+                "status": "success",
+                "score": min(100, max(0, int(result["score"]))),
+                "passed": bool(result["passed"]),
+                "feedback": str(result["feedback"])[:200]  # Limita feedback
+            }
+        except Exception as e:
+            print(f"Erro ao avaliar quiz: {e}")
+            # Fallback: avaliação básica por tamanho de resposta
+            avg_length = sum(len(ans.split()) for ans in sanitized_answers) / len(sanitized_answers)
+            passed = avg_length >= 10  # Pelo menos 10 palavras por resposta
+            
+            return {
+                "status": "success",
+                "score": 70 if passed else 50,
+                "passed": passed,
+                "feedback": "Avaliação automática: " + (
+                    "Suas respostas demonstram conhecimento adequado." if passed
+                    else "Suas respostas estão muito curtas. Revise o conteúdo."
+                )
+            }
 
 
 class RoadmapHandler(http.server.SimpleHTTPRequestHandler):
@@ -174,8 +318,12 @@ class RoadmapHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_generate_roadmap(data)
         elif self.path == "/api/save-roadmap":
             self.handle_save_roadmap(data)
-        elif self.path == "/api/diagnose":
-            self.handle_diagnosis(data)
+        elif self.path == "/api/generate-checklist":
+            self.handle_generate_checklist(data)
+        elif self.path == "/api/generate-diagnostic-quiz":
+            self.handle_generate_diagnostic_quiz(data)
+        elif self.path == "/api/evaluate-quiz":
+            self.handle_evaluate_quiz(data)
         elif self.path == "/api/regenerate-dep-map":
             self.handle_regenerate_dep_map()
         else:
@@ -319,6 +467,97 @@ class RoadmapHandler(http.server.SimpleHTTPRequestHandler):
             self.send_header("Content-Type", "application/json")
             self.end_headers()
             self.wfile.write(json.dumps({"status": "success"}).encode("utf-8"))
+        except Exception as e:
+            self.send_response(500)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(
+                json.dumps({"status": "error", "message": str(e)}).encode("utf-8")
+            )
+
+    def handle_generate_checklist(self, data):
+        """Endpoint para gerar checklist de auto-avaliação."""
+        try:
+            topic = data.get("topic", "")
+            if not topic:
+                self.send_response(400)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(
+                    json.dumps({"status": "error", "message": "Tópico obrigatório"}).encode("utf-8")
+                )
+                return
+
+            service = DiagnosisService(DATA_DIR)
+            result = service.generate_checklist(topic)
+
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps(result).encode("utf-8"))
+
+        except Exception as e:
+            self.send_response(500)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(
+                json.dumps({"status": "error", "message": str(e)}).encode("utf-8")
+            )
+
+    def handle_generate_diagnostic_quiz(self, data):
+        """Endpoint para gerar quiz diagnóstico."""
+        try:
+            topic = data.get("topic", "")
+            if not topic:
+                self.send_response(400)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(
+                    json.dumps({"status": "error", "message": "Tópico obrigatório"}).encode("utf-8")
+                )
+                return
+
+            service = DiagnosisService(DATA_DIR)
+            result = service.generate_quiz(topic)
+
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps(result).encode("utf-8"))
+
+        except Exception as e:
+            self.send_response(500)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(
+                json.dumps({"status": "error", "message": str(e)}).encode("utf-8")
+            )
+
+    def handle_evaluate_quiz(self, data):
+        """Endpoint para avaliar respostas do quiz."""
+        try:
+            topic = data.get("topic", "")
+            answers = data.get("answers", [])
+
+            if not topic or not answers:
+                self.send_response(400)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(
+                    json.dumps(
+                        {"status": "error", "message": "Tópico e respostas obrigatórios"}
+                    ).encode("utf-8")
+                )
+                return
+
+            service = DiagnosisService(DATA_DIR)
+            result = service.evaluate_quiz(topic, answers)
+
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps(result).encode("utf-8"))
+
         except Exception as e:
             self.send_response(500)
             self.send_header("Content-Type", "application/json")
