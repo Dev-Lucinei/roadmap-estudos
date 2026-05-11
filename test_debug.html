@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug - Flowchart</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="flowchart_layout.css">
+</head>
+<body>
+    <div style="padding: 20px; color: white;">
+        <h1>Debug - Teste de Carregamento</h1>
+        <div id="status"></div>
+        <button onclick="testRender()" style="margin: 20px 0; padding: 10px 20px;">Testar Renderização</button>
+    </div>
+
+    <div class="flowchart-container" id="flowchart-container">
+        <svg class="flowchart-svg" id="flowchart-svg"></svg>
+    </div>
+
+    <script src="flowchart_layout.js"></script>
+    <script>
+        const status = document.getElementById('status');
+        
+        // Verificar se FlowchartLayout foi carregado
+        if (typeof FlowchartLayout !== 'undefined') {
+            status.innerHTML += '<p style="color: green;">✓ FlowchartLayout carregado com sucesso</p>';
+        } else {
+            status.innerHTML += '<p style="color: red;">✗ FlowchartLayout NÃO foi carregado</p>';
+        }
+        
+        // Dados de teste simples
+        const testData = {
+            "title": "Teste Simples",
+            "nodes": [
+                {
+                    "id": "node1",
+                    "title": "Nó Central 1",
+                    "type": "central",
+                    "difficulty": "easy",
+                    "subtopics": [
+                        {
+                            "id": "sub1",
+                            "title": "Subtópico 1",
+                            "difficulty": "easy"
+                        },
+                        {
+                            "id": "sub2",
+                            "title": "Subtópico 2",
+                            "difficulty": "medium"
+                        }
+                    ]
+                },
+                {
+                    "id": "node2",
+                    "title": "Nó Central 2",
+                    "type": "central",
+                    "difficulty": "medium",
+                    "subtopics": []
+                }
+            ]
+        };
+        
+        function testRender() {
+            try {
+                status.innerHTML += '<p>Tentando renderizar...</p>';
+                
+                const flowchart = new FlowchartLayout('flowchart-container', 'flowchart-svg');
+                status.innerHTML += '<p style="color: green;">✓ Instância criada</p>';
+                
+                flowchart.render(testData);
+                status.innerHTML += '<p style="color: green;">✓ Render() executado</p>';
+                
+                status.innerHTML += `<p>Nós renderizados: ${flowchart.nodes.size}</p>`;
+            } catch (e) {
+                status.innerHTML += `<p style="color: red;">✗ Erro: ${e.message}</p>`;
+                console.error('Erro completo:', e);
+            }
+        }
+        
+        // Testar automaticamente após 1 segundo
+        setTimeout(testRender, 1000);
+    </script>
+</body>
+</html>

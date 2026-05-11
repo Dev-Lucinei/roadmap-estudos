@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roadmap - Layout Fluxograma</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="flowchart_layout.css">
+</head>
+<body>
+    <div class="header">
+        <h1>🗺️ Roadmap de Estudos - Layout Fluxograma</h1>
+        <p>Layout profissional com conexões visuais entre tópicos</p>
+    </div>
+
+    <div class="flowchart-controls">
+        <button class="flowchart-control-btn" onclick="expandAll()">📂 Expandir Tudo</button>
+        <button class="flowchart-control-btn" onclick="collapseAll()">📁 Recolher Tudo</button>
+        <button class="flowchart-control-btn" onclick="resetView()">🔄 Reset</button>
+    </div>
+
+    <div class="flowchart-container" id="flowchart-container">
+        <svg class="flowchart-svg" id="flowchart-svg"></svg>
+    </div>
+
+    <script src="flowchart_layout.js"></script>
+    <script>
+        // Dados de exemplo
+        const roadmapData = {
+            "title": "Python - Fundamentos e Desenvolvimento",
+            "nodes": [
+                {
+                    "id": "logica-prog",
+                    "title": "Lógica de Programação",
+                    "type": "central",
+                    "difficulty": "easy",
+                    "subtopics": [
+                        {
+                            "id": "var-tipos",
+                            "title": "Variáveis e Tipos",
+                            "difficulty": "easy"
+                        },
+                        {
+                            "id": "operadores",
+                            "title": "Operadores",
+                            "difficulty": "easy"
+                        },
+                        {
+                            "id": "condicionais",
+                            "title": "Estruturas Condicionais",
+                            "difficulty": "easy"
+                        },
+                        {
+                            "id": "repeticao",
+                            "title": "Estruturas de Repetição",
+                            "difficulty": "easy"
+                        },
+                        {
+                            "id": "funcoes",
+                            "title": "Funções e Escopo",
+                            "difficulty": "medium",
+                            "subtopics": [
+                                {
+                                    "id": "funcoes-basicas",
+                                    "title": "Funções Básicas"
+                                },
+                                {
+                                    "id": "funcoes-lambda",
+                                    "title": "Funções Lambda"
+                                }
+                            ]
+                        },
+                        {
+                            "id": "recursividade",
+                            "title": "Recursividade",
+                            "difficulty": "hard"
+                        }
+                    ]
+                },
+                {
+                    "id": "paradigmas",
+                    "title": "Paradigmas de Programação",
+                    "type": "central",
+                    "difficulty": "medium",
+                    "subtopics": [
+                        {
+                            "id": "estruturada",
+                            "title": "Programação Estruturada",
+                            "difficulty": "easy"
+                        },
+                        {
+                            "id": "poo",
+                            "title": "POO",
+                            "difficulty": "medium",
+                            "subtopics": [
+                                {
+                                    "id": "classes",
+                                    "title": "Classes e Objetos"
+                                },
+                                {
+                                    "id": "heranca",
+                                    "title": "Herança"
+                                },
+                                {
+                                    "id": "polimorfismo",
+                                    "title": "Polimorfismo"
+                                }
+                            ]
+                        },
+                        {
+                            "id": "funcional",
+                            "title": "Programação Funcional",
+                            "difficulty": "medium"
+                        },
+                        {
+                            "id": "assincrona",
+                            "title": "Programação Assíncrona",
+                            "difficulty": "hard",
+                            "subtopics": [
+                                {
+                                    "id": "asyncio",
+                                    "title": "asyncio"
+                                },
+                                {
+                                    "id": "await",
+                                    "title": "async/await"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "id": "sintaxe",
+                    "title": "Sintaxe Python Avançada",
+                    "type": "central",
+                    "difficulty": "medium",
+                    "subtopics": [
+                        {
+                            "id": "comprehensions",
+                            "title": "Comprehensions",
+                            "difficulty": "medium"
+                        },
+                        {
+                            "id": "decorators",
+                            "title": "Decoradores",
+                            "difficulty": "hard"
+                        },
+                        {
+                            "id": "generators",
+                            "title": "Geradores",
+                            "difficulty": "hard"
+                        },
+                        {
+                            "id": "context-managers",
+                            "title": "Context Managers",
+                            "difficulty": "medium"
+                        }
+                    ]
+                }
+            ]
+        };
+
+        // Inicializar layout
+        const flowchart = new FlowchartLayout('flowchart-container', 'flowchart-svg');
+        flowchart.render(roadmapData);
+
+        // Funções de controle
+        function resetView() {
+            flowchart.expandedNodes.clear();
+            flowchart.render(roadmapData);
+        }
+
+        function expandAll() {
+            // Expandir todos os nós que têm subtópicos
+            roadmapData.nodes.forEach(node => {
+                if (node.subtopics && node.subtopics.length > 0) {
+                    flowchart.expandedNodes.add(node.id);
+                    node.subtopics.forEach(sub => {
+                        if (sub.subtopics && sub.subtopics.length > 0) {
+                            flowchart.expandedNodes.add(sub.id);
+                        }
+                    });
+                }
+            });
+            flowchart.render(roadmapData);
+        }
+
+        function collapseAll() {
+            flowchart.expandedNodes.clear();
+            flowchart.render(roadmapData);
+        }
+
+        // Marcar alguns nós como completos (exemplo)
+        setTimeout(() => {
+            const node1 = document.getElementById('node-var-tipos');
+            const node2 = document.getElementById('node-operadores');
+            if (node1) node1.classList.add('completed');
+            if (node2) node2.classList.add('completed');
+        }, 1000);
+    </script>
+</body>
+</html>

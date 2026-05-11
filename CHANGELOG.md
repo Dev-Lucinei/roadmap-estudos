@@ -2,6 +2,244 @@
 
 Este documento registra a evolução, decisões técnicas e soluções de problemas do projeto **Roadmap-Estudos**.
 
+## [v2.8.6] - 2026-05-10
+### Corrigido
+- **Subtópicos Cortados no Topo**: Adicionada verificação de margem mínima para `subtopicStartY`.
+  - Se `subtopicStartY < minTopMargin (100px)`, ajusta para `minTopMargin`
+  - Previne que subtópicos sejam empurrados para cima e fiquem ocultos
+  - Mesma lógica aplicada ao nó central agora também protege subtópicos
+
+### Memória Técnica
+- Problema: `subtopicStartY = adjustedY - (maxHeight / 2)` podia resultar em Y negativo ou muito pequeno
+- Quando nó tem muitos subtópicos com sub-subtópicos, `maxHeight` é grande, empurrando início para cima
+- Solução: `if (subtopicStartY < 100) { subtopicStartY = 100 }`
+- Resultado: Todos os elementos sempre visíveis, respeitando margem superior
+
+## [v2.8.5] - 2026-05-10
+### Corrigido
+- **Sistema de Posicionamento Sequencial**: Implementado cálculo incremental que previne sobreposição de containers.
+  - Cada subtópico é posicionado **após** o anterior (não mais centralizado fixo)
+  - `currentY` incrementa com altura real ocupada (60px + sub-subtópicos + gaps)
+  - Calcula altura total de cada lado (esquerda/direita) para centralização correta
+  - Sub-subtópicos posicionados sequencialmente abaixo do pai
+
+### Alterado
+- **Lógica de Posicionamento**: De "centralizado com gap fixo" para "sequencial com altura dinâmica"
+- **Cálculo de Espaço**: 
+  - Subtópico: 60px altura + 40px gap
+  - Sub-subtópicos: 20px offset + (n * 80px)
+  - Altura total calculada antes do posicionamento
+
+### Memória Técnica
+- Problema: Centralização com gap fixo (`idx * 100`) não considerava altura real dos sub-subtópicos
+- Solução: Sistema incremental onde `currentY += alturaReal` após cada elemento
+- Função `calculateSideHeight()` pré-calcula espaço total necessário para centralização
+- Resultado: Cada container ocupa seu espaço exclusivo, sem sobreposição
+
+## [v2.8.4] - 2026-05-10
+### Corrigido
+- **Sobreposição de Sub-subtópicos**: Corrigido cálculo de altura na Fase 1 para considerar corretamente sub-subtópicos expandidos.
+  - Altura de subtópico com filhos expandidos: `80 + (quantidade * 80)` (antes era `60 + (quantidade * 60)`)
+  - Alinhado com o cálculo real de posicionamento na Fase 2
+  - Previne sobreposição quando múltiplos subtópicos têm filhos expandidos
+
+### Memória Técnica
+- Problema: Fase 1 calculava `subtopicHeight = 60 + (n * 60)` mas Fase 2 posicionava com `80 + (n * 80)`
+- Desalinhamento causava cálculo de altura insuficiente, resultando em sobreposição
+- Solução: Sincronizar cálculos usando mesmos valores (80px offset + 80px gap)
+- Resultado: Espaço correto reservado para sub-subtópicos, sem sobreposição
+
+## [v2.8.3] - 2026-05-10
+### Corrigido
+- **Espaçamento Uniforme de Subtópicos**: Ajustado cálculo de posicionamento para garantir distância consistente entre containers.
+  - Gap uniforme de 100px entre subtópicos (antes variava)
+  - Gap uniforme de 80px entre sub-subtópicos
+  - Centralização corrigida: `subtopicStartY = adjustedY - ((total - 1) * gap / 2)`
+  - Offset inicial de sub-subtópicos ajustado para 80px
+
+### Memória Técnica
+- Problema: Centralização usava `* 40` mas espaçamento usava `* 90`, causando irregularidade
+- Solução: Variável `subtopicGap = 100` usada tanto para centralização quanto para espaçamento
+- Fórmula de centralização: divide o espaço total por 2 para centralizar em relação ao nó pai
+- Resultado: Distância visual uniforme entre todos os containers de subtópicos
+
+## [v2.8.2] - 2026-05-10
+### Corrigido
+- **Espaçamento Equilibrado entre Nós**: Implementado cálculo de espaçamento baseado na média das alturas de nós adjacentes.
+  - Quando nó expandido é seguido por nó recolhido: espaço reduzido (não mais sobreposição)
+  - Quando nó recolhido é seguido por nó expandido: espaço aumentado (não mais gap excessivo)
+  - Fórmula: `avgHeight = (alturaAtual + alturaProxima) / 2`
+
+### Memória Técnica
+- Problema: `currentY += requiredHeight + minGap` usava apenas a altura do nó atual, causando:
+  - Gap excessivo quando nó expandido era seguido por recolhido
+  - Sobreposição quando nó recolhido era seguido por expandido
+- Solução: Calcular média das alturas de nós adjacentes para espaçamento equilibrado
+- Resultado: Transições suaves entre nós expandidos e recolhidos
+
+## [v2.8.1] - 2026-05-10
+### Corrigido
+- **Corte de Subtópicos no Topo**: Implementado ajuste automático de posição do nó central quando subtópicos ficariam acima da margem segura.
+  - Margem mínima de 100px do topo garantida
+  - Nó central é deslocado para baixo automaticamente se necessário
+  - Subtópicos sempre visíveis, mesmo ao expandir o primeiro nó
+
+### Memória Técnica
+- Problema: Quando o primeiro nó central estava em Y=150 e tinha muitos subtópicos, eles ficavam centralizados acima dele (Y < 100) e eram cortados pelo header.
+- Solução: Antes de posicionar, calcula onde os subtópicos ficariam. Se `subtopicStartY < minTopMargin`, ajusta o Y do nó central para baixo.
+- Fórmula: `adjustedY = currentY + (minTopMargin - subtopicStartY)`
+
+## [v2.8.0] - 2026-05-10
+### Adicionado
+- **Algoritmo de Layout Adaptativo**: Sistema robusto que calcula espaçamento dinamicamente baseado no conteúdo real.
+  - **Fase 1**: Pré-calcula altura necessária para cada nó central
+  - **Fase 2**: Posiciona nós com espaçamento mínimo necessário (60px quando recolhido)
+  - **Centralização Vertical**: Subtópicos são centralizados em relação ao nó pai
+  - **Escalabilidade**: Funciona automaticamente para qualquer roadmap futuro
+
+### Alterado
+- **calculateLayout()**: Reescrito completamente com algoritmo em duas fases
+- **Espaçamento Dinâmico**: 
+  - Nós recolhidos: 60px de gap (antes era 100-180px fixo)
+  - Nós expandidos: Espaço calculado baseado no número real de subtópicos
+  - Subtópicos: 90px de gap vertical
+  - Sub-subtópicos: 60px de gap vertical
+
+### Memória Técnica
+- **Problema Anterior**: Espaçamento fixo desperdiçava espaço e não se adaptava a diferentes roadmaps.
+- **Solução Nova**: 
+  1. Primeira passada calcula altura necessária para cada nó (considerando expansão)
+  2. Segunda passada posiciona nós usando apenas o espaço necessário
+  3. Subtópicos são centralizados verticalmente em relação ao pai
+- **Benefícios**:
+  - Roadmaps recolhidos são extremamente compactos (60px gap)
+  - Roadmaps expandidos usam exatamente o espaço necessário
+  - Funciona para 3 nós ou 30 nós sem ajustes manuais
+  - Centralização vertical melhora estética e legibilidade
+
+## [v2.7.2] - 2026-05-10
+### Corrigido
+- **Espaçamento Compacto**: Reduzido drasticamente o espaçamento entre nós principais.
+  - `baseVerticalGap` reduzido de 180px para 100px
+  - Espaçamento de subtópicos reduzido de 120px para 100px
+  - Espaçamento de sub-subtópicos reduzido de 80px para 70px
+- **Corte no Topo**: Padding superior aumentado de 60px para 100px e `startY` de 150px para 200px.
+- **Layout Mais Compacto**: Todos os espaçamentos ajustados para melhor aproveitamento da tela.
+
+### Memória Técnica
+- O espaçamento anterior (180px base) era excessivo, forçando zoom out extremo para visualizar roadmaps completos.
+- Novo espaçamento (100px base) mantém legibilidade enquanto permite visualização de mais conteúdo.
+- Padding superior de 100px garante que o primeiro nó não seja cortado pelo header fixo mesmo em zoom reduzido.
+
+## [v2.7.1] - 2026-05-10
+### Corrigido
+- **Erro Crítico de Sintaxe**: Arquivo `flowchart_layout.js` estava corrompido com código duplicado, impedindo o carregamento.
+  - Arquivo recriado do zero com estrutura limpa
+  - Sintaxe validada com Node.js
+- **Espaçamento Dinâmico**: Nós recolhidos agora ficam próximos uns dos outros, expandindo suavemente quando abertos.
+  - Gap vertical reduzido de 600px para 180px base
+  - Espaçamento calculado dinamicamente baseado no estado de expansão
+  - Nós expandidos recebem espaço adicional proporcional ao número de subtópicos
+- **Corte no Topo**: Aumentado padding superior do container de 40px para 60px e `startY` de 100px para 150px.
+- **Altura do SVG**: Cálculo ajustado para considerar altura dos nós (`maxY + height`) e garantir margem inferior adequada.
+- **Transições Suaves**: 
+  - Animação de entrada melhorada com `cubic-bezier(0.4, 0, 0.2, 1)`
+  - Scroll suave habilitado com `scroll-behavior: smooth`
+  - Duração de animação ajustada para 0.5s nos nós
+
+### Memória Técnica
+- O espaçamento fixo anterior (`verticalGap * 3 = 600px`) desperdiçava espaço quando nós estavam recolhidos.
+- Nova abordagem usa `currentY` incremental que soma apenas o espaço necessário: `nodeHeight + baseGap + additionalSpace`.
+- `additionalSpace` é calculado dinamicamente: `Math.max(subtopicCount * 120, 200)` quando expandido, 0 quando recolhido.
+- Padding superior aumentado evita que o primeiro nó fique cortado pelo header fixo.
+
+## [v2.7.0] - 2026-05-10
+### Adicionado
+- **Expansão/Recolhimento Interativo**: Sistema completo de expandir/recolher nós no layout de fluxograma.
+  - Click em nós com subtópicos expande/recolhe seus filhos
+  - Ícone visual (▶) que rotaciona ao expandir
+  - Botões "📂 Expandir" e "📁 Recolher" no header para controle global
+  - Double-click sempre abre a lição, independente de ter subtópicos
+- **Layout Único**: Removido layout de árvore, mantendo apenas o fluxograma como padrão.
+- **Indicadores Visuais**: Barra inferior nos nós recolhidos indicando que há conteúdo oculto.
+
+### Alterado
+- **flowchart_layout.js**: 
+  - Adicionado `expandedNodes` Set para rastrear estado de expansão
+  - Método `toggleNode()` para expandir/recolher
+  - Renderização condicional baseada em estado de expansão
+- **flowchart_layout.css**: Estilos para ícone de expansão e indicadores visuais
+- **app.js**: 
+  - `renderRoadmap()` usa apenas fluxograma
+  - Funções `expandAllNodes()` e `collapseAllNodes()`
+  - Removida lógica de alternância de layout
+- **index.html**: Botões de expandir/recolher substituem botão de alternância
+
+### Memória Técnica
+- O estado de expansão é mantido em um `Set` para lookup O(1)
+- Re-renderização completa ao expandir/recolher garante posicionamento correto
+- Nós sem subtópicos abrem lição diretamente no click
+- Nós com subtópicos requerem double-click para abrir lição (single click expande)
+- O sistema preserva nós completos após re-renderização via timeout
+
+## [v2.6.0] - 2026-05-10
+### Adicionado
+- **Layout de Fluxograma Profissional**: Novo modo de visualização tipo mindmap/fluxograma com conexões visuais entre nós.
+  - Nós centrais no centro da tela
+  - Subtópicos distribuídos em colunas esquerda/direita alternadamente
+  - Sub-subtópicos expandem para as laterais externas
+  - Conexões SVG com curvas bezier suaves
+- **Alternância de Layout**: Botão "🔀 Layout" para alternar entre modo árvore e modo fluxograma.
+- **Arquivos Criados**:
+  - `flowchart_layout.js` - Sistema de renderização de fluxograma
+  - `flowchart_layout.css` - Estilos profissionais para o layout de fluxograma
+  - `test_flowchart.html` - Demonstração completa do novo layout
+- **Integração Completa**: Sistema de fluxograma integrado ao `app.js` e `index.html` principal.
+
+### Alterado
+- **index.html**: Adicionado container de fluxograma e botão de alternância de layout.
+- **app.js**: Adicionada função `toggleLayoutMode()` para alternar entre layouts.
+
+### Memória Técnica
+- O layout de fluxograma usa posicionamento absoluto calculado dinamicamente baseado na hierarquia dos nós.
+- Conexões SVG são desenhadas usando curvas quadráticas bezier para aparência profissional.
+- O sistema mantém a estilização glass morphism existente para consistência visual.
+- Nós são distribuídos alternadamente (esquerda/direita) para balancear o layout e aproveitar espaço horizontal.
+- A classe `FlowchartLayout` é independente e pode ser reutilizada em outros projetos.
+
+## [v2.5.0] - 2026-05-10
+### Adicionado
+- **Sistema de Expansão Inteligente**: Layout adaptativo que aproveita melhor o espaço da tela em diferentes níveis de hierarquia.
+  - **Nível 1**: Subtópicos expandem HORIZONTALMENTE (esquerda/direita)
+  - **Nível 2+**: Subtópicos expandem VERTICALMENTE (cima/baixo)
+- **Arquivo de Teste**: `test_expansion_layout.html` para visualizar e testar o novo sistema de expansão.
+- **Responsividade Aprimorada**: Em telas menores (< 1200px), o layout força expansão vertical para melhor usabilidade.
+
+### Alterado
+- **CSS de Subtópicos**: Refatorado `.node-subtopics-tree` para suportar `flex-direction` dinâmica baseada em `data-level`.
+- **Conectores Visuais**: Linhas de conexão adaptadas para layout horizontal (nível 1) e vertical (níveis 2+).
+- **Tamanhos de Nós**: Ajustados progressivamente por nível (nível 1: 240px, nível 2: 200px, nível 3: 180px).
+
+### Memória Técnica
+- O layout anterior expandia todos os níveis verticalmente, desperdiçando espaço horizontal em telas grandes.
+- A nova abordagem usa `flex-direction: row` no primeiro nível de subtópicos e `flex-direction: column` nos níveis subsequentes.
+- Os conectores visuais (linhas) foram adaptados: verticais para layout horizontal, horizontais para layout vertical.
+- O atributo `data-level` já existente no código foi aproveitado para aplicar estilos específicos via CSS.
+
+## [v2.4.0] - 2026-05-10
+### Adicionado
+- **Padrão JSON Unificado**: Documentação oficial em `docs/PADRAO_JSON_ROADMAP.md` definindo estrutura v2.0 para roadmaps.
+- **Estrutura Hierárquica com `subtopics`**: Nova estrutura usando objetos aninhados em vez de referências por ID (`children`), permitindo múltiplos níveis de profundidade nativamente.
+- **Script de Migração**: `scripts/migrate_roadmap_structure.py` para converter automaticamente arquivos do formato antigo (`children` + `side`) para o novo formato (`subtopics`).
+
+### Alterado
+- **Formato Oficial**: `roadmap_exemplo_arvore.json` agora é a referência oficial da estrutura. O formato antigo (`python_fundamentos.json`) ainda é suportado para retrocompatibilidade, mas está descontinuado.
+
+### Memória Técnica
+- A estrutura antiga usava `children` (array de IDs) que exigia duplicação de nós no array principal, tornando a manutenção complexa e propensa a erros de referência.
+- A nova estrutura com `subtopics` aninhados é mais intuitiva, reduz redundância e permite hierarquias ilimitadas sem necessidade de campos auxiliares como `side`.
+- O campo `side` ("left"/"right") foi removido da estrutura oficial, mas pode ser calculado dinamicamente no frontend se necessário para layout.
+
 ## [v2.3.0] - 2026-05-10
 ### Adicionado
 - **Sistema de Proteção com Imutabilidade**: Implementado sistema consolidado de bloqueio de arquivos críticos usando `chattr +i` (imutabilidade no nível do kernel Linux) integrado ao `guard_harness.py`.

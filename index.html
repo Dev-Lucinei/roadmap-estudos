@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Antigravity Learning Path - Engenharia & Fullstack</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="flowchart_layout.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
@@ -28,6 +29,8 @@
                     <select id="roadmap-selector" onchange="loadRoadmap(this.value)">
                         <option value="">Carregando temas...</option>
                     </select>
+                    <button class="admin-btn" onclick="expandAllNodes()" title="Expandir todos os nós">📂 Expandir</button>
+                    <button class="admin-btn" onclick="collapseAllNodes()" title="Recolher todos os nós">📁 Recolher</button>
                     <button class="admin-btn" onclick="openNewRoadmapModal()">+ Novo Tema</button>
                     <button id="edit-mode-btn" class="admin-btn" onclick="toggleEditMode()">✏️ Modo Edição</button>
                 </div>
@@ -37,6 +40,11 @@
             
             <div id="roadmap-nodes">
                 <!-- Nodes renderizados via JS -->
+            </div>
+            
+            <!-- Container para layout de fluxograma -->
+            <div id="flowchart-container" class="flowchart-container" style="display: none;">
+                <svg class="flowchart-svg" id="flowchart-svg"></svg>
             </div>
         </main>
 
@@ -73,6 +81,7 @@
     </div>
 
     <!-- Scripts do App -->
+    <script src="flowchart_layout.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

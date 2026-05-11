@@ -108,60 +108,90 @@ async function loadRoadmap(filename) {
 }
 
 function renderRoadmap() {
-    if (!currentRoadmap) return;
-    nodesContainer.innerHTML = '';
-    const centralNodes = currentRoadmap.nodes.filter(n => n.type === 'central');
+    if (!currentRoadmap) {
+        console.error('renderRoadmap: currentRoadmap é null');
+        return;
+    }
     
-    centralNodes.forEach(centralNode => {
-        if (centralNode.group) {
-            const sectionHeader = document.createElement('div');
-            sectionHeader.className = 'section-title';
-            sectionHeader.innerText = centralNode.group;
-            nodesContainer.appendChild(sectionHeader);
-        }
-
-        const group = document.createElement('div');
-        group.className = 'node-group';
-
-        const childrenContainer = document.createElement('div');
-        childrenContainer.className = 'node-children';
-        
-        const leftCol = document.createElement('div');
-        leftCol.className = 'side-column left';
-        const rightCol = document.createElement('div');
-        rightCol.className = 'side-column right';
-
-        const nodeEl = createNodeElement(centralNode);
-
-        const children = currentRoadmap.nodes.filter(n => centralNode.children && centralNode.children.includes(n.id));
-        children.forEach(child => {
-            const childEl = createNodeElement(child);
-            if (child.side === 'left') leftCol.appendChild(childEl);
-            else rightCol.appendChild(childEl);
+    console.log('renderRoadmap: Iniciando renderização', currentRoadmap);
+    
+    // Usar apenas layout de fluxograma
+    const flowchartContainer = document.getElementById('flowchart-container');
+    const nodesContainer = document.getElementById('roadmap-nodes');
+    
+    if (!flowchartContainer) {
+        console.error('renderRoadmap: flowchart-container não encontrado');
+        return;
+    }
+    
+    // Ocultar container antigo, mostrar fluxograma
+    nodesContainer.style.display = 'none';
+    flowchartContainer.style.display = 'block';
+    
+    // Verificar se FlowchartLayout está disponível
+    if (typeof FlowchartLayout === 'undefined') {
+        console.error('renderRoadmap: FlowchartLayout não está definido');
+        flowchartContainer.innerHTML = '<p style="color: red; padding: 40px; text-align: center;">Erro: FlowchartLayout não carregado. Verifique se flowchart_layout.js está incluído.</p>';
+        return;
+    }
+    
+    // Inicializar flowchart se necessário
+    if (!window.flowchartInstance) {
+        console.log('renderRoadmap: Criando nova instância de FlowchartLayout');
+        window.flowchartInstance = new FlowchartLayout('flowchart-container', 'flowchart-svg');
+    }
+    
+    // Renderizar
+    console.log('renderRoadmap: Chamando render()');
+    window.flowchartInstance.render(currentRoadmap);
+    
+    // Marcar nós completos
+    setTimeout(() => {
+        completedNodes.forEach(nodeId => {
+            const nodeEl = document.getElementById(`node-${nodeId}`);
+            if (nodeEl) nodeEl.classList.add('completed');
         });
-
-        childrenContainer.appendChild(leftCol);
-        childrenContainer.appendChild(nodeEl);
-        childrenContainer.appendChild(rightCol);
-        group.appendChild(childrenContainer);
-        nodesContainer.appendChild(group);
-
-        const spacer = document.createElement('div');
-        spacer.style.height = '120px';
-        nodesContainer.appendChild(spacer);
-    });
+    }, 100);
     
     updateProgressBar();
-    requestAnimationFrame(() => setTimeout(drawConnections, 300));
+    console.log('renderRoadmap: Renderização concluída');
 }
 
-function createNodeElement(node) {
+function createNodeElement(node, level = 0) {
+    const hasSubtopics = node.subtopics && node.subtopics.length > 0;
+    
+    // Wrapper para o nó e seus subtópicos
+    const wrapper = document.createElement('div');
+    wrapper.className = 'node-wrapper';
+    wrapper.id = `wrapper-${node.id}`;
+    wrapper.setAttribute('data-level', level);
+    
     const el = document.createElement('div');
-    el.className = `node ${node.type} ${completedNodes.includes(node.id) ? 'completed' : ''}`;
+    el.className = `node ${node.type || 'topic'} ${completedNodes.includes(node.id) ? 'completed' : ''} ${hasSubtopics ? 'has-children' : ''}`;
     el.id = `node-${node.id}`;
     el.setAttribute('data-difficulty', node.difficulty || 'easy');
-    el.innerText = node.title;
-    el.onclick = () => showLesson(node);
+    
+    const titleSpan = document.createElement('span');
+    titleSpan.className = 'node-title';
+    titleSpan.innerText = node.title;
+    el.appendChild(titleSpan);
+
+    // Ícone de expansão se houver subtópicos
+    if (hasSubtopics) {
+        const expandIcon = document.createElement('span');
+        expandIcon.className = 'node-expand-icon';
+        expandIcon.innerText = '›';
+        el.appendChild(expandIcon);
+        
+        el.onclick = (e) => {
+            e.stopPropagation();
+            console.log('Click no nó:', node.id, 'Level:', level);
+            toggleSubtopics(node.id);
+        };
+    } else {
+        // Se não tem subtópicos, abre a lição
+        el.onclick = () => showLesson(node);
+    }
 
     // Botões de CRUD (Modo Edição)
     const actions = document.createElement('div');
@@ -172,7 +202,62 @@ function createNodeElement(node) {
     `;
     el.appendChild(actions);
 
-    return el;
+    wrapper.appendChild(el);
+
+    // Container de subtópicos em árvore (RECURSIVO)
+    if (hasSubtopics) {
+        const subtopicsContainer = document.createElement('div');
+        subtopicsContainer.className = 'node-subtopics-tree';
+        subtopicsContainer.id = `subtopics-${node.id}`;
+        
+        node.subtopics.forEach((subtopic) => {
+            // Cria objeto completo para o subtópico
+            const subtopicNode = {
+                id: subtopic.id || `${node.id}_${subtopic.title}`,
+                title: subtopic.title || subtopic,
+                subtopics: subtopic.subtopics || [],
+                type: 'subtopic',
+                difficulty: subtopic.difficulty || node.difficulty
+            };
+            
+            // RECURSÃO: cria elemento para o subtópico (que pode ter seus próprios subtópicos)
+            const subtopicWrapper = createNodeElement(subtopicNode, level + 1);
+            subtopicsContainer.appendChild(subtopicWrapper);
+        });
+        
+        wrapper.appendChild(subtopicsContainer);
+    }
+
+    return wrapper;
+}
+
+function toggleSubtopics(nodeId) {
+    const wrapper = document.getElementById(`wrapper-${nodeId}`);
+    const nodeEl = document.getElementById(`node-${nodeId}`);
+    const subtopicsEl = document.getElementById(`subtopics-${nodeId}`);
+    
+    console.log('Toggle subtopics:', nodeId);
+    console.log('Wrapper:', wrapper);
+    console.log('Node:', nodeEl);
+    console.log('Subtopics:', subtopicsEl);
+    
+    if (!wrapper || !nodeEl || !subtopicsEl) {
+        console.error('Elementos não encontrados!');
+        return;
+    }
+    
+    const isExpanded = wrapper.classList.contains('expanded');
+    console.log('Is expanded:', isExpanded);
+    
+    if (isExpanded) {
+        wrapper.classList.remove('expanded');
+        nodeEl.classList.remove('expanded');
+    } else {
+        wrapper.classList.add('expanded');
+        nodeEl.classList.add('expanded');
+    }
+    
+    console.log('Classes após toggle:', wrapper.className);
 }
 
 // --- LIÇÕES E GERAÇÃO IA ---
@@ -653,12 +738,65 @@ window.closePanel = () => {
     document.body.classList.remove('zen-mode');
 };
 
+// --- ALTERNÂNCIA DE LAYOUT ---
+
+// Integrar flowchart com showLesson
+if (typeof FlowchartLayout !== 'undefined') {
+    FlowchartLayout.prototype.onNodeClick = function(node) {
+        showLesson(node);
+    };
+}
+
+// Funções de controle de expansão
+function expandAllNodes() {
+    if (!window.flowchartInstance || !currentRoadmap) return;
+    
+    // Expandir todos os nós que têm subtópicos
+    currentRoadmap.nodes.forEach(node => {
+        if (node.subtopics && node.subtopics.length > 0) {
+            window.flowchartInstance.expandedNodes.add(node.id);
+            node.subtopics.forEach(sub => {
+                if (sub.subtopics && sub.subtopics.length > 0) {
+                    window.flowchartInstance.expandedNodes.add(sub.id);
+                }
+            });
+        }
+    });
+    
+    window.flowchartInstance.render(currentRoadmap);
+    
+    // Re-aplicar nós completos
+    setTimeout(() => {
+        completedNodes.forEach(nodeId => {
+            const nodeEl = document.getElementById(`node-${nodeId}`);
+            if (nodeEl) nodeEl.classList.add('completed');
+        });
+    }, 100);
+}
+
+function collapseAllNodes() {
+    if (!window.flowchartInstance || !currentRoadmap) return;
+    
+    window.flowchartInstance.expandedNodes.clear();
+    window.flowchartInstance.render(currentRoadmap);
+    
+    // Re-aplicar nós completos
+    setTimeout(() => {
+        completedNodes.forEach(nodeId => {
+            const nodeEl = document.getElementById(`node-${nodeId}`);
+            if (nodeEl) nodeEl.classList.add('completed');
+        });
+    }, 100);
+}
+
 document.addEventListener('DOMContentLoaded', init);
 // P1: Removido setInterval(drawConnections, 5000) — causava layout thrashing periódico
 // drawConnections é chamado apenas após eventos reais (resize, render)
 window.addEventListener('resize', () => requestAnimationFrame(drawConnections));
 
 window.loadRoadmap = loadRoadmap;
+window.expandAllNodes = expandAllNodes;
+window.collapseAllNodes = collapseAllNodes;
 window.generateLessonForCurrentNode = generateLessonForCurrentNode;
 window.regenerateDepMap = async () => {
     try {

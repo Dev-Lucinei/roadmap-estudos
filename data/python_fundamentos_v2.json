@@ -1,0 +1,140 @@
+{
+  "title": "Fundamentos de Programação e Python",
+  "nodes": [
+    {
+      "id": "logica-prog",
+      "title": "Lógica de Programação",
+      "type": "central",
+      "group": "Fundamentos",
+      "difficulty": "easy",
+      "content": "Base fundamental para qualquer linguagem de programação.",
+      "subtopics": [
+        {
+          "id": "operadores",
+          "title": "Operadores (Aritméticos, Relacionais, Lógicos)",
+          "difficulty": "easy"
+        },
+        {
+          "id": "condicionais",
+          "title": "Estruturas Condicionais (if/else, switch)",
+          "difficulty": "easy"
+        },
+        {
+          "id": "repeticao",
+          "title": "Estruturas de Repetição (for, while, do-while)",
+          "difficulty": "easy"
+        },
+        {
+          "id": "funcoes-escopo",
+          "title": "Funções e Escopo",
+          "difficulty": "medium"
+        },
+        {
+          "id": "recursividade",
+          "title": "Recursividade Básica",
+          "difficulty": "hard"
+        },
+        {
+          "id": "strings-arrays",
+          "title": "Manipulação de Strings e Arrays",
+          "difficulty": "medium"
+        },
+        {
+          "id": "io-arquivos",
+          "title": "Manipulação de Arquivos I/O",
+          "difficulty": "medium"
+        }
+      ]
+    },
+    {
+      "id": "paradigmas",
+      "title": "Paradigmas de Programação",
+      "type": "central",
+      "group": "Python para Desenvolvimento",
+      "difficulty": "medium",
+      "content": "Diferentes formas e estilos de estruturar o seu código.",
+      "subtopics": [
+        {
+          "id": "estruturada",
+          "title": "Programação Estruturada",
+          "difficulty": "easy"
+        },
+        {
+          "id": "poo",
+          "title": "Programação Orientada a Objetos (POO)",
+          "difficulty": "medium"
+        },
+        {
+          "id": "funcional",
+          "title": "Programação Funcional (Conceitos Básicos)",
+          "difficulty": "medium"
+        },
+        {
+          "id": "eventos",
+          "title": "Programação Orientada a Eventos",
+          "difficulty": "medium"
+        },
+        {
+          "id": "reativa",
+          "title": "Programação Reativa",
+          "difficulty": "hard"
+        },
+        {
+          "id": "concorrente",
+          "title": "Programação Concorrente",
+          "difficulty": "hard"
+        },
+        {
+          "id": "assincrona",
+          "title": "Programação Assíncrona",
+          "difficulty": "hard"
+        }
+      ]
+    },
+    {
+      "id": "sintaxe-estruturas",
+      "title": "Sintaxe e Estruturas",
+      "type": "central",
+      "group": "Python para Desenvolvimento",
+      "difficulty": "medium",
+      "content": "Recursos específicos e avançados da linguagem Python.",
+      "subtopics": [
+        {
+          "id": "dados-nativos",
+          "title": "Tipos de Dados Nativos (Listas, Tuplas, Dicionários, Sets)",
+          "difficulty": "easy"
+        },
+        {
+          "id": "funcoes-modulos",
+          "title": "Funções e Módulos",
+          "difficulty": "easy"
+        },
+        {
+          "id": "arq-manipulacao",
+          "title": "Manipulação de Arquivos",
+          "difficulty": "easy"
+        },
+        {
+          "id": "excecoes",
+          "title": "Tratamento de Exceções",
+          "difficulty": "medium"
+        },
+        {
+          "id": "comprehensions",
+          "title": "Compreensões de Lista/Dicionário",
+          "difficulty": "medium"
+        },
+        {
+          "id": "decorators-generators",
+          "title": "Decoradores e Geradores",
+          "difficulty": "hard"
+        },
+        {
+          "id": "asyncio",
+          "title": "Programação Assíncrona com `asyncio`",
+          "difficulty": "hard"
+        }
+      ]
+    }
+  ]
+}

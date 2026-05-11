@@ -1,0 +1,419 @@
+/**
+ * Sistema de Layout Flowchart/Mindmap
+ * Renderiza roadmaps como fluxogramas conectados
+ */
+
+class FlowchartLayout {
+    constructor(containerId, svgId) {
+        this.container = document.getElementById(containerId);
+        this.svg = document.getElementById(svgId);
+        this.nodes = new Map(); // Armazena posições dos nós
+        this.connections = []; // Armazena conexões entre nós
+        this.expandedNodes = new Set(); // Nós expandidos
+        this.allNodes = new Map(); // Cache de todos os nós
+    }
+
+    /**
+     * Calcula posições dos nós em layout de fluxograma
+     * Apenas renderiza nós expandidos
+     * @param {Object} roadmapData - Dados do roadmap
+     * @returns {Map} Mapa de posições {nodeId: {x, y, width, height}}
+     */
+    calculateLayout(roadmapData) {
+        const positions = new Map();
+        const centerX = this.container.offsetWidth / 2;
+        const startY = 150; // Aumentado para evitar corte no topo
+        
+        // Espaçamento dinâmico baseado em expansão
+        const baseVerticalGap = 180; // Gap base entre nós centrais
+        const horizontalGap = 280;
+        
+        let currentY = startY;
+        
+        roadmapData.nodes.forEach((node, index) => {
+            // Calcular altura necessária para este nó baseado em expansão
+            let nodeHeight = 80; // Altura do nó central
+            let additionalSpace = 0;
+            
+            if (node.subtopics && node.subtopics.length > 0 && this.expandedNodes.has(node.id)) {
+                // Se expandido, calcular espaço necessário para subtópicos
+                const subtopicCount = node.subtopics.length;
+                additionalSpace = Math.max(subtopicCount * 120, 200);
+                
+                // Verificar se há sub-subtópicos expandidos
+                node.subtopics.forEach(sub => {
+                    if (sub.subtopics && sub.subtopics.length > 0 && this.expandedNodes.has(sub.id)) {
+                        additionalSpace += sub.subtopics.length * 80;
+                    }
+                });
+            }
+            
+            // Nó central
+            positions.set(node.id, {
+                x: centerX,
+                y: currentY,
+                width: 280,
+                height: nodeHeight,
+                level: 0,
+                node: node,
+                hasSubtopics: node.subtopics && node.subtopics.length > 0
+            });
+            
+            // Armazenar no cache
+            this.allNodes.set(node.id, node);
+
+            // Subtópicos - apenas se o nó central estiver expandido
+            if (node.subtopics && node.subtopics.length > 0 && this.expandedNodes.has(node.id)) {
+                const leftSubtopics = [];
+                const rightSubtopics = [];
+                
+                // Alternar entre esquerda e direita
+                node.subtopics.forEach((subtopic, idx) => {
+                    this.allNodes.set(subtopic.id, subtopic);
+                    if (idx % 2 === 0) {
+                        leftSubtopics.push(subtopic);
+                    } else {
+                        rightSubtopics.push(subtopic);
+                    }
+                });
+
+                // Posicionar subtópicos da esquerda
+                leftSubtopics.forEach((subtopic, idx) => {
+                    const subY = currentY - (additionalSpace / 4) + (idx * 120);
+                    positions.set(subtopic.id, {
+                        x: centerX - horizontalGap,
+                        y: subY,
+                        width: 220,
+                        height: 60,
+                        level: 1,
+                        node: subtopic,
+                        parent: node.id,
+                        hasSubtopics: subtopic.subtopics && subtopic.subtopics.length > 0
+                    });
+
+                    // Sub-subtópicos (nível 2) - apenas se expandido
+                    if (subtopic.subtopics && subtopic.subtopics.length > 0 && this.expandedNodes.has(subtopic.id)) {
+                        subtopic.subtopics.forEach((subsubtopic, subIdx) => {
+                            this.allNodes.set(subsubtopic.id, subsubtopic);
+                            const subsubY = subY + (subIdx * 80) - 40;
+                            positions.set(subsubtopic.id, {
+                                x: centerX - (horizontalGap * 2),
+                                y: subsubY,
+                                width: 180,
+                                height: 50,
+                                level: 2,
+                                node: subsubtopic,
+                                parent: subtopic.id,
+                                hasSubtopics: false
+                            });
+                            
+                            this.connections.push({
+                                from: subtopic.id,
+                                to: subsubtopic.id,
+                                type: 'subtopic'
+                            });
+                        });
+                    }
+
+                    this.connections.push({
+                        from: node.id,
+                        to: subtopic.id,
+                        type: 'main'
+                    });
+                });
+
+                // Posicionar subtópicos da direita
+                rightSubtopics.forEach((subtopic, idx) => {
+                    const subY = currentY - (additionalSpace / 4) + (idx * 120);
+                    positions.set(subtopic.id, {
+                        x: centerX + horizontalGap,
+                        y: subY,
+                        width: 220,
+                        height: 60,
+                        level: 1,
+                        node: subtopic,
+                        parent: node.id,
+                        hasSubtopics: subtopic.subtopics && subtopic.subtopics.length > 0
+                    });
+
+                    // Sub-subtópicos (nível 2) - apenas se expandido
+                    if (subtopic.subtopics && subtopic.subtopics.length > 0 && this.expandedNodes.has(subtopic.id)) {
+                        subtopic.subtopics.forEach((subsubtopic, subIdx) => {
+                            this.allNodes.set(subsubtopic.id, subsubtopic);
+                            const subsubY = subY + (subIdx * 80) - 40;
+                            positions.set(subsubtopic.id, {
+                                x: centerX + (horizontalGap * 2),
+                                y: subsubY,
+                                width: 180,
+                                height: 50,
+                                level: 2,
+                                node: subsubtopic,
+                                parent: subtopic.id,
+                                hasSubtopics: false
+                            });
+                            
+                            this.connections.push({
+                                from: subtopic.id,
+                                to: subsubtopic.id,
+                                type: 'subtopic'
+                            });
+                        });
+                    }
+
+                    this.connections.push({
+                        from: node.id,
+                        to: subtopic.id,
+                        type: 'main'
+                    });
+                });
+            }
+            
+            // Atualizar posição Y para o próximo nó
+            // Se recolhido, usa gap pequeno; se expandido, usa espaço calculado
+            currentY += nodeHeight + baseVerticalGap + additionalSpace;
+        });
+
+        this.nodes = positions;
+        return positions;
+    }
+                                y: subsubY,
+                                width: 180,
+                                height: 50,
+                                level: 2,
+                                node: subsubtopic,
+                                parent: subtopic.id,
+                                hasSubtopics: false
+                            });
+                            
+                            this.connections.push({
+                                from: subtopic.id,
+                                to: subsubtopic.id,
+                                type: 'subtopic'
+                            });
+                        });
+                    }
+
+                    this.connections.push({
+                        from: node.id,
+                        to: subtopic.id,
+                        type: 'main'
+                    });
+                });
+
+                // Posicionar subtópicos da direita
+                rightSubtopics.forEach((subtopic, idx) => {
+                    const subY = centralY - (verticalGap / 2) + (idx * 120);
+                    positions.set(subtopic.id, {
+                        x: centerX + horizontalGap,
+                        y: subY,
+                        width: 220,
+                        height: 60,
+                        level: 1,
+                        node: subtopic,
+                        parent: node.id,
+                        hasSubtopics: subtopic.subtopics && subtopic.subtopics.length > 0
+                    });
+
+                    // Sub-subtópicos (nível 2) - apenas se expandido
+                    if (subtopic.subtopics && subtopic.subtopics.length > 0 && this.expandedNodes.has(subtopic.id)) {
+                        subtopic.subtopics.forEach((subsubtopic, subIdx) => {
+                            this.allNodes.set(subsubtopic.id, subsubtopic);
+                            const subsubY = subY + (subIdx * 80) - 40;
+                            positions.set(subsubtopic.id, {
+                                x: centerX + (horizontalGap * 2),
+                                y: subsubY,
+                                width: 180,
+                                height: 50,
+                                level: 2,
+                                node: subsubtopic,
+                                parent: subtopic.id,
+                                hasSubtopics: false
+                            });
+                            
+                            this.connections.push({
+                                from: subtopic.id,
+                                to: subsubtopic.id,
+                                type: 'subtopic'
+                            });
+                        });
+                    }
+
+                    this.connections.push({
+                        from: node.id,
+                        to: subtopic.id,
+                        type: 'main'
+                    });
+                });
+            }
+        });
+
+        this.nodes = positions;
+        return positions;
+    }
+
+    /**
+     * Desenha conexões SVG entre nós
+     */
+    drawConnections() {
+        this.svg.innerHTML = ''; // Limpar SVG
+        
+        this.connections.forEach(conn => {
+            const fromPos = this.nodes.get(conn.from);
+            const toPos = this.nodes.get(conn.to);
+            
+            if (!fromPos || !toPos) return;
+
+            // Pontos de conexão
+            const fromX = fromPos.x;
+            const fromY = fromPos.y;
+            const toX = toPos.x;
+            const toY = toPos.y;
+
+            // Criar path curvo
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            
+            // Calcular ponto de controle para curva suave
+            const midX = (fromX + toX) / 2;
+            const controlX = midX;
+            const controlY = (fromY + toY) / 2;
+
+            // Path com curva bezier
+            const d = `M ${fromX} ${fromY} Q ${controlX} ${controlY} ${toX} ${toY}`;
+            
+            path.setAttribute('d', d);
+            path.setAttribute('stroke', conn.type === 'main' ? 'var(--accent-color)' : 'var(--glass-border)');
+            path.setAttribute('stroke-width', conn.type === 'main' ? '2' : '1.5');
+            path.setAttribute('fill', 'none');
+            path.setAttribute('opacity', '0.6');
+            path.setAttribute('stroke-dasharray', conn.type === 'main' ? '0' : '5,5');
+            
+            this.svg.appendChild(path);
+        });
+    }
+
+    /**
+     * Renderiza os nós no container
+     */
+    renderNodes() {
+        this.container.innerHTML = '';
+        
+        this.nodes.forEach((pos, nodeId) => {
+            const node = pos.node;
+            const nodeEl = document.createElement('div');
+            
+            nodeEl.className = `flowchart-node level-${pos.level} difficulty-${node.difficulty || 'medium'}`;
+            nodeEl.id = `node-${nodeId}`;
+            nodeEl.style.left = `${pos.x - pos.width / 2}px`;
+            nodeEl.style.top = `${pos.y - pos.height / 2}px`;
+            nodeEl.style.width = `${pos.width}px`;
+            nodeEl.style.minHeight = `${pos.height}px`;
+            
+            // Adicionar classe se tiver subtópicos
+            if (pos.hasSubtopics) {
+                nodeEl.classList.add('has-subtopics');
+                if (this.expandedNodes.has(nodeId)) {
+                    nodeEl.classList.add('expanded');
+                }
+            }
+            
+            // Ícone de expansão
+            if (pos.hasSubtopics) {
+                const expandIcon = document.createElement('span');
+                expandIcon.className = 'flowchart-expand-icon';
+                expandIcon.textContent = '▶';
+                nodeEl.appendChild(expandIcon);
+            }
+            
+            // Título
+            const title = document.createElement('div');
+            title.className = 'flowchart-node-title';
+            title.textContent = node.title;
+            nodeEl.appendChild(title);
+            
+            // Badge de dificuldade
+            if (node.difficulty) {
+                const badge = document.createElement('span');
+                badge.className = 'flowchart-node-badge';
+                badge.textContent = node.difficulty;
+                nodeEl.appendChild(badge);
+            }
+            
+            // Click handler - expandir/recolher ou abrir lição
+            nodeEl.onclick = (e) => {
+                if (pos.hasSubtopics) {
+                    e.stopPropagation();
+                    this.toggleNode(nodeId);
+                } else {
+                    this.onNodeClick(node);
+                }
+            };
+            
+            // Double click sempre abre a lição
+            nodeEl.ondblclick = (e) => {
+                e.stopPropagation();
+                this.onNodeClick(node);
+            };
+            
+            this.container.appendChild(nodeEl);
+        });
+    }
+    
+    /**
+     * Expande ou recolhe um nó
+     */
+    toggleNode(nodeId) {
+        if (this.expandedNodes.has(nodeId)) {
+            this.expandedNodes.delete(nodeId);
+        } else {
+            this.expandedNodes.add(nodeId);
+        }
+        
+        // Re-renderizar
+        this.render(this.currentRoadmap);
+    }
+
+    /**
+     * Handler de click em nó
+     */
+    onNodeClick(node) {
+        console.log('Node clicked:', node);
+        // Integrar com showLesson() existente
+        if (typeof showLesson === 'function') {
+            showLesson(node);
+        }
+    }
+
+    /**
+     * Renderiza o roadmap completo
+     */
+    render(roadmapData) {
+        console.log('FlowchartLayout.render: Iniciando', roadmapData);
+        
+        this.currentRoadmap = roadmapData; // Armazenar para re-render
+        this.connections = []; // Reset
+        
+        console.log('FlowchartLayout.render: Calculando layout');
+        this.calculateLayout(roadmapData);
+        
+        console.log('FlowchartLayout.render: Nós calculados:', this.nodes.size);
+        
+        // Ajustar altura do SVG com margem adequada
+        const maxY = Math.max(...Array.from(this.nodes.values()).map(p => p.y + p.height));
+        const minHeight = Math.max(maxY + 250, 800); // Garantir altura mínima
+        this.svg.style.height = `${minHeight}px`;
+        this.container.style.minHeight = `${minHeight}px`;
+        
+        console.log('FlowchartLayout.render: Altura SVG:', minHeight);
+        
+        console.log('FlowchartLayout.render: Desenhando conexões');
+        this.drawConnections();
+        
+        console.log('FlowchartLayout.render: Renderizando nós');
+        this.renderNodes();
+        
+        console.log('FlowchartLayout.render: Concluído');
+    }
+}
+
+// Exportar para uso global
+window.FlowchartLayout = FlowchartLayout;
