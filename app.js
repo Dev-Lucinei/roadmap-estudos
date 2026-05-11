@@ -13,7 +13,7 @@ const svg = document.getElementById('roadmap-svg');
 const view = document.getElementById('roadmap-view');
 const roadmapSelector = document.getElementById('roadmap-selector');
 const editModeBtn = document.getElementById('edit-mode-btn');
-const genQuizBtn = document.getElementById('gen-quiz-btn');
+const generateLessonBtn = document.getElementById('generate-lesson-btn');
 const generateQuizBtn = document.getElementById('generate-quiz-btn');
 
 // Estado Global
@@ -289,8 +289,6 @@ function toggleSubtopics(nodeId) {
         }
     }
 
-    genQuizBtn.style.display = isEditMode ? 'block' : 'none';
-
     try {
         const response = await fetch(`licoes/${node.id}.md`);
         if (!response.ok) throw new Error('Lição não encontrada.');
@@ -319,32 +317,102 @@ function toggleSubtopics(nodeId) {
         lessonContent.innerHTML = `
             <h2>${node.title}</h2>
             <p>⚠️ Lição ainda não gerada.</p>
-            ${isEditMode ? '<p>Clique no botão 🤖 acima para gerar via IA.</p>' : ''}
+            <p>Clique no botão <strong>📝 Gerar Conteúdo</strong> acima para criar a lição via IA.</p>
         `;
     }
 }
 
-async function generateLessonForCurrentNode() {
-    if (!currentLessonNode) return;
-    genQuizBtn.innerText = "⏳ Gerando...";
-    genQuizBtn.disabled = true;
+async function generateLessonContent() {
+    if (!currentLessonNode) {
+        alert('Nenhuma lição selecionada.');
+        return;
+    }
+
+    console.log('[DEBUG] Iniciando geração de lição para:', currentLessonNode);
+
+    const btn = document.getElementById('generate-lesson-btn');
+    if (!btn) {
+        console.error('[ERROR] Botão generate-lesson-btn não encontrado!');
+        alert('Erro: Botão não encontrado na interface.');
+        return;
+    }
+
+    const originalText = btn.innerText;
+    btn.innerText = "⏳ Gerando conteúdo...";
+    btn.disabled = true;
+
+    // Exibe estado de loading no painel
+    lessonContent.innerHTML = `
+        <div style="text-align: center; padding: 60px 20px;">
+            <div style="font-size: 3rem; margin-bottom: 20px;">🧠</div>
+            <h2>Gerando conteúdo da lição...</h2>
+            <p style="color: #888;">A IA está criando conteúdo exclusivo para <strong>${currentLessonNode.title}</strong></p>
+            <div class="loading-spinner"></div>
+        </div>
+    `;
+
     try {
+        const payload = {
+            id: currentLessonNode.id,
+            title: currentLessonNode.title,
+            type: currentLessonNode.type || 'subtopic'
+        };
+
+        console.log('[DEBUG] Enviando requisição para:', `${API_URL}/generate-lesson`);
+        console.log('[DEBUG] Payload:', payload);
+
         const response = await fetch(`${API_URL}/generate-lesson`, {
             method: 'POST',
-            body: JSON.stringify({
-                id: currentLessonNode.id,
-                title: currentLessonNode.title,
-                type: currentLessonNode.type
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
         });
+
+        console.log('[DEBUG] Status da resposta:', response.status);
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
         const result = await response.json();
-        if (result.status === 'success') showLesson(currentLessonNode);
+        console.log('[DEBUG] Resultado:', result);
+
+        if (result.status === 'success') {
+            console.log('[DEBUG] Lição gerada com sucesso, recarregando...');
+            
+            // Recarrega a lição com o conteúdo gerado
+            await showLesson(currentLessonNode);
+            
+            // Notifica sucesso
+            const notification = document.createElement('div');
+            notification.className = 'success-notification';
+            notification.innerHTML = '✅ Conteúdo gerado com sucesso!';
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        } else {
+            throw new Error(result.message || 'Erro ao gerar conteúdo');
+        }
     } catch (e) {
-        alert("Erro ao gerar lição. Verifique o servidor.");
+        console.error('[ERROR] Erro ao gerar conteúdo:', e);
+        lessonContent.innerHTML = `
+            <div style="text-align: center; padding: 60px 20px;">
+                <div style="font-size: 3rem; margin-bottom: 20px;">⚠️</div>
+                <h2>Erro ao gerar conteúdo</h2>
+                <p style="color: #f44336;">${e.message}</p>
+                <p style="color: #888;">Verifique se o servidor está rodando e se a API key está configurada.</p>
+                <button class="quiz-btn retry" onclick="generateLessonContent()" style="margin-top: 20px;">
+                    🔄 Tentar Novamente
+                </button>
+            </div>
+        `;
     } finally {
-        genQuizBtn.innerText = "🤖 Gerar Lição/Quiz";
-        genQuizBtn.disabled = false;
+        btn.innerText = originalText;
+        btn.disabled = false;
     }
+}
+
+// Mantém função legada para compatibilidade (modo edição)
+async function generateLessonForCurrentNode() {
+    await generateLessonContent();
 }
 
 // --- CRUD E ROADMAPS ---
@@ -354,7 +422,6 @@ window.toggleEditMode = () => {
     document.body.classList.toggle('edit-mode', isEditMode);
     editModeBtn.innerText = isEditMode ? "💾 Sair e Salvar" : "✏️ Modo Edição";
     if (!isEditMode) saveRoadmap();
-    if (currentLessonNode) genQuizBtn.style.display = isEditMode ? 'block' : 'none';
 };
 
 async function saveRoadmap() {
@@ -1006,6 +1073,7 @@ window.loadRoadmap = loadRoadmap;
 window.expandAllNodes = expandAllNodes;
 window.collapseAllNodes = collapseAllNodes;
 window.generateLessonForCurrentNode = generateLessonForCurrentNode;
+window.generateLessonContent = generateLessonContent;
 window.generateQuizForCurrentLesson = generateQuizForCurrentLesson;
 window.regenerateDepMap = async () => {
     try {

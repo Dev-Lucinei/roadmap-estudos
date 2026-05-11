@@ -19,36 +19,60 @@ client = OpenAI(
 
 def gerar_conteudo_ia(topico, tipo):
     prompt = f"""
-    Você é um professor de Engenharia de Software especialista em Gamificação. 
-    Gere uma lição completa e um quiz de validação sobre '{topico}' para um desenvolvedor Fullstack.
+    Você é um professor de Engenharia de Software especialista em criar conteúdo educacional focado e conciso.
+    
+    TAREFA: Gere uma lição EXCLUSIVAMENTE sobre '{topico}'. 
+    
+    RESTRIÇÕES CRÍTICAS:
+    - Aborde APENAS o tópico '{topico}' - não divague para tópicos relacionados
+    - Mantenha o conteúdo conciso e direto (máximo 800 palavras)
+    - Foque em conceitos práticos e aplicáveis
+    - Use exemplos específicos do tópico solicitado
     
     ESTRUTURA DA LIÇÃO:
-    1. # [Título do Tópico]
-    2. ## 📋 Metadados (Título, Data, Tags)
-    3. ## 🎯 Resumo Executivo
-    4. ## 📚 Conteúdo Detalhado (Use Mermaid.js se for explicar processos ou fluxos)
-    5. ## 💡 Insights e Conexões
-    6. ## ✅ Checklist
+    1. # {topico}
+    2. ## 🎯 Resumo Executivo (2-3 frases sobre o que é e por que importa)
+    3. ## 📚 Conceitos-Chave (3-5 pontos principais com exemplos práticos)
+    4. ## 💡 Aplicação Prática (1-2 exemplos de uso real)
+    5. ## ⚠️ Erros Comuns (2-3 armadilhas a evitar)
+    6. ## ✅ Checklist de Domínio (3-5 itens para validar conhecimento)
     
     ESTRUTURA DO QUIZ (OBRIGATÓRIO):
-    Ao final do documento, adicione um bloco de código JSON contendo EXATAMENTE 3 questões de múltipla escolha no seguinte formato:
+    Ao final do documento, adicione um bloco de código JSON contendo EXATAMENTE 3 questões de múltipla escolha focadas APENAS em '{topico}':
     
     ```json
     [
       {{
-        "question": "Pergunta 1?",
+        "question": "Pergunta específica sobre {topico}?",
         "options": ["Opção A", "Opção B", "Opção C", "Opção D"],
         "answer": 0
       }},
-      ...
+      {{
+        "question": "Segunda pergunta sobre {topico}?",
+        "options": ["Opção A", "Opção B", "Opção C", "Opção D"],
+        "answer": 1
+      }},
+      {{
+        "question": "Terceira pergunta sobre {topico}?",
+        "options": ["Opção A", "Opção B", "Opção C", "Opção D"],
+        "answer": 2
+      }}
     ]
     ```
+    
     Onde "answer" é o índice (0-3) da resposta correta.
     
-    Idioma: Português do Brasil.
+    IMPORTANTE: 
+    - Use Mermaid.js APENAS se for essencial para explicar um fluxo ou diagrama
+    - Mantenha linguagem clara e objetiva
+    - Idioma: Português do Brasil
+    - NÃO mencione outros tópicos além de '{topico}'
     """
     response = client.chat.completions.create(
-        model="openrouter/auto", messages=[{"role": "user", "content": prompt}]
+        model="openrouter/auto",
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=1500,  # Limita resposta para manter conteúdo conciso
+        temperature=0.7,
     )
     return response.choices[0].message.content
 

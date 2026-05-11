@@ -413,7 +413,14 @@ class RoadmapHandler(http.server.SimpleHTTPRequestHandler):
             node_id = data["id"]
             title = data["title"]
             node_type = data.get("type", "subtopic")
+            
+            # Log para debug
+            print(f"[DEBUG] Gerando lição: id={node_id}, title={title}, type={node_type}")
+            
             filepath = processar_node(node_id, title, node_type)
+            
+            print(f"[DEBUG] Lição gerada com sucesso: {filepath}")
+            
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.end_headers()
@@ -421,6 +428,10 @@ class RoadmapHandler(http.server.SimpleHTTPRequestHandler):
                 json.dumps({"status": "success", "file": filepath}).encode("utf-8")
             )
         except Exception as e:
+            print(f"[ERROR] Erro ao gerar lição: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            
             self.send_response(500)
             self.send_header("Content-Type", "application/json")
             self.end_headers()

@@ -2,6 +2,52 @@
 
 Este documento registra a evolução, decisões técnicas e soluções de problemas do projeto **Roadmap-Estudos**.
 
+## [v2.9.1] - 2026-05-10
+### Adicionado
+- **Botão "📝 Gerar Conteúdo"**: Novo botão dedicado para geração de conteúdo de lição sob demanda.
+  - Posicionado entre botões "Modo Zen" e "Gerar Quiz" no painel de lições
+  - Interface com loading spinner e feedback visual durante geração
+  - Notificação de sucesso após geração completa
+  - Tratamento de erros com opção de retry
+  - Logs de debug no frontend e backend para troubleshooting
+
+### Corrigido
+- **Referências a botão removido**: Removidas referências ao antigo `genQuizBtn` que causavam erro silencioso.
+  - Variável `genQuizBtn` substituída por `generateLessonBtn`
+  - Removidas linhas que controlavam visibilidade do botão antigo
+  - Corrigido erro que impedia execução da função `showLesson()`
+
+### Alterado
+- **Prompt de Geração de Lição**: Otimizado para conteúdo focado e conciso.
+  - Restrição explícita: conteúdo APENAS sobre o tópico específico
+  - Limite de 800 palavras para evitar verbosidade
+  - Estrutura simplificada: Resumo → Conceitos-Chave → Aplicação → Erros Comuns → Checklist
+  - Limite de tokens: 1500 (economia de custos e tempo de resposta)
+  - Temperatura: 0.7 (equilíbrio entre criatividade e precisão)
+
+- **Função `generateLessonContent()`**: Nova implementação otimizada.
+  - Estado de loading visual no painel durante geração
+  - Recarregamento automático da lição após sucesso
+  - Mensagem de erro detalhada com botão de retry
+  - Mantém compatibilidade com função legada `generateLessonForCurrentNode()`
+  - Logs detalhados para debug (payload, status, resultado)
+
+- **Estilos CSS**: Adicionados estilos para botão secundário e notificações.
+  - `.admin-btn.secondary`: Gradiente rosa/vermelho para diferenciação visual
+  - `.loading-spinner`: Animação de carregamento
+  - `.success-notification`: Notificação animada com auto-dismiss (3s)
+
+### Memória Técnica
+- Problema: Botão de geração não funcionava apesar do endpoint estar correto
+- Causa raiz: Referências ao botão antigo `genQuizBtn` (removido do HTML) causavam erro JavaScript que interrompia execução
+- Solução: Removidas todas as referências ao `genQuizBtn` e substituídas por `generateLessonBtn`
+- Teste: Endpoint validado via curl (retornou 200 e gerou arquivo com sucesso)
+- Fluxo: Usuário clica → Loading visual → API gera conteúdo focado → Recarrega lição → Notifica sucesso
+- Segurança: Prompt com restrições explícitas para evitar desvio de contexto
+- UX: Feedback visual em todas as etapas (loading, sucesso, erro)
+- Performance: Limite de 1500 tokens reduz tempo de resposta e custo de API
+- Resultado: Geração de conteúdo sob demanda, focada e eficiente, agora funcionando corretamente
+
 ## [v2.9.0] - 2026-05-10
 ### Adicionado
 - **Sistema de Avaliação de Conhecimento via Quiz IA**: Implementado fluxo completo de geração e avaliação de quizzes.
