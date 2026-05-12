@@ -1,17 +1,23 @@
-import sys
-import uvicorn
+"""Roadmap Estudos API - FastAPI Backend."""
+
 from pathlib import Path
+import sys
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 if str(BASE_DIR) not in sys.path:
-    sys.path.append(str(BASE_DIR))
+    sys.path.insert(0, str(BASE_DIR))  # noqa: E402
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+import uvicorn  # noqa: E402
+from fastapi import FastAPI  # noqa: E402
+from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+from fastapi.staticfiles import StaticFiles  # noqa: E402
 
-from backend.api.routes_fastapi import router as api_router
-from backend.core.config import DATA_DIR, LICOES_DIR, BASE_DIR as CONFIG_BASE_DIR
+from backend.api.routes_fastapi import router as api_router  # noqa: E402
+from backend.core.config import (  # noqa: E402
+    BASE_DIR as CONFIG_BASE_DIR,
+    DATA_DIR,
+    LICOES_DIR,
+)
 
 app = FastAPI(
     title="Roadmap Estudos API",
@@ -37,6 +43,7 @@ app.mount(
 
 @app.on_event("startup")
 async def startup_event() -> None:
+    """Initialize directories on startup."""
     DATA_DIR.mkdir(exist_ok=True)
     LICOES_DIR.mkdir(exist_ok=True)
 

@@ -21,7 +21,6 @@ class TestDiagnosisService(unittest.TestCase):
         self.data_dir = "/tmp/test_data"
         os.makedirs(self.data_dir, exist_ok=True)
 
-        # Create a dummy dep_map.json
         self.dep_map = {"Python Fundamentos": ["variáveis", "tipos"]}
         with open(
             os.path.join(self.data_dir, "dep_map.json"), "w", encoding="utf-8"
@@ -32,13 +31,13 @@ class TestDiagnosisService(unittest.TestCase):
 
     def tearDown(self):
         """Clean up test files."""
-        import shutil
-
         shutil.rmtree(self.data_dir, ignore_errors=True)
 
     def test_diagnose_success(self):
         """Test successful diagnosis with a hit (no gap)."""
-        with patch("backend.services.diagnosis.diagnosis_service.OpenAI") as mock_openai_class:
+        with patch(
+            "backend.services.diagnosis.diagnosis_service.OpenAI"
+        ) as mock_openai_class:
             mock_client = Mock()
             mock_completion = Mock()
             mock_choice = Mock()
@@ -58,17 +57,24 @@ class TestDiagnosisService(unittest.TestCase):
 
                 self.assertEqual(result["status"], "hit")
                 self.assertFalse(result["has_gap"])
-                self.assertEqual(result["tags"], self.dep_map["Python Fundamentos"])
+                self.assertEqual(
+                    result["tags"], self.dep_map["Python Fundamentos"]
+                )
                 self.assertIn("avançar", result["message"])
 
     def test_diagnose_with_gap(self):
         """Test successful diagnosis with a miss (gap found)."""
-        with patch("backend.services.diagnosis.diagnosis_service.OpenAI") as mock_openai_class:
+        with patch(
+            "backend.services.diagnosis.diagnosis_service.OpenAI"
+        ) as mock_openai_class:
             mock_client = Mock()
             mock_completion = Mock()
             mock_choice = Mock()
             mock_message = Mock()
-            mock_message.content = "Falta conhecimento básico sobre tipos de dados. Revisar tipagem dinâmica."
+            mock_message.content = (
+                "Falta conhecimento básico sobre tipos de dados. "
+                "Revisar tipagem dinâmica."
+            )
             mock_choice.message = mock_message
             mock_completion.choices = [mock_choice]
             mock_client.chat.completions.create.return_value = mock_completion
@@ -92,7 +98,6 @@ class TestDiagnosisService(unittest.TestCase):
 
     def test_diagnose_missing_dep_map(self):
         """Test diagnosis when dep_map is missing."""
-        # Create service with empty directory
         empty_dir = "/tmp/empty_test_data"
         os.makedirs(empty_dir, exist_ok=True)
         service = DiagnosisService(empty_dir)
@@ -101,34 +106,13 @@ class TestDiagnosisService(unittest.TestCase):
             service.diagnose("Python Fundamentos", "Resposta")
         self.assertEqual(str(cm.exception), "Mapa de dependências não encontrado")
 
-        import shutil
-
         shutil.rmtree(empty_dir, ignore_errors=True)
 
     def test_diagnose_truncation(self):
         """Test that diagnosis is truncated to 100 words."""
-        with patch("server.OpenAI") as mock_openai_class:
-            mock_client = Mock()
-            mock_completion = Mock()
-            mock_choice = Mock()
-            mock_message = Mock()
-            # Create a very long response
-            mock_message.content = "palavra " * 150
-            mock_choice.message = mock_message
-            mock_completion.choices = [mock_choice]
-            mock_client.chat.completions.create.return_value = mock_completion
-            mock_openai_class.return_value = mock_client
-
-            with patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-key"}):
-                result = self.service.diagnose("Python Fundamentos", "Resposta")
-
-                words = result["message"].split()
-                self.assertEqual(len(words), 100)
-                self.assertTrue(result["message"].endswith("..."))
-
-    def test_diagnose_truncation(self):
-        """Test that diagnosis is truncated to 100 words."""
-        with patch("backend.services.diagnosis.diagnosis_service.OpenAI") as mock_openai_class:
+        with patch(
+            "backend.services.diagnosis.diagnosis_service.OpenAI"
+        ) as mock_openai_class:
             mock_client = Mock()
             mock_completion = Mock()
             mock_choice = Mock()
