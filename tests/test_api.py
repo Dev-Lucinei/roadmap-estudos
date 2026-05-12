@@ -57,9 +57,7 @@ class TestDiagnosisService(unittest.TestCase):
 
                 self.assertEqual(result["status"], "hit")
                 self.assertFalse(result["has_gap"])
-                self.assertEqual(
-                    result["tags"], self.dep_map["Python Fundamentos"]
-                )
+                self.assertEqual(result["tags"], self.dep_map["Python Fundamentos"])
                 self.assertIn("avançar", result["message"])
 
     def test_diagnose_with_gap(self):
@@ -91,7 +89,7 @@ class TestDiagnosisService(unittest.TestCase):
 
     def test_diagnose_missing_api_key(self):
         """Test diagnosis when API key is missing."""
-        with patch.dict(os.environ, {}, clear=True):
+        with patch.dict(os.environ, {"OPENROUTER_API_KEY": ""}, clear=False):
             with self.assertRaises(PermissionError) as cm:
                 self.service.diagnose("Python Fundamentos", "Resposta")
             self.assertEqual(str(cm.exception), "API key não configurada")

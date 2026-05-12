@@ -15,12 +15,15 @@ if env_path.exists():
             key, _, value = line.partition("=")
             os.environ.setdefault(key.strip(), value.strip())
 
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 
 
-def check_api_key():
-    if not OPENROUTER_API_KEY:
-        raise EnvironmentError(
-            "OPENROUTER_API_KEY não encontrada. Configure a variável no arquivo .env."
-        )
+def get_api_key() -> str | None:
+    """Retorna a API key atual do ambiente."""
+    return os.getenv("OPENROUTER_API_KEY")
+
+
+def check_api_key() -> None:
+    """Verifica se a API key está configurada no ambiente atual."""
+    if not get_api_key():
+        raise PermissionError("API key não configurada")

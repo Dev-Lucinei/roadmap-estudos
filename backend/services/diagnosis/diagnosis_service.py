@@ -2,25 +2,25 @@ import json
 import os
 from openai import OpenAI
 from backend.core.config import (
-    OPENROUTER_API_KEY,
     OPENROUTER_BASE_URL,
     DATA_DIR,
     check_api_key,
+    get_api_key,
 )
 
 
 class DiagnosisService:
-    def __init__(self, data_dir=DATA_DIR):
+    def __init__(self, data_dir: str = DATA_DIR):
         self.data_dir = data_dir
 
-    def get_client(self):
+    def get_client(self) -> OpenAI:
         check_api_key()
         return OpenAI(
             base_url=OPENROUTER_BASE_URL,
-            api_key=OPENROUTER_API_KEY,
+            api_key=get_api_key() or "",
         )
 
-    def diagnose(self, topic, user_answer):
+    def diagnose(self, topic: str, user_answer: str) -> dict:
         dep_map_path = os.path.join(self.data_dir, "dep_map.json")
         if not os.path.exists(dep_map_path):
             raise FileNotFoundError("Mapa de dependências não encontrado")
