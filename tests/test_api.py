@@ -4,13 +4,13 @@ Tests for the Diagnosis Service.
 
 import json
 import os
+import shutil
 import sys
 import unittest
 from unittest.mock import Mock, patch
 
-# Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from server import DiagnosisService
+from backend.services.diagnosis.diagnosis_service import DiagnosisService
 
 
 class TestDiagnosisService(unittest.TestCase):
@@ -38,8 +38,7 @@ class TestDiagnosisService(unittest.TestCase):
 
     def test_diagnose_success(self):
         """Test successful diagnosis with a hit (no gap)."""
-        with patch("server.OpenAI") as mock_openai_class:
-            # Mock OpenAI response
+        with patch("backend.services.diagnosis.diagnosis_service.OpenAI") as mock_openai_class:
             mock_client = Mock()
             mock_completion = Mock()
             mock_choice = Mock()
@@ -64,8 +63,7 @@ class TestDiagnosisService(unittest.TestCase):
 
     def test_diagnose_with_gap(self):
         """Test successful diagnosis with a miss (gap found)."""
-        with patch("server.OpenAI") as mock_openai_class:
-            # Mock OpenAI response
+        with patch("backend.services.diagnosis.diagnosis_service.OpenAI") as mock_openai_class:
             mock_client = Mock()
             mock_completion = Mock()
             mock_choice = Mock()
@@ -125,7 +123,26 @@ class TestDiagnosisService(unittest.TestCase):
                 result = self.service.diagnose("Python Fundamentos", "Resposta")
 
                 words = result["message"].split()
-                # Should be exactly 100 words (the last word contains the ...)
+                self.assertEqual(len(words), 100)
+                self.assertTrue(result["message"].endswith("..."))
+
+    def test_diagnose_truncation(self):
+        """Test that diagnosis is truncated to 100 words."""
+        with patch("backend.services.diagnosis.diagnosis_service.OpenAI") as mock_openai_class:
+            mock_client = Mock()
+            mock_completion = Mock()
+            mock_choice = Mock()
+            mock_message = Mock()
+            mock_message.content = "palavra " * 150
+            mock_choice.message = mock_message
+            mock_completion.choices = [mock_choice]
+            mock_client.chat.completions.create.return_value = mock_completion
+            mock_openai_class.return_value = mock_client
+
+            with patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-key"}):
+                result = self.service.diagnose("Python Fundamentos", "Resposta")
+
+                words = result["message"].split()
                 self.assertEqual(len(words), 100)
                 self.assertTrue(result["message"].endswith("..."))
 

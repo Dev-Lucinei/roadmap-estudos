@@ -1,4 +1,5 @@
 import sys
+import uvicorn
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -35,12 +36,10 @@ app.mount(
 
 
 @app.on_event("startup")
-async def startup_event():
+async def startup_event() -> None:
     DATA_DIR.mkdir(exist_ok=True)
     LICOES_DIR.mkdir(exist_ok=True)
 
 
 if __name__ == "__main__":
-    import uvicorn
-
     uvicorn.run("backend.main:app", host="0.0.0.0", port=8000, reload=True)
