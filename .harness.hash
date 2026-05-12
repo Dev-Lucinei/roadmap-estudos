@@ -1,6 +1,6 @@
 {
-  "harness.py": "c97071fb19119222cd38a0c26e0c7330bcbbf55adc2ea49c0f7fee9840d9ddf8",
+  "harness.py": "6eec3f1f8fc139a5405e14593f32a35003cf6a254a0e3ba1ce53155264487a73",
   "scripts/guard_harness.py": "5a3eae6a25b09bb135a629d618e81923011a84c397007dad1239620be7d07d27",
-  "_sealed_at": "2026-05-10T20:54:34Z",
+  "_sealed_at": "2026-05-12T02:23:54Z",
   "_sealed_by": "guard_harness --seal"
 }
