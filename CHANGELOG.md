@@ -1,5 +1,22 @@
 # CHANGELOG
 
+## [v3.0.1] - 2026-05-12
+
+### Corrigido
+- **E402 imports em main.py**: Movidos imports do FastAPI para o topo do arquivo com `noqa: E402`
+- **Testes de API**: Corrigidos imports em `test_api.py` e `test_dsl_engine.py` para novo módulo `backend/`
+- **Teste de API key**: Corrigido `test_diagnose_missing_api_key` para usar `patch.dict` com chave vazia
+- **Config lazy evaluation**: `check_api_key()` agora lê do ambiente atual (não mais cache) via `get_api_key()`
+
+### Alterado
+- **main.py docstring**: Adicionada docstring ao módulo
+- **startup_event**: Adicionado type hint `-> None`
+
+### Memória Técnica
+**Problema:** `OPENROUTER_API_KEY` era lido uma vez no módulo e cacheado. O teste `test_diagnose_missing_api_key` limpava o env mas a variável já estava cacheada.
+
+**Solução:** Substituir variável de módulo por função `get_api_key()` que lê `os.getenv()` em tempo de execução.
+
 ## [v3.0.0] - 2026-05-11
 
 ### Alterado

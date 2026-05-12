@@ -40,6 +40,8 @@ Sempre que detectar uma nova funcionalidade, alteração estrutural ou bug, acio
 - Servidor local: `http://localhost:8000`
 - Start: `cd backend && python main.py` (ou `uvicorn backend.main:app --reload`)
 - Testes: `pytest tests/`
+- Lint: `ruff check . && ruff format .`
+- Harness: `python harness.py`
 - Teste rápido de API: `curl http://localhost:8000/api/roadmaps`
 - API Docs: `http://localhost:8000/docs` (Swagger UI)
 
