@@ -27,7 +27,11 @@ app.add_middleware(
 
 app.include_router(api_router)
 
-app.mount("/", StaticFiles(directory=str(CONFIG_BASE_DIR / "frontend" / "public"), html=True), name="static")
+app.mount(
+    "/",
+    StaticFiles(directory=str(CONFIG_BASE_DIR / "frontend" / "public"), html=True),
+    name="static",
+)
 
 
 @app.on_event("startup")
