@@ -15,6 +15,7 @@ Uso:
     python harness.py audit      → apenas auditoria de arquitetura
     python harness.py security   → apenas verificações de segurança
     python harness.py structure  → apenas estrutura de arquivos
+    python harness.py content    → apenas validação de formato de conteúdo (roadmaps/lições)
 """
 
 import ast
@@ -33,9 +34,8 @@ from typing import Any
 # =============================================================================
 
 BASE_DIR = Path(__file__).resolve().parent
-# Para este projeto, o código fonte está na raiz (server.py, generate_*.py)
-# src/ existe apenas como placeholder e não é varrido
-SRC_DIR = BASE_DIR / "src"
+# Para este projeto, o código fonte está em backend/
+SRC_DIR = BASE_DIR / "backend"
 TESTS_DIR = BASE_DIR / "tests"
 
 # Arquivos protegidos contra modificação por agentes
@@ -49,9 +49,9 @@ PROTECTED_FILES: list[str] = [
 REQUIRED_FILES = [
     "pyproject.toml",
     "README.md",
-    "server.py",
-    "generate_lessons.py",
-    "generate_roadmap.py",
+    "backend/main.py",
+    "backend/core/config.py",
+    "backend/api/routes.py",
 ]
 
 REQUIRED_DIRS = [
@@ -61,6 +61,8 @@ REQUIRED_DIRS = [
     "skill",
     "data",
     "licoes",
+    "backend",
+    "frontend",
 ]
 
 # Padrões proibidos por segurança
@@ -994,6 +996,139 @@ class ValidationHarness:
         """Verifica estrutura obrigatória do projeto."""
         self._check_project_structure()
 
+    def run_content_format(self) -> None:
+        """Verifica formato de roadmaps e lições gerados."""
+        start = time.time()
+        errors: list[ValidationError] = []
+
+        # Importa o validador de conteúdo
+        try:
+            sys.path.insert(0, str(BASE_DIR / "scripts"))
+            from validate_content_format import ContentValidator
+
+            validator = ContentValidator()
+            validator.validate_all()
+
+            # Converte erros do validador para o formato do harness
+            for error_msg in validator.errors:
+                # Parse da mensagem de erro
+                if ":" in error_msg:
+                    parts = error_msg.split(":", 2)
+                    file = parts[1].strip() if len(parts) > 1 else "unknown"
+                    message = parts[2].strip() if len(parts) > 2 else error_msg
+                else:
+                    file = "unknown"
+                    message = error_msg
+
+                errors.append(
+                    ValidationError(
+                        type="content",
+                        severity="error",
+                        file=file,
+                        line=None,
+                        column=None,
+                        code="CONTENT_FORMAT",
+                        message=message,
+                        fix_instruction=self._get_content_fix_instruction(message),
+                        fix_example=None,
+                        auto_fixable=False,
+                        auto_fix_command=None,
+                    )
+                )
+
+            # Converte warnings
+            for warning_msg in validator.warnings:
+                if ":" in warning_msg:
+                    parts = warning_msg.split(":", 2)
+                    file = parts[1].strip() if len(parts) > 1 else "unknown"
+                    message = parts[2].strip() if len(parts) > 2 else warning_msg
+                else:
+                    file = "unknown"
+                    message = warning_msg
+
+                errors.append(
+                    ValidationError(
+                        type="content",
+                        severity="warning",
+                        file=file,
+                        line=None,
+                        column=None,
+                        code="CONTENT_WARNING",
+                        message=message,
+                        fix_instruction=self._get_content_fix_instruction(message),
+                        fix_example=None,
+                        auto_fixable=False,
+                        auto_fix_command=None,
+                    )
+                )
+
+        except ImportError as e:
+            errors.append(
+                ValidationError(
+                    type="content",
+                    severity="error",
+                    file="scripts/validate_content_format.py",
+                    line=None,
+                    column=None,
+                    code="VALIDATOR_MISSING",
+                    message=f"Validador de conteúdo não encontrado: {e}",
+                    fix_instruction="Verificar se scripts/validate_content_format.py existe",
+                    fix_example=None,
+                    auto_fixable=False,
+                    auto_fix_command=None,
+                )
+            )
+        except Exception as e:
+            errors.append(
+                ValidationError(
+                    type="content",
+                    severity="error",
+                    file="scripts/validate_content_format.py",
+                    line=None,
+                    column=None,
+                    code="VALIDATOR_ERROR",
+                    message=f"Erro ao executar validador: {e}",
+                    fix_instruction="Verificar logs do validador para detalhes",
+                    fix_example=None,
+                    auto_fixable=False,
+                    auto_fix_command=None,
+                )
+            )
+
+        duration = int((time.time() - start) * 1000)
+        is_fail = any(e.severity == "error" for e in errors)
+        result = StepResult(
+            step="content",
+            status="success" if not is_fail else "fail",
+            exit_code=0 if not is_fail else 1,
+            duration_ms=duration,
+            stdout=f"Validados roadmaps e lições",
+            stderr="",
+            errors=errors,
+        )
+        self.results.append(result)
+
+    def _get_content_fix_instruction(self, message: str) -> str:
+        """Retorna instrução de correção baseada na mensagem de erro."""
+        if "deve começar com 'roadmap_'" in message:
+            return "Renomear arquivo para seguir padrão roadmap_*.json"
+        elif "contém caracteres inválidos" in message:
+            return "Remover acentos e caracteres especiais do nome do arquivo"
+        elif "falta campo" in message:
+            return "Adicionar campo obrigatório ao JSON"
+        elif "ID" in message and "inválido" in message:
+            return "Converter ID para kebab-case (apenas a-z, 0-9, -, _)"
+        elif "não contém quiz embutido" in message:
+            return "Adicionar bloco ```json com quiz de 3+ perguntas ao final do arquivo"
+        elif "quiz tem menos de 3 perguntas" in message:
+            return "Adicionar mais perguntas ao quiz (mínimo 3)"
+        elif "deve ter exatamente 4 opções" in message:
+            return "Ajustar pergunta para ter exatamente 4 alternativas"
+        elif "'answer' deve ser 0-3" in message:
+            return "Corrigir campo 'answer' para índice válido (0, 1, 2 ou 3)"
+        else:
+            return "Corrigir formato conforme documentação em docs/PADROES_FORMATO_CONTEUDO.md"
+
     def _check_hash(self, rel_path: str, expected: dict, errors: list[ValidationError]):
         """Verifica o hash de um arquivo protegido."""
         abs_path = BASE_DIR / rel_path
@@ -1160,6 +1295,7 @@ class ValidationHarness:
         """Executa todas as validações na ordem de prioridade."""
         self.run_integrity()  # sempre primeiro — fail-fast se violado
         self.run_structure()
+        self.run_content_format()  # valida formato de roadmaps e lições
         self.run_security()
         self.run_lint()
         self.run_typecheck()
@@ -1169,6 +1305,7 @@ class ValidationHarness:
     def run_without_integrity(self) -> None:
         """Executa todas as validações exceto integridade (para hooks do git)."""
         self.run_structure()
+        self.run_content_format()
         self.run_security()
         self.run_lint()
         self.run_typecheck()
@@ -1425,6 +1562,7 @@ def main() -> None:
     # run_all inclui run_integrity, mas já foi executado — define steps restantes
     def _run_remaining() -> None:
         harness.run_structure()
+        harness.run_content_format()
         harness.run_security()
         harness.run_lint()
         harness.run_typecheck()
@@ -1440,6 +1578,7 @@ def main() -> None:
         "audit": harness.run_audit,
         "security": harness.run_security,
         "structure": harness.run_structure,
+        "content": harness.run_content_format,
     }
 
     if cmd == "json":

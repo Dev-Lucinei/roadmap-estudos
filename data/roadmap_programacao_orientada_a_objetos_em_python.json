@@ -1,0 +1,179 @@
+{
+    "title": "Roadmap de Estudos: Programação Orientada a Objetos em Python",
+    "nodes": [
+        {
+            "id": "poo_intro",
+            "title": "Introdução à Programação Orientada a Objetos (POO)",
+            "type": "central",
+            "group": "Fundamentos POO",
+            "difficulty": "easy",
+            "content": "Compreensão dos pilares fundamentais da POO e sua aplicação em Python.",
+            "subtopics": [
+                {
+                    "id": "conceitos_poo",
+                    "title": "Pilares da POO",
+                    "difficulty": "easy",
+                    "content": "Exploração de Abstração, Encapsulamento, Herança e Polimorfismo."
+                },
+                {
+                    "id": "classes_objetos",
+                    "title": "Classes e Objetos",
+                    "difficulty": "easy",
+                    "content": "Definição de classes e instanciamento de objetos em Python."
+                },
+                {
+                    "id": "atributos_metodos",
+                    "title": "Atributos e Métodos",
+                    "difficulty": "easy",
+                    "content": "Compreensão da diferença entre atributos de instância e de classe, e criação de métodos."
+                },
+                {
+                    "id": "encapsulamento",
+                    "title": "Encapsulamento",
+                    "difficulty": "medium",
+                    "content": "Utilização de convenções para simular atributos protegidos e privados."
+                },
+                {
+                    "id": "heranca",
+                    "title": "Herança",
+                    "difficulty": "medium",
+                    "content": "Criação de classes filhas que herdam de classes pai, incluindo o uso de `super()`."
+                },
+                {
+                    "id": "polimorfismo",
+                    "title": "Polimorfismo",
+                    "difficulty": "medium",
+                    "content": "Implementação de métodos com o mesmo nome em diferentes classes e como Python lida com isso."
+                },
+                {
+                    "id": "abstracao",
+                    "title": "Abstração",
+                    "difficulty": "medium",
+                    "content": "Foco na ideia de interfaces e classes abstratas em Python (utilizando `abc`)."
+                },
+                {
+                    "id": "relacionamentos_poo",
+                    "title": "Relacionamentos POO (Composição/Agregação)",
+                    "difficulty": "medium",
+                    "content": "Entendimento de como objetos podem se relacionar entre si."
+                }
+            ]
+        },
+        {
+            "id": "poo_funcionalidades",
+            "title": "Funcionalidades Avançadas de POO",
+            "type": "central",
+            "group": "Estudando Classes e Objetos",
+            "difficulty": "medium",
+            "content": "Exploração de características mais profundas e úteis da POO em Python.",
+            "subtopics": [
+                {
+                    "id": "estrutor_destrutor",
+                    "title": "Métodos `__init__` e `__del__`",
+                    "difficulty": "easy",
+                    "content": "O construtor (`__init__`) e o destrutor (`__del__`)."
+                },
+                {
+                    "id": "getters_setters",
+                    "title": "Getters e Setters (com `property`)",
+                    "difficulty": "medium",
+                    "content": "Controle de acesso a atributos usando o decorador `@property`."
+                },
+                {
+                    "id": "propriedades",
+                    "title": "Propriedades",
+                    "difficulty": "medium",
+                    "content": "Uso avançado de `property` para criar interfaces mais limpas."
+                },
+                {
+                    "id": "metodos_estaticos",
+                    "title": "Métodos Estáticos (`@staticmethod`)",
+                    "difficulty": "medium",
+                    "content": "Métodos que não acessam nem o objeto nem a classe."
+                },
+                {
+                    "id": "metodos_classe",
+                    "title": "Métodos de Classe (`@classmethod`)",
+                    "difficulty": "medium",
+                    "content": "Métodos que recebem a classe como primeiro argumento (`cls`)."
+                },
+                {
+                    "id": "slots",
+                    "title": "Slots (`__slots__`)",
+                    "difficulty": "hard",
+                    "content": "Otimização de memória e controle de atributos com `__slots__`."
+                },
+                {
+                    "id": "descorators_poo",
+                    "title": "Decorators em POO",
+                    "difficulty": "hard",
+                    "content": "Como decorators podem extender ou modificar o comportamento de classes e métodos."
+                },
+                {
+                    "id": "comparacao_objetos",
+                    "title": "Comparação de Objetos (`__eq__`, `__lt__`, etc.)",
+                    "difficulty": "medium",
+                    "content": "Implementação de métodos especiais para comparação de objetos."
+                }
+            ]
+        },
+        {
+            "id": "poo_padroes_projeto",
+            "title": "Padrões de Projeto POO em Python",
+            "type": "central",
+            "group": "Padrões e Aplicações",
+            "difficulty": "hard",
+            "content": "Entendimento e aplicação de padrões de projeto comuns para resolver problemas recorrentes em desenvolvimento.",
+            "subtopics": [
+                {
+                    "id": "introducao_padroes",
+                    "title": "O que são Padrões de Projeto?",
+                    "difficulty": "medium",
+                    "content": "Benefícios e tipos de padrões de projeto."
+                },
+                {
+                    "id": "singleton",
+                    "title": "Padrão Singleton",
+                    "difficulty": "medium",
+                    "content": "Garantir que uma classe tenha apenas uma instância."
+                },
+                {
+                    "id": "factory",
+                    "title": "Padrão Factory (Factory Method/Abstract Factory)",
+                    "difficulty": "hard",
+                    "content": "Deleguar a criação de objetos."
+                },
+                {
+                    "id": "builder",
+                    "title": "Padrão Builder",
+                    "difficulty": "hard",
+                    "content": "Construção de objetos complexos passo a passo."
+                },
+                {
+                    "id": "observer",
+                    "title": "Padrão Observer",
+                    "difficulty": "hard",
+                    "content": "Permitir que objetos observem e reajam a mudanças em outros objetos."
+                },
+                {
+                    "id": "strategy",
+                    "title": "Padrão Strategy",
+                    "difficulty": "hard",
+                    "content": "Definir uma família de algoritmos, encapsular cada um deles e torná-los intercambiáveis."
+                },
+                {
+                    "id": "decorator_pattern",
+                    "title": "Padrão Decorator",
+                    "difficulty": "medium",
+                    "content": "Adicionar responsabilidades a um objeto dinamicamente."
+                },
+                {
+                    "id": "aplicacao_pratica",
+                    "title": "Exercícios Práticos e Projetos",
+                    "difficulty": "hard",
+                    "content": "Aplicar os conceitos de POO e padrões de projeto em projetos reais."
+                }
+            ]
+        }
+    ]
+}

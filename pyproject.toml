@@ -1,16 +1,24 @@
 [project]
 name = "roadmap-estudos"
-version = "0.1.0"
-description = "Add your description here"
+version = "0.2.0"
+description = "Sistema de gestão de aprendizado com IA"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "openai>=2.36.0",
+    "fastapi>=0.111.0",
+    "uvicorn[standard]>=0.30.0",
+    "pydantic>=2.0.0",
+    "httpx>=0.28.1",
+    "pytest-asyncio>=1.3.0",
 ]
 
 [dependency-groups]
 dev = [
     "mypy>=2.0.0",
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
     "pytest-cov>=7.1.0",
+    "httpx>=0.27.0",
     "ruff>=0.15.12",
 ]

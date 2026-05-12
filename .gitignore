@@ -1,33 +1,29 @@
-# Segurança — nunca commitar
-.env
-*.env.*
-
 # Python
 __pycache__/
+*.py[cod]
 *.pyc
-*.pyo
-*.pyd
-.Python
-*.egg-info/
-dist/
-build/
-.eggs/
-
-# Ambiente virtual
-.venv/
-venv/
-env/
-
-# Ferramentas
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
 
-# Logs e temporários
-server.log
-*.log
+# Virtual environments
+.venv/
+venv/
+ENV/
 
 # IDE
 .vscode/
 .idea/
 *.swp
+*.swo
+
+# Environment
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Lock files (keep uv.lock)
+# package-lock.json

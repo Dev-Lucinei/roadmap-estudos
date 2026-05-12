@@ -3,50 +3,64 @@
 Este documento é a **fonte da verdade** para qualquer agente que colabore neste projeto. Leia-o integralmente antes de iniciar qualquer alteração.
 
 ## 🛠️ Stack Técnica & Arquitetura
-- **Backend**: Python 3.11+ (Servidor Bridge via `server.py`)
-- **Frontend**: HTML5, Vanilla CSS, JavaScript (ES6+ porém utilizando **escopo global** para compatibilidade com `http.server`)
+- **Backend**: Python 3.11+ com **FastAPI** (servidor assíncrono em `backend/main.py`)
+- **Frontend**: HTML5, Vanilla CSS, JavaScript (ES6+ com **escopo global** para compatibilidade)
+- **Validação**: Pydantic v2 para todos os endpoints
 - **IA**: Integração via OpenRouter API
 - **Persistência**: Arquivos JSON em `/data` e Markdown em `/licoes`
 
+## 📁 Estrutura de Diretórios
+```
+roadmap-estudos/
+├── backend/
+│   ├── api/
+│   │   ├── routes.py          # Rotas legado (http.server)
+│   │   └── routes_fastapi.py  # Rotas FastAPI (novas)
+│   ├── core/config.py         # Configurações
+│   ├── models/                # Pydantic models (validação)
+│   │   ├── lesson.py
+│   │   ├── quiz.py
+│   │   ├── roadmap.py
+│   │   └── diagnosis.py
+│   └── services/              # Lógica de negócio
+│       ├── ai_content/        # Geração de roadmaps e lições
+│       ├── diagnosis/         # Diagnóstico
+│       ├── quiz/              # Quizzes
+│       └── dsl/               # Motor DSL
+frontend/public/assets/        # CSS, JS, assets
+data/                         # Roadmaps JSON
+licoes/                       # Lições Markdown
+```
+
 ## 🔄 Workflow de Orquestração
 Sempre que detectar uma nova funcionalidade, alteração estrutural ou bug, acione o protocolo de orquestração para garantir a sincronia entre Dados, IA e Interface:
-👉 **[@skills/workflown-agents.md](./skills/workflown-agents.md)**
-
-## 🐍 Boas Práticas Python
-- **Tipagem**: Use *type hints* em todas as funções para facilitar a manutenção.
-- **Caminhos**: Utilize `os.path.join` e `BASE_DIR` para garantir portabilidade entre SOs.
-- **Tratamento de Erros**: Implemente blocos `try-except` específicos em endpoints da API para evitar que o servidor caia.
-- **Performance**: Para operações de arquivo, prefira `with open(...)` para garantir o fechamento dos descritores.
-
-## 📝 Fluxo de Evolução & Commits
-Siga rigorosamente a sequência: **Modificação -> Registro no Changelog -> Commit**.
-
-### 1. Alimentação do CHANGELOG.md
-Antes de cada commit, registre a evolução no `CHANGELOG.md`:
-- **Versão**: Seguindo SemVer (ex: `[v2.2.0]`).
-- **Data**: Data da alteração.
-- **Seções**: `### Adicionado`, `### Corrigido` ou `### Alterado`.
-- **Memória Técnica**: Documente problemas enfrentados e a solução aplicada para mitigar erros futuros (evitar regressões).
-
-### 2. Conventional Commits (PT-BR)
-As mensagens devem ser detalhadas e seguir o formato: `[tipo]([escopo]): [descrição detalhada]`
-
-**Tipos permitidos:**
-- `feat`: Nova funcionalidade.
-- `fix`: Correção de bug.
-- `docs`: Alterações em documentação.
-- `style`: Formatação, faltando ponto e vírgula, etc (não altera lógica).
-- `refactor`: Refatoração de código que não corrige bug nem adiciona feature.
-- `perf`: Melhoria de performance.
-- `chore`: Atualizações de build, dependências, etc.
-
-**Exemplo:** `feat(api): implementa endpoint de salvamento de roadmap com validação de JSON`
-
-## ⚠️ Notas de Atenção (Não Ignore)
-- **Escopo JS**: Não converta o frontend para ES6 Modules (`import/export`) a menos que a infraestrutura de servidor mude, para evitar erros de CORS/MIME.
-- **Parser de Quiz**: O quiz é extraído via Regex de blocos ` ```json ` no final dos arquivos `.md`. Alterar esse formato quebrará o frontend.
-- **Porta 8000**: Se encontrar `Address already in use`, use `fuser -k 8000/tcp` ou verifique a flag `allow_reuse_address` no `server.py`.
+👉 **[@skill/workflown-agents.md](./skill/workflown-agents.md)**
 
 ## 🚦 Verificação de Ambiente
 - Servidor local: `http://localhost:8000`
+- Start: `cd backend && python main.py` (ou `uvicorn backend.main:app --reload`)
+- Testes: `pytest tests/`
 - Teste rápido de API: `curl http://localhost:8000/api/roadmaps`
+- API Docs: `http://localhost:8000/docs` (Swagger UI)
+
+## 🐍 Boas Práticas Python
+- **Tipagem**: Use *type hints* em todas as funções.
+- **Validação**: Use Pydantic models em `backend/models/` para validar entradas de API.
+- **Async**: Endpoints de IA devem ser `async def` para não bloquear.
+- **Caminhos**: Utilize `os.path.join` e `BASE_DIR` para portabilidade.
+- **Tratamento de Erros**: Try-except específicos com `HTTPException` no FastAPI.
+
+## 📝 Fluxo de Evolução & Commits
+Siga: **Modificação -> Registro no Changelog -> Commit**.
+
+### Conventional Commits (PT-BR)
+`[tipo]([escopo]): [descrição detalhada]`
+
+Tipos: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `chore`
+
+Exemplo: `feat(api): migra endpoint de quiz para FastAPI com validação Pydantic`
+
+## ⚠️ Notas de Atenção
+- **Escopo JS**: Não converta o frontend para ES6 Modules (`import/export`).
+- **Parser de Quiz**: O quiz é extraído via Regex de blocos ` ```json ` no final dos `.md`.
+- **Porta 8000**: Se `Address already in use`, use `fuser -k 8000/tcp`.

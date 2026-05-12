@@ -18,14 +18,28 @@ Este projeto é um **Sistema de Gestão de Aprendizado (LMS) Pessoal** que trans
 
 ## 📁 Estrutura do Projeto
 
-```text
-portal_estudos/
-├── licoes/                 # Arquivos .md gerados pela IA (Fonte de estudo)
-├── app.js                  # Lógica de renderização e interatividade
-├── style.css               # Design system e animações
-├── index.html              # Estrutura principal da aplicação
-├── roadmap_data.js         # Definição da estrutura do roteiro
-└── generate_lessons.py     # Motor de geração de conteúdo com IA
+```
+roadmap-estudos/
+├── backend/                    # Servidor Python (FastAPI/serviços)
+│   ├── api/                    # Rotas da API REST
+│   ├── core/                   # Configurações centrais
+│   └── services/               # Lógica de negócio
+│       ├── ai_content/         # Geração de roadmaps e lições
+│       ├── diagnosis/          # Serviço de diagnóstico
+│       ├── quiz/               # Serviço de quizzes
+│       └── dsl/                # Motor DSL
+├── frontend/                   # Interface web
+│   └── public/                 # Arquivos estáticos servidos
+│       ├── index.html          # Página principal
+│       └── assets/             # CSS, JS, dados
+├── data/                       # Roadmaps em JSON
+├── licoes/                     # Lições em Markdown
+├── docs/                       # Documentação técnica
+├── scripts/                    # Utilitários e automação
+├── tests/                      # Testes automatizados
+├── skill/                      # Skill do agente
+├── harness.py                  # Orquestrador de validação
+└── AGENTS.md                   # Instruções para agentes
 ```
 
 ## ⚙️ Configuração e Instalação
@@ -34,25 +48,20 @@ portal_estudos/
 - Python 3.11 ou superior instalado.
 - Ambiente virtual configurado (opcional, mas recomendado).
 
-### 2. Gerando as Lições
-Para preencher o portal com conteúdo gerado por IA, execute o script de geração:
-```bash
-./.venv/bin/python3 portal_estudos/generate_lessons.py
-```
-*O script utiliza o template `anotacao_profissional.md` para garantir alta densidade de informação.*
-
-### 3. Rodando o Servidor
+### 2. Rodando o Servidor
 Inicie o servidor web para visualizar o portal:
 ```bash
-python3 -m http.server 8502 --directory portal_estudos
+cd backend && python main.py
 ```
+*O servidor API estará disponível em `http://localhost:8000`*
 
 ## 📖 Como Usar
 
-1.  Acesse `http://localhost:8502` no seu navegador (Brave/Edge recomendado).
-2.  Navegue pelo roadmap visual para ter a visão geral do curso.
-3.  **Clique em um nó central**: Para visualizar os objetivos gerais daquela área.
-4.  **Clique em um nó de tópico**: Para abrir o conteúdo teórico detalhado no painel lateral.
+1.  Inicie o servidor backend: `cd backend && python main.py`
+2.  Acesse `http://localhost:8000` no navegador
+3.  Navegue pelo roadmap visual para ter a visão geral do curso
+4.  **Clique em um nó central**: Para visualizar os objetivos gerais daquela área
+5.  **Clique em um nó de tópico**: Para abrir o conteúdo teórico detalhado no painel lateral
 
 ## 🧠 Metodologia de Estudo
 O conteúdo gerado segue a técnica de **Síntese Acadêmica**, focando em:

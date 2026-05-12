@@ -1,4 +1,103 @@
-# CHANGELOG - Roadmap-Estudos
+# CHANGELOG
+
+## [v3.0.0] - 2026-05-11
+
+### Alterado
+- **[BREAKING] Migração para FastAPI**: Substituído `http.server` síncrono por **FastAPI** com uvicorn.
+  - **Performance**: Endpoints agora são assíncronos, não bloqueiam em I/O
+  - **Validação automática**: Pydantic v2 valida inputs sem código manual
+  - **Documentação automática**: Swagger UI disponível em `/docs`
+  - **CORS integrado**: Middleware configurado via FastAPI
+
+### Adicionado
+- **Pydantic Models**: Novos modelos em `backend/models/` para validação de entrada:
+  - `GenerateLessonRequest/Response`
+  - `GenerateQuizRequest/Response`
+  - `EvaluateQuizRequest/Response`
+  - `CreateRoadmapRequest/Response`
+  - `DiagnoseRequest/Response`
+- **Rotas FastAPI**: `backend/api/routes_fastapi.py` com todos os endpoints reescritos
+- **Dependências**: `fastapi>=0.111.0`, `uvicorn[standard]>=0.30.0`, `pydantic>=2.0.0`
+
+### Memória Técnica
+**Problema:** O `http.server` é síncrono - bloqueia em cada requisição. Chamadas à API de IA (OpenRouter) eram um gargalo.
+
+**Solução:** FastAPI + uvicorn com `async def` para endpoints de IA:
+- Requisições simultâneas não mais se bloqueiam
+- Pydantic valida schema automaticamente (erro 422 para inputs inválidos)
+- Swagger UI automática para debugging
+
+**Migração de rotas:** Cada método estático em `ApiRoutes` → endpoint FastAPI com `@router.post()` e `async def`.
+
+**Entry point:** `uvicorn backend.main:app --reload` substitui `python main.py` (que usava socketserver).
+
+## [v2.3.1] - 2026-05-11
+
+### Corrigido
+- **[CRÍTICO] Endpoints de quiz incorretos**: Frontend estava chamando `/generate-quiz` e `/evaluate-quiz` mas backend esperava `/api/quiz/generate` e `/api/quiz/evaluate`. Corrigidos todos os endpoints no `app.js`.
+- **[CRÍTICO] Payload de geração de lição**: Frontend enviava `id` mas backend esperava `node_id`. Corrigido payload em `generateLessonContent()`.
+- **Formato de resposta inconsistente**: Endpoints de quiz agora retornam formato padronizado `{"status": "success/error", "quiz": [...], "message": "..."}` com tratamento de erro adequado.
+- **Normalização de nomes de arquivo**: Função `salvar_roadmap()` agora remove acentos e caracteres especiais dos nomes de arquivo usando `unicodedata.normalize()`, evitando problemas com URL encoding.
+
+### Adicionado
+- **Arquivo `.env.example`**: Template de configuração para API key do OpenRouter.
+- **Tratamento de erro robusto**: Todos os endpoints de quiz agora têm try-catch com mensagens de erro descritivas.
+- **Script de validação de formato**: `scripts/validate_content_format.py` valida automaticamente que todos os roadmaps e lições seguem os padrões estabelecidos.
+- **Documentação de padrões**: `docs/PADROES_FORMATO_CONTEUDO.md` documenta todos os formatos obrigatórios para roadmaps, lições e quizzes.
+
+### Memória Técnica
+**Problema 1:** Desalinhamento entre rotas do frontend e backend causava 404 em todas as operações de quiz. Frontend usava convenção `/generate-quiz` enquanto backend seguia padrão REST `/api/quiz/generate`.
+
+**Solução 1:** Padronizado frontend para seguir convenção REST do backend. Alternativa de mudar backend foi rejeitada para manter consistência com outros endpoints (`/api/roadmaps`, `/api/generate-lesson`).
+
+**Problema 2:** Nomes de arquivo com acentuação (`automação`) causavam erro 404 quando frontend tentava carregar via URL encoding (`automa%C3%A7%C3%A3o`). Python criava arquivo com UTF-8 mas sistema de arquivos não resolvia corretamente o encoding na URL.
+
+**Solução 2:** Normalização usando `unicodedata.normalize('NFKD')` + `encode('ASCII', 'ignore')` para remover diacríticos. Isso garante que `"Automação"` → `"automacao"`, compatível com URLs e sistemas de arquivo.
+
+**Problema 3:** Sem validação automática, conteúdo gerado pela IA podia estar em formato incorreto, causando falhas silenciosas no carregamento.
+
+**Solução 3:** Criado script `validate_content_format.py` que verifica:
+- Nomenclatura de arquivos (prefixos, caracteres permitidos)
+- Estrutura JSON de roadmaps (campos obrigatórios, IDs válidos)
+- Formato de lições (markdown, quiz embutido, estrutura de perguntas)
+- Detecta uso de estrutura antiga (children/side) e sugere migração
+
+Script pode ser integrado em CI/CD para validação automática antes de commits.
+
+**Lição aprendida:** 
+1. Manter convenção de rotas consistente em todo o projeto (REST: `/api/recurso/acao`).
+2. Sempre normalizar nomes de arquivo para ASCII ao salvar, especialmente quando serão acessados via URL.
+3. Retornos de API devem sempre incluir `status` para facilitar tratamento de erro no frontend.
+4. Validação automática de formato previne bugs silenciosos e garante qualidade do conteúdo gerado.
+
+## [v2.3.0] - 2026-05-11
+
+### Corrigido
+- **[CRÍTICO] Roadmaps não carregando completamente**: Arquivo `python_fundamentos_v2.json` renomeado para `roadmap_python_fundamentos_v2.json` para seguir o padrão de nomenclatura. A API `list_roadmaps()` agora retorna todos os 3 roadmaps disponíveis (antes retornava apenas 2).
+- **[CRÍTICO] Lições existentes não carregando**: Servidor não estava servindo arquivos do diretório `/licoes`. Adicionado tratamento específico para rota `/licoes/` no `RoadmapHandler.do_GET()` e criado método `_send_file()` para servir arquivos markdown com Content-Type correto.
+
+### Adicionado
+- **Documentação de diagnóstico**: Criado `docs/diagnostico-roadmaps-licoes.md` com análise detalhada do estado atual dos roadmaps e lições, incluindo estatísticas, testes de validação e próximos passos.
+- **Método `_send_file()`**: Novo método no `RoadmapHandler` para servir arquivos de texto/markdown com encoding UTF-8 e Content-Type apropriado.
+
+### Memória Técnica
+**Problema 1:** O método `ApiRoutes.list_roadmaps()` filtra apenas arquivos que começam com `roadmap_` e terminam com `.json`. O arquivo `python_fundamentos_v2.json` não seguia esse padrão, causando sua exclusão da listagem.
+
+**Solução 1:** Renomeação do arquivo para seguir a convenção estabelecida. Alternativa considerada mas não implementada: modificar o filtro da API para ser mais flexível (rejeitada para manter consistência e previsibilidade).
+
+**Problema 2:** O `SimpleHTTPRequestHandler` estava configurado para servir apenas arquivos de `frontend/public` (via parâmetro `directory`). Quando o frontend fazia `fetch('licoes/logica-prog.md')`, o servidor tentava buscar em `frontend/public/licoes/` (que não existe) e retornava 404, mesmo com as lições existindo em `/licoes` na raiz.
+
+**Solução 2:** Adicionado tratamento explícito no `do_GET()` para interceptar requisições que começam com `/licoes/` e servir arquivos diretamente do diretório `/licoes` na raiz do projeto usando `BASE_DIR / "licoes"`. Criado método `_send_file()` que:
+- Lê arquivo com encoding UTF-8
+- Define Content-Type como `text/markdown; charset=utf-8`
+- Inclui headers CORS via `end_headers()` herdado
+- Trata erros com status 500
+
+**Teste de validação:** 12 lições testadas via HTTP, todas retornando 200 OK com conteúdo correto. Frontend agora consegue carregar e renderizar lições existentes.
+
+**Lição aprendida:** 
+1. Convenções de nomenclatura devem ser documentadas e validadas automaticamente. Recomenda-se criar um script de validação que rode em CI/CD para detectar arquivos fora do padrão.
+2. Ao usar `SimpleHTTPRequestHandler` com `directory` customizado, arquivos fora desse diretório não são acessíveis automaticamente. É necessário tratamento explícito no `do_GET()` para servir recursos de outros diretórios. - Roadmap-Estudos
 
 Este documento registra a evolução, decisões técnicas e soluções de problemas do projeto **Roadmap-Estudos**.
 
@@ -72,6 +171,161 @@ Este documento registra a evolução, decisões técnicas e soluções de proble
 - Validação: Backend valida estrutura JSON e frontend valida preenchimento completo
 - UX: Botões de "Tentar Novamente" e "Marcar como Concluído" (apenas se aprovado)
 - Resultado: Experiência fluida de teste de conhecimento com feedback construtivo e seguro
+
+## [v2.9.3] - 2026-05-11
+### Corrigido
+- **CAUSA RAIZ ENCONTRADA**: Padding não estava incluído no box-sizing, causando altura real maior que calculada.
+  - Nó definido como 80px de altura
+  - Padding de 15px top + 15px bottom = 30px extra
+  - Altura real renderizada: 110px (não 80px!)
+  - Espaçamento de 250px menos 30px de padding = 220px efetivo
+  - Gap real: 220 - 110 = 110px (insuficiente)
+- **Solução**: Adicionado `box-sizing: border-box` ao `.flowchart-node`
+  - Agora padding é incluído nos 80px
+  - Espaçamento de 250px funciona corretamente
+  - Gap real: 250 - 80 = 170px ✓
+
+### Memória Técnica
+- O problema NUNCA foi no JavaScript (cálculos estavam corretos)
+- Era CSS: `box-sizing: content-box` (padrão) vs `border-box`
+- Com `content-box`: altura = conteúdo + padding + border
+- Com `border-box`: altura = total (padding e border incluídos)
+- Logs mostravam Y correto (150, 400, 650) mas visualmente sobreposto
+- Isso indicava que o problema era renderização, não cálculo
+
+## [v2.9.2] - 2026-05-11
+### Corrigido
+- **Removido Ajuste Complexo de adjustedY**: Simplificado posicionamento para usar apenas `currentY`.
+  - Removida lógica que empurrava subtópicos para cima e depois ajustava
+  - Nós centrais agora sempre posicionados em `currentY` fixo
+  - Espaçamento de 250px agora funciona corretamente
+
+### Memória Técnica
+- Problema: `adjustedY` estava sendo calculado diferentemente para nós expandidos vs recolhidos
+- Isso causava espaçamento inconsistente mesmo com `fixedSpacing = 250`
+- Lógica antiga tentava centralizar subtópicos empurrando nó para cima, depois ajustando se cortasse
+- Solução: Remover toda lógica de `adjustedY`, usar apenas `currentY` direto
+- Resultado: Espaçamento fixo de 250px finalmente funciona como esperado
+
+## [v2.9.1] - 2026-05-11
+### Alterado
+- **Espaçamento Aumentado para 250px**: Ajustado de 200px para 250px para garantir margem visual adequada.
+  - Margem mínima entre containers: 170px (250 - 80)
+  - Espaçamento confortável para todos os roadmaps
+  - Previne sobreposição visual em qualquer cenário
+
+### Memória Técnica
+- 200px não era suficiente para alguns roadmaps (margem de apenas 120px)
+- 250px garante margem de 170px entre containers, proporcionando respiração visual adequada
+- Fórmula simples: `fixedSpacing = alturaContainer + margemDesejada` → `250 = 80 + 170`
+
+## [v2.9.0] - 2026-05-11
+### Alterado
+- **Espaçamento Fixo Uniforme**: Simplificado para 200px fixo entre todos os nós centrais.
+  - Remove toda complexidade de cálculos dinâmicos
+  - Espaçamento consistente independente do estado (recolhido/expandido)
+  - Previsível e fácil de ajustar
+  - Elimina edge cases e bugs de sobreposição
+
+### Removido
+- Cálculos complexos de média, máximo e altura proporcional
+- Lógica condicional baseada em estado de expansão
+- Fase 1 de pré-cálculo de alturas (não mais necessária para espaçamento)
+
+### Memória Técnica
+- Tentativas anteriores de espaçamento dinâmico causavam inconsistências
+- Fórmulas complexas eram difíceis de debugar e manter
+- Espaçamento fixo de 200px:
+  - Suficiente para nós recolhidos (80px + 120px gap)
+  - Adequado para nós expandidos (permite visualização clara)
+  - Simples, previsível e robusto
+- Princípio KISS (Keep It Simple, Stupid) aplicado com sucesso
+
+## [v2.8.11] - 2026-05-11
+### Corrigido
+- **Espaçamento Correto para Nós Recolhidos**: Diferenciação entre nós recolhidos e expandidos no cálculo.
+  - Ambos recolhidos: `80 + 60 = 140px` (altura completa + gap)
+  - Pelo menos um expandido: `(h1/2) + 60 + (h2/2)` (metade de cada + gap)
+  - Logs de debug adicionados para troubleshooting
+
+### Memória Técnica
+- Problema: Fórmula `(h/2) + gap + (h/2)` assume que subtópicos se expandem bidirecionalmente
+- Quando nó está recolhido (80px), não há subtópicos, então não há expansão bidirecional
+- Usar `(80/2) + 60 + (80/2) = 140px` estava correto matematicamente, mas visualmente os nós ficavam sobrepostos
+- Solução: Detectar quando ambos estão recolhidos e usar altura completa
+- Resultado: `80 + 60 = 140px` para recolhidos, fórmula proporcional para expandidos
+
+## [v2.8.10] - 2026-05-11
+### Corrigido
+- **Espaçamento Proporcional Correto**: Ajustado cálculo para considerar metade da altura de cada nó adjacente.
+  - Fórmula: `(h1/2) + gap + (h2/2)`
+  - Considera que subtópicos se expandem para cima e para baixo do nó central
+  - Espaçamento proporcional ao tamanho real de cada container
+
+### Memória Técnica
+- Problema: Usar `max(h1, h2)` ou média não considerava que subtópicos se expandem em ambas direções
+- Quando nó tem subtópicos, eles ocupam espaço acima e abaixo do centro
+- Solução: Somar metade de cada altura + gap
+  - Nó 1 (80px): ocupa 40px abaixo do centro
+  - Gap: 60px
+  - Nó 2 (80px): ocupa 40px acima do centro
+  - Total: 40 + 60 + 40 = 140px ✓
+- Para nó expandido (500px): 250 + 60 + 40 = 350px ✓
+- Resultado: Espaçamento sempre correto, proporcional ao conteúdo
+
+## [v2.8.9] - 2026-05-11
+### Corrigido
+- **Espaçamento Consistente entre Nós**: Alterado de média para máximo das alturas adjacentes.
+  - Fórmula: `maxHeight = Math.max(h1, h2)` + `minGap`
+  - Garante espaço suficiente independente do estado de expansão
+  - Previne tanto sobreposição quanto gaps excessivos
+
+### Memória Técnica
+- Problema: Média das alturas causava espaçamento inconsistente
+  - Dois nós recolhidos: (80+80)/2 + 60 = 100px (muito próximo)
+  - Nó recolhido + expandido: (80+500)/2 + 60 = 350px (muito longe)
+- Solução: Usar a maior altura garante espaço adequado para ambos os nós
+  - Dois nós recolhidos: max(80,80) + 60 = 140px ✓
+  - Nó recolhido + expandido: max(80,500) + 60 = 560px ✓
+- Resultado: Espaçamento proporcional ao conteúdo real
+
+## [v2.8.8] - 2026-05-11
+### Corrigido
+- **Espaçamento Mínimo entre Nós Centrais**: Garantido espaçamento mínimo de 140px entre nós recolhidos.
+  - Fórmula: `Math.max(avgHeight + minGap, 140)`
+  - Previne que nós fiquem sobrepostos quando todos estão recolhidos
+  - 140px = 80px (altura do nó) + 60px (gap mínimo)
+
+### Adicionado
+- **Script de Correção**: `scripts/fix_roadmap_structure.py` para converter roadmaps com estrutura antiga
+  - Converte `children` + `side` para `subtopics`
+  - Logs detalhados do processo de conversão
+  - Validação de estrutura
+
+### Memória Técnica
+- Problema: Quando todos os nós estavam recolhidos (requiredHeight = 80px), a média resultava em ~70px, causando sobreposição
+- Solução: Espaçamento mínimo absoluto de 140px garante que nós nunca fiquem muito próximos
+- Cálculo: `spacing = max((h1 + h2)/2 + 60, 140)`
+
+## [v2.8.7] - 2026-05-11
+### Corrigido
+- **Geração de Roadmap com Estrutura Correta**: Atualizado `generate_roadmap.py` para gerar estrutura v2.0 com `subtopics`.
+  - Prompt atualizado para especificar estrutura com objetos aninhados
+  - Removido uso de `children` e `side` (estrutura antiga)
+  - Adicionada validação e aviso se estrutura antiga for detectada
+  - IDs agora em kebab-case conforme padrão
+  - Suporte a até 2 níveis de profundidade (subtopics → subtopics)
+
+### Alterado
+- **Prompt de IA**: Instruções detalhadas sobre estrutura v2.0
+- **Validação**: Verifica presença de `nodes` e detecta estrutura antiga
+- **Parsing**: Remove markdown code blocks automaticamente
+
+### Memória Técnica
+- Problema: IA estava gerando estrutura antiga (`children` + `side`) incompatível com novo layout
+- Solução: Prompt explícito com exemplo da estrutura v2.0 e regras claras
+- Validação adicional previne erros silenciosos
+- Roadmaps antigos ainda funcionam (retrocompatibilidade), mas novos usam estrutura correta
 
 ## [v2.8.6] - 2026-05-10
 ### Corrigido

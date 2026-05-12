@@ -1,0 +1,366 @@
+{
+    "title": "Roadmap de Estudos: Automação de Tarefas com Python",
+    "description": "Um guia estruturado para aprender a automatizar tarefas repetitivas utilizando Python, desde os fundamentos até técnicas avançadas.",
+    "nodes": [
+        {
+            "id": "fundamentos-python-automacao",
+            "title": "Fundamentos Essenciais de Python para Automação",
+            "type": "central",
+            "group": "Fundamentos",
+            "difficulty": "easy",
+            "content": "Os blocos de construção necessários em Python para iniciar a automação.",
+            "subtopics": [
+                {
+                    "id": "instalacao-ambiente",
+                    "title": "Instalação e Configuração do Ambiente",
+                    "difficulty": "easy",
+                    "content": "Como instalar Python e configurar um ambiente de desenvolvimento local.",
+                    "subtopics": [
+                        {
+                            "id": "instalacao-python-os",
+                            "title": "Instalação do Python (Windows, macOS, Linux)",
+                            "difficulty": "easy"
+                        },
+                        {
+                            "id": "vscode-setup",
+                            "title": "Configuração do VS Code para Python",
+                            "difficulty": "easy"
+                        },
+                        {
+                            "id": "gerenciadores-pacotes",
+                            "title": "Uso de Pip para Gerenciamento de Pacotes",
+                            "difficulty": "easy"
+                        }
+                    ]
+                },
+                {
+                    "id": "tipos-dados-variaveis",
+                    "title": "Tipos de Dados e Variáveis",
+                    "difficulty": "easy",
+                    "content": "Compreendendo os tipos básicos de dados e como utilizá-los.",
+                    "subtopics": [
+                        {
+                            "id": "numeros-strings",
+                            "title": "Números (inteiros, floats) e Strings",
+                            "difficulty": "easy"
+                        },
+                        {
+                            "id": "booleanos-listas",
+                            "title": "Booleanos, Listas e Tuplas",
+                            "difficulty": "easy"
+                        },
+                        {
+                            "id": "dicionarios-sets",
+                            "title": "Dicionários e Sets",
+                            "difficulty": "medium"
+                        }
+                    ]
+                },
+                {
+                    "id": "estruturas-controle",
+                    "title": "Estruturas de Controle de Fluxo",
+                    "difficulty": "easy",
+                    "content": "Tomando decisões e repetindo ações em seus scripts.",
+                    "subtopics": [
+                        {
+                            "id": "condicionais-if-else",
+                            "title": "Condicionais (if, elif, else)",
+                            "difficulty": "easy"
+                        },
+                        {
+                            "id": "loops-for-while",
+                            "title": "Loops (for, while)",
+                            "difficulty": "easy"
+                        },
+                        {
+                            "id": "break-continue",
+                            "title": "Controle de Loop (break, continue)",
+                            "difficulty": "easy"
+                        }
+                    ]
+                },
+                {
+                    "id": "funcoes-python",
+                    "title": "Funções em Python",
+                    "difficulty": "medium",
+                    "content": "Criando blocos de código reutilizáveis para organizar seus scripts.",
+                    "subtopics": [
+                        {
+                            "id": "definicao-chamada-funcoes",
+                            "title": "Definição e Chamada de Funções",
+                            "difficulty": "easy"
+                        },
+                        {
+                            "id": "argumentos-retornos",
+                            "title": "Argumentos e Valores de Retorno",
+                            "difficulty": "medium"
+                        },
+                        {
+                            "id": "escopo-variaveis",
+                            "title": "Escopo de Variáveis (Local e Global)",
+                            "difficulty": "medium"
+                        }
+                    ]
+                },
+                {
+                    "id": "manipulacao-arquivos",
+                    "title": "Leitura e Escrita de Arquivos",
+                    "difficulty": "medium",
+                    "content": "Interagindo com o sistema de arquivos para ler e gravar dados.",
+                    "subtopics": [
+                        {
+                            "id": "abrir-fechar-arquivos",
+                            "title": "Abrindo e Fechando Arquivos",
+                            "difficulty": "easy"
+                        },
+                        {
+                            "id": "ler-escrever-txt",
+                            "title": "Lendo e Escrevendo em Arquivos .txt",
+                            "difficulty": "easy"
+                        },
+                        {
+                            "id": "trabalhando-csv",
+                            "title": "Trabalhando com Arquivos CSV",
+                            "difficulty": "medium"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "ferramentas-comuns-automacao",
+            "title": "Ferramentas e Bibliotecas para Automação",
+            "type": "central",
+            "group": "Ferramentas Essenciais",
+            "difficulty": "medium",
+            "content": "Explorando bibliotecas Python que simplificam tarefas de automação.",
+            "subtopics": [
+                {
+                    "id": "manipulacao-dados",
+                    "title": "Manipulação e Análise de Dados",
+                    "difficulty": "medium",
+                    "content": "Utilizando bibliotecas poderosas para processar dados.",
+                    "subtopics": [
+                        {
+                            "id": "pandas-introducao",
+                            "title": "Introdução ao Pandas",
+                            "difficulty": "medium"
+                        },
+                        {
+                            "id": "dataframes-operacoes",
+                            "title": "Operações com DataFrames",
+                            "difficulty": "medium"
+                        },
+                        {
+                            "id": "leitura-arquivos-pandas",
+                            "title": "Leitura de Diversos Formatos (Excel, JSON, SQL) com Pandas",
+                            "difficulty": "medium"
+                        }
+                    ]
+                },
+                {
+                    "id": "web-scraping",
+                    "title": "Web Scraping e Automação Web",
+                    "difficulty": "hard",
+                    "content": "Extraindo informações de websites e interagindo com navegadores.",
+                    "subtopics": [
+                        {
+                            "id": "requests-beautifulsoup",
+                            "title": "Bibliotecas Requests e Beautiful Soup",
+                            "difficulty": "medium"
+                        },
+                        {
+                            "id": "selenium-introducao",
+                            "title": "Introdução ao Selenium WebDriver",
+                            "difficulty": "hard"
+                        },
+                        {
+                            "id": "interacao-elementos",
+                            "title": "Localização e Interação com Elementos Web",
+                            "difficulty": "hard"
+                        }
+                    ]
+                },
+                {
+                    "id": "automacao-desktop",
+                    "title": "Automação de Tarefas de Desktop",
+                    "difficulty": "medium",
+                    "content": "Automatizando interação com a interface gráfica do usuário.",
+                    "subtopics": [
+                        {
+                            "id": "pyautogui-funcoes",
+                            "title": "PyAutoGUI: Movimentação do Mouse e Teclado",
+                            "difficulty": "medium"
+                        },
+                        {
+                            "id": "reconhecimento-imagem",
+                            "title": "PyAutoGUI: Reconhecimento de Imagem",
+                            "difficulty": "medium"
+                        },
+                        {
+                            "id": "automacao-interface",
+                            "title": "Automação de Janelas e Aplicações",
+                            "difficulty": "medium"
+                        }
+                    ]
+                },
+                {
+                    "id": "manipulacao-excel",
+                    "title": "Automação com Planilhas Excel",
+                    "difficulty": "medium",
+                    "content": "Processando e gerando arquivos Excel de forma programática.",
+                    "subtopics": [
+                        {
+                            "id": "openpyxl-leitura",
+                            "title": "Leitura e Escrita com Openpyxl",
+                            "difficulty": "medium"
+                        },
+                        {
+                            "id": "manipulacao-celulas",
+                            "title": "Formatação de Células e Planilhas",
+                            "difficulty": "medium"
+                        }
+                    ]
+                },
+                {
+                    "id": "manipulacao-pdf",
+                    "title": "Automação de Arquivos PDF",
+                    "difficulty": "medium",
+                    "content": "Lendo, escrevendo e manipulando documentos PDF.",
+                    "subtopics": [
+                        {
+                            "id": "PyPDF2-operacoes",
+                            "title": "Operações Básicas com PyPDF2",
+                            "difficulty": "medium"
+                        },
+                        {
+                            "id": "extracao-texto",
+                            "title": "Extração de Texto e União de Páginas",
+                            "difficulty": "medium"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "temas-avancados-automacao",
+            "title": "Tópicos Avançados e Boas Práticas",
+            "type": "central",
+            "group": "Profissionalização",
+            "difficulty": "hard",
+            "content": "Aprofundando em técnicas mais complexas e aspectos de engenharia de software.",
+            "subtopics": [
+                {
+                    "id": "programacao-orientada-objetos",
+                    "title": "Programação Orientada a Objetos (POO)",
+                    "difficulty": "medium",
+                    "content": "Estruturando código complexo de forma modular e reutilizável.",
+                    "subtopics": [
+                        {
+                            "id": "conceitos-poo",
+                            "title": "Conceitos Fundamentais (Classes, Objetos, Encapsulamento)",
+                            "difficulty": "medium"
+                        },
+                        {
+                            "id": "heranca-polimorfismo",
+                            "title": "Herança e Polimorfismo",
+                            "difficulty": "medium"
+                        },
+                        {
+                            "id": "aplicacao-poo",
+                            "title": "Aplicação de POO em Projetos de Automação",
+                            "difficulty": "hard"
+                        }
+                    ]
+                },
+                {
+                    "id": "expressao-regular",
+                    "title": "Expressões Regulares (Regex)",
+                    "difficulty": "hard",
+                    "content": "Padrões poderosos para busca e manipulação de texto.",
+                    "subtopics": [
+                        {
+                            "id": "sintaxe-regex",
+                            "title": "Sintaxe e Metacaracteres Fundamentais",
+                            "difficulty": "hard"
+                        },
+                        {
+                            "id": "utilizando-re",
+                            "title": "Uso do Módulo 're' do Python",
+                            "difficulty": "hard"
+                        },
+                        {
+                            "id": "casos-uso-regex",
+                            "title": "Casos de Uso Comuns em Automação",
+                            "difficulty": "hard"
+                        }
+                    ]
+                },
+                {
+                    "id": "gerenciamento-erros",
+                    "title": "Tratamento de Erros e Exceções",
+                    "difficulty": "medium",
+                    "content": "Tornando seus scripts mais robustos contra falhas inesperadas.",
+                    "subtopics": [
+                        {
+                            "id": "try-except",
+                            "title": "Blocos Try-Except",
+                            "difficulty": "medium"
+                        },
+                        {
+                            "id": "tipos-excecoes",
+                            "title": "Tipos Comuns de Exceções e Como Tratá-las",
+                            "difficulty": "medium"
+                        },
+                        {
+                            "id": "finally-raise",
+                            "title": "Cláusulas Finally e Raise de Exceções",
+                            "difficulty": "medium"
+                        }
+                    ]
+                },
+                {
+                    "id": "agendamento-tarefas",
+                    "title": "Agendamento de Tarefas",
+                    "difficulty": "medium",
+                    "content": "Execução automática de scripts em horários programados.",
+                    "subtopics": [
+                        {
+                            "id": "apscheduler-basico",
+                            "title": "Introdução ao APScheduler",
+                            "difficulty": "medium"
+                        },
+                        {
+                            "id": "tipos-agendamentos",
+                            "title": "Agendamentos Fixos e Cron",
+                            "difficulty": "medium"
+                        }
+                    ]
+                },
+                {
+                    "id": "projetos-praticos",
+                    "title": "Desenvolvimento de Projetos Práticos",
+                    "difficulty": "hard",
+                    "content": "Integrando conhecimentos em projetos reais de automação.",
+                    "subtopics": [
+                        {
+                            "id": "planejamento-projeto",
+                            "title": "Planejamento e Definição de Escopo",
+                            "difficulty": "medium"
+                        },
+                        {
+                            "id": "refatoracao-codigo",
+                            "title": "Boas Práticas de Código e Refatoração",
+                            "difficulty": "hard"
+                        },
+                        {
+                            "id": "deploy-compartilhamento",
+                            "title": "Empacotamento e Compartilhamento de Scripts",
+                            "difficulty": "hard"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
