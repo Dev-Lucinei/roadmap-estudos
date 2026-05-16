@@ -1,5 +1,6 @@
+"""Geração de lições educacionais via OpenRouter API."""
+
 import os
-from openai import OpenAI
 from backend.core.config import (
     OPENROUTER_API_KEY,
     OPENROUTER_BASE_URL,
@@ -7,16 +8,27 @@ from backend.core.config import (
     check_api_key,
 )
 
+try:
+    from openai import OpenAI
+except ImportError:
+    OpenAI = None  # type: ignore
 
-def get_client():
+
+def get_client() -> "OpenAI":
+    """Retorna cliente OpenAI configurado para OpenRouter."""
+    if OpenAI is None:
+        raise ImportError("openai package not installed")
     check_api_key()
+    if OpenAI is None:
+        raise ImportError("openai package not installed")
     return OpenAI(
         base_url=OPENROUTER_BASE_URL,
         api_key=OPENROUTER_API_KEY,
     )
 
 
-def gerar_conteudo_ia(topico, tipo):
+def gerar_conteudo_ia(topico: str, tipo: str) -> str | None:
+    """Gera conteúdo de lição via OpenRouter API."""
     client = get_client()
     prompt = f"""
     Você é um professor de Engenharia de Software especialista em criar conteúdo educacional focado e conciso.
@@ -77,7 +89,10 @@ def gerar_conteudo_ia(topico, tipo):
     return response.choices[0].message.content
 
 
-def processar_node(node_id, title, node_type, output_dir=None):
+def processar_node(
+    node_id: str, title: str, node_type: str, output_dir: str | None = None
+) -> str:
+    """Gera uma lição para um nó do roadmap e salva em Markdown."""
     if output_dir is None:
         output_dir = LICOES_DIR
 

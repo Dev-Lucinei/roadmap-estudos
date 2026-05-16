@@ -1,0 +1,359 @@
+{
+  "project_id": "roadmap-estudos",
+  "last_update": "2026-05-16T00:11:00.245981Z",
+  "tasks": [
+    {
+      "id": "TASK-1.1",
+      "assigned_agent": "",
+      "status": "completed",
+      "priority": "H",
+      "dependencies": [],
+      "input_data": "",
+      "output_log": "Estrutura de diret\u00f3rios criada: backend/, frontend/, data/, licoes/, scripts/, tests/",
+      "result_path": ""
+    },
+    {
+      "id": "TASK-1.2",
+      "assigned_agent": "",
+      "status": "completed",
+      "priority": "H",
+      "dependencies": [
+        "TASK-1.1"
+      ],
+      "input_data": "",
+      "output_log": "harness.py e guard_harness.py configurados com --seal",
+      "result_path": "harness.py"
+    },
+    {
+      "id": "TASK-1.3",
+      "assigned_agent": "",
+      "status": "completed",
+      "priority": "H",
+      "dependencies": [
+        "TASK-1.1"
+      ],
+      "input_data": "",
+      "output_log": "Depend\u00eancias configuradas: FastAPI, Pydantic, OpenAI SDK, pytest, ruff, mypy",
+      "result_path": "pyproject.toml"
+    },
+    {
+      "id": "TASK-2.1",
+      "assigned_agent": "",
+      "status": "completed",
+      "priority": "H",
+      "dependencies": [
+        "TASK-1.3"
+      ],
+      "input_data": "",
+      "output_log": "Models Pydantic criados: lesson.py, quiz.py, roadmap.py, diagnosis.py",
+      "result_path": "backend/models/"
+    },
+    {
+      "id": "TASK-2.2",
+      "assigned_agent": "",
+      "status": "completed",
+      "priority": "H",
+      "dependencies": [
+        "TASK-2.1"
+      ],
+      "input_data": "",
+      "output_log": "FastAPI APIRouter com 9 endpoints implementados, migra\u00e7\u00e3o de http.server conclu\u00edda",
+      "result_path": "backend/api/routes_fastapi.py"
+    },
+    {
+      "id": "TASK-2.3",
+      "assigned_agent": "",
+      "status": "completed",
+      "priority": "H",
+      "dependencies": [
+        "TASK-2.1"
+      ],
+      "input_data": "",
+      "output_log": "roadmap_generator.py com chamadas OpenRouter para gerar roadmaps",
+      "result_path": "backend/services/ai_content/roadmap_generator.py"
+    },
+    {
+      "id": "TASK-2.4",
+      "assigned_agent": "",
+      "status": "completed",
+      "priority": "H",
+      "dependencies": [
+        "TASK-2.1"
+      ],
+      "input_data": "",
+      "output_log": "lesson_generator.py com suporte a quizzes Markdown embutidos",
+      "result_path": "backend/services/ai_content/lesson_generator.py"
+    },
+    {
+      "id": "TASK-2.5",
+      "assigned_agent": "",
+      "status": "completed",
+      "priority": "H",
+      "dependencies": [
+        "TASK-2.1"
+      ],
+      "input_data": "",
+      "output_log": "QuizService: gera\u00e7\u00e3o de 4 perguntas e avalia\u00e7\u00e3o via IA",
+      "result_path": "backend/services/quiz/quiz_service.py"
+    },
+    {
+      "id": "TASK-2.6",
+      "assigned_agent": "",
+      "status": "completed",
+      "priority": "H",
+      "dependencies": [
+        "TASK-2.1"
+      ],
+      "input_data": "",
+      "output_log": "DiagnosisService: an\u00e1lise de gaps com dep_map.json",
+      "result_path": "backend/services/diagnosis/diagnosis_service.py"
+    },
+    {
+      "id": "TASK-3.1",
+      "assigned_agent": "",
+      "status": "completed",
+      "priority": "H",
+      "dependencies": [
+        "TASK-2.2"
+      ],
+      "input_data": "",
+      "output_log": "SPA com tema escuro glassmorphism: index.html, main.css, app.js",
+      "result_path": "frontend/public/"
+    },
+    {
+      "id": "TASK-3.2",
+      "assigned_agent": "",
+      "status": "completed",
+      "priority": "H",
+      "dependencies": [
+        "TASK-3.1"
+      ],
+      "input_data": "",
+      "output_log": "Fluxograma SVG com bezier curves e altern\u00e2ncia de lados",
+      "result_path": "frontend/public/assets/flowchart_layout.js"
+    },
+    {
+      "id": "TASK-3.3",
+      "assigned_agent": "",
+      "status": "completed",
+      "priority": "M",
+      "dependencies": [
+        "TASK-3.2"
+      ],
+      "input_data": "",
+      "output_log": "Expans\u00e3o/recolhimento com anima\u00e7\u00e3o suave, toggle por n\u00f3",
+      "result_path": "frontend/public/assets/flowchart_layout.js"
+    },
+    {
+      "id": "TASK-3.4",
+      "assigned_agent": "",
+      "status": "completed",
+      "priority": "M",
+      "dependencies": [
+        "TASK-3.2"
+      ],
+      "input_data": "",
+      "output_log": "Algoritmo de posicionamento din\u00e2mico para evitar sobreposi\u00e7\u00e3o",
+      "result_path": "frontend/public/assets/flowchart_layout.js"
+    },
+    {
+      "id": "TASK-4.1",
+      "assigned_agent": "",
+      "status": "completed",
+      "priority": "M",
+      "dependencies": [],
+      "input_data": "",
+      "output_log": "validate_content_format.py: valida naming, estrutura JSON, formato quiz",
+      "result_path": "scripts/validate_content_format.py"
+    },
+    {
+      "id": "TASK-4.2",
+      "assigned_agent": "",
+      "status": "completed",
+      "priority": "H",
+      "dependencies": [],
+      "input_data": "",
+      "output_log": "guard_harness.py: SHA256, chattr +i, git dirty detection",
+      "result_path": "scripts/guard_harness.py"
+    },
+    {
+      "id": "TASK-4.3",
+      "assigned_agent": "",
+      "status": "completed",
+      "priority": "H",
+      "dependencies": [
+        "TASK-4.2"
+      ],
+      "input_data": "",
+      "output_log": "harness.py unificado: lint, type, test, audit, security, structure, content",
+      "result_path": "harness.py"
+    },
+    {
+      "id": "TASK-4.4",
+      "assigned_agent": "",
+      "status": "completed",
+      "priority": "H",
+      "dependencies": [
+        "TASK-2.2"
+      ],
+      "input_data": "",
+      "output_log": "Sanitiza\u00e7\u00e3o de path traversal e XSS nas rotas",
+      "result_path": "backend/api/routes_fastapi.py"
+    },
+    {
+      "id": "TASK-5.1",
+      "assigned_agent": "",
+      "status": "completed",
+      "priority": "M",
+      "dependencies": [
+        "TASK-2.6"
+      ],
+      "input_data": "",
+      "output_log": "Testes de diagn\u00f3stico: test_diagnosis.py (4), test_api.py (6)",
+      "result_path": "tests/"
+    },
+    {
+      "id": "TASK-5.2",
+      "assigned_agent": "",
+      "status": "completed",
+      "priority": "M",
+      "dependencies": [],
+      "input_data": "",
+      "output_log": "Testes do motor DSL: test_dsl_engine.py (9 testes)",
+      "result_path": "tests/test_dsl_engine.py"
+    },
+    {
+      "id": "TASK-5.3",
+      "assigned_agent": "",
+      "status": "completed",
+      "priority": "H",
+      "dependencies": [
+        "TASK-5.1"
+      ],
+      "input_data": "tests/test_api.py",
+      "output_log": "Corrigido import lazy do OpenAI em diagnosis_service.py + try/except no module-level import para compatibilidade com pytest do sistema. 21/21 testes passando.",
+      "result_path": "backend/services/diagnosis/diagnosis_service.py",
+      "last_update": "2026-05-15T02:36:49.251181Z"
+    },
+    {
+      "id": "TASK-5.4",
+      "assigned_agent": "",
+      "status": "completed",
+      "priority": "M",
+      "dependencies": [
+        "TASK-5.3"
+      ],
+      "input_data": "",
+      "output_log": "Adicionados docstrings e return types em todo backend (~93 avisos de audit resolvidos). 0 erros de audit, 0 warnings de audit.",
+      "result_path": "",
+      "last_update": "2026-05-15T02:49:38.614032Z"
+    },
+    {
+      "id": "TASK-6.1",
+      "assigned_agent": "",
+      "status": "completed",
+      "priority": "H",
+      "dependencies": [],
+      "input_data": "data/dep_map.json",
+      "output_log": "dep_map.json expandido com 30+ entradas cobrindo programa\u00e7\u00e3o, web, devops, data science, CS e engenharia de software",
+      "result_path": "data/dep_map.json",
+      "last_update": "2026-05-16T00:11:00.245959Z"
+    },
+    {
+      "id": "TASK-6.2",
+      "assigned_agent": "",
+      "status": "pending",
+      "priority": "H",
+      "dependencies": [
+        "TASK-6.1"
+      ],
+      "input_data": "",
+      "output_log": "",
+      "result_path": ""
+    },
+    {
+      "id": "TASK-6.3",
+      "assigned_agent": "",
+      "status": "pending",
+      "priority": "M",
+      "dependencies": [
+        "TASK-6.2"
+      ],
+      "input_data": "",
+      "output_log": "",
+      "result_path": ""
+    },
+    {
+      "id": "TASK-7.1",
+      "assigned_agent": "",
+      "status": "pending",
+      "priority": "L",
+      "dependencies": [],
+      "input_data": "backend/services/dsl/engine.py",
+      "output_log": "",
+      "result_path": ""
+    },
+    {
+      "id": "TASK-7.2",
+      "assigned_agent": "",
+      "status": "pending",
+      "priority": "L",
+      "dependencies": [
+        "TASK-7.1"
+      ],
+      "input_data": "",
+      "output_log": "",
+      "result_path": ""
+    },
+    {
+      "id": "TASK-7.3",
+      "assigned_agent": "",
+      "status": "pending",
+      "priority": "L",
+      "dependencies": [
+        "TASK-7.2"
+      ],
+      "input_data": "",
+      "output_log": "",
+      "result_path": ""
+    },
+    {
+      "id": "TASK-F.1",
+      "assigned_agent": "",
+      "status": "pending",
+      "priority": "M",
+      "dependencies": [
+        "TASK-5.4",
+        "TASK-6.3",
+        "TASK-7.3"
+      ],
+      "input_data": "",
+      "output_log": "",
+      "result_path": ""
+    },
+    {
+      "id": "TASK-F.2",
+      "assigned_agent": "",
+      "status": "pending",
+      "priority": "M",
+      "dependencies": [
+        "TASK-F.1"
+      ],
+      "input_data": "",
+      "output_log": "",
+      "result_path": ""
+    },
+    {
+      "id": "TASK-F.3",
+      "assigned_agent": "",
+      "status": "pending",
+      "priority": "M",
+      "dependencies": [
+        "TASK-F.2"
+      ],
+      "input_data": "",
+      "output_log": "",
+      "result_path": ""
+    }
+  ]
+}

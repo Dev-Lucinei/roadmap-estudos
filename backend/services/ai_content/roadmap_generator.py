@@ -1,7 +1,8 @@
+"""Geração de roadmaps de estudo via OpenRouter API."""
+
 import json
 import os
 import re
-from openai import OpenAI
 from backend.core.config import (
     OPENROUTER_API_KEY,
     OPENROUTER_BASE_URL,
@@ -9,16 +10,27 @@ from backend.core.config import (
     check_api_key,
 )
 
+try:
+    from openai import OpenAI
+except ImportError:
+    OpenAI = None  # type: ignore
 
-def get_client():
+
+def get_client() -> "OpenAI":
+    """Retorna cliente OpenAI configurado para OpenRouter."""
+    if OpenAI is None:
+        raise ImportError("openai package not installed")
     check_api_key()
+    if OpenAI is None:
+        raise ImportError("openai package not installed")
     return OpenAI(
         base_url=OPENROUTER_BASE_URL,
         api_key=OPENROUTER_API_KEY,
     )
 
 
-def gerar_roadmap_ia(tema):
+def gerar_roadmap_ia(tema: str) -> dict | None:
+    """Gera um roadmap de estudos via OpenRouter API."""
     client = get_client()
     prompt = f"""
     Você é um arquiteto de currículo técnico. Gere um objeto JSON que represente um roadmap de estudos sobre o tema '{tema}'.
@@ -87,7 +99,8 @@ def gerar_roadmap_ia(tema):
         return None
 
 
-def salvar_roadmap(tema, dados):
+def salvar_roadmap(tema: str, dados: dict) -> str:
+    """Salva um roadmap no diretório de dados."""
     if not os.path.exists(DATA_DIR):
         os.makedirs(DATA_DIR)
 

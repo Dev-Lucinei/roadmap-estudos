@@ -1,3 +1,5 @@
+"""Configurações centrais do Roadmap-Estudos."""
+
 import os
 from pathlib import Path
 
@@ -16,6 +18,7 @@ if env_path.exists():
             os.environ.setdefault(key.strip(), value.strip())
 
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+OPENROUTER_API_KEY: str | None = os.getenv("OPENROUTER_API_KEY")
 
 
 def get_api_key() -> str | None:

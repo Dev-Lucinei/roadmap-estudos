@@ -1,3 +1,5 @@
+"""Rotas legado do servidor http.server (mantido para compatibilidade)."""
+
 import json
 import os
 from backend.core.config import DATA_DIR
@@ -14,8 +16,11 @@ diagnosis_service = DiagnosisService()
 
 
 class ApiRoutes:
+    """Rotas legado do servidor http.server (mantido para compatibilidade)."""
+
     @staticmethod
-    def list_roadmaps():
+    def list_roadmaps() -> list[str]:
+        """Lista todos os roadmaps disponíveis no diretório de dados."""
         roadmaps = []
         if os.path.exists(DATA_DIR):
             for f in os.listdir(DATA_DIR):
@@ -24,7 +29,8 @@ class ApiRoutes:
         return roadmaps
 
     @staticmethod
-    def load_roadmap(roadmap_id):
+    def load_roadmap(roadmap_id: str) -> dict | None:
+        """Carrega um roadmap pelo ID."""
         path = os.path.join(DATA_DIR, f"roadmap_{roadmap_id}.json")
         if os.path.exists(path):
             with open(path, "r", encoding="utf-8") as f:
@@ -32,7 +38,8 @@ class ApiRoutes:
         return None
 
     @staticmethod
-    def get_dep_map():
+    def get_dep_map() -> dict:
+        """Retorna o mapa de dependências entre tópicos."""
         path = os.path.join(DATA_DIR, "dep_map.json")
         if os.path.exists(path):
             with open(path, "r", encoding="utf-8") as f:
@@ -40,7 +47,8 @@ class ApiRoutes:
         return {}
 
     @staticmethod
-    def generate_lesson(data):
+    def generate_lesson(data: dict) -> dict | None:
+        """Gera uma lição para o nó especificado."""
         node_id = data.get("node_id")
         title = data.get("title")
         node_type = data.get("type", "subtopic")
@@ -50,7 +58,8 @@ class ApiRoutes:
         return None
 
     @staticmethod
-    def create_roadmap(data):
+    def create_roadmap(data: dict) -> dict | None:
+        """Cria um novo roadmap com base no tema fornecido."""
         tema = data.get("tema")
         if tema:
             roadmap_data = gerar_roadmap_ia(tema)
@@ -60,7 +69,8 @@ class ApiRoutes:
         return None
 
     @staticmethod
-    def handle_quiz_generate(data):
+    def handle_quiz_generate(data: dict) -> dict:
+        """Gera um quiz para a lição especificada."""
         node_id = data.get("node_id")
         title = data.get("title")
         if node_id and title:
@@ -77,7 +87,8 @@ class ApiRoutes:
         }
 
     @staticmethod
-    def handle_quiz_evaluate(data):
+    def handle_quiz_evaluate(data: dict) -> dict:
+        """Avalia as respostas de um quiz."""
         node_id = data.get("node_id")
         title = data.get("title")
         quiz_data = data.get("quiz_data")
@@ -93,7 +104,8 @@ class ApiRoutes:
         return {"status": "error", "message": "Parâmetros inválidos"}
 
     @staticmethod
-    def handle_diagnose(data):
+    def handle_diagnose(data: dict) -> dict | None:
+        """Realiza diagnóstico de conhecimento."""
         topic = data.get("topic")
         user_answer = data.get("user_answer")
         if topic and user_answer:

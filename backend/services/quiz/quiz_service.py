@@ -1,7 +1,8 @@
+"""Serviço de geração e avaliação de quizzes educacionais."""
+
 import json
 import os
 import re
-from openai import OpenAI
 from backend.core.config import (
     OPENROUTER_API_KEY,
     OPENROUTER_BASE_URL,
@@ -9,19 +10,30 @@ from backend.core.config import (
     check_api_key,
 )
 
+try:
+    from openai import OpenAI
+except ImportError:
+    OpenAI = None  # type: ignore
+
 
 class QuizService:
-    def __init__(self, licoes_dir=LICOES_DIR):
+    """Serviço para gerar e avaliar quizzes a partir de lições."""
+
+    def __init__(self, licoes_dir: str = LICOES_DIR):
         self.licoes_dir = licoes_dir
 
-    def get_client(self):
+    def get_client(self) -> "OpenAI":
+        """Retorna cliente OpenAI configurado para OpenRouter."""
         check_api_key()
+        if OpenAI is None:
+            raise ImportError("openai package not installed")
         return OpenAI(
             base_url=OPENROUTER_BASE_URL,
             api_key=OPENROUTER_API_KEY,
         )
 
-    def generate_quiz(self, node_id, title):
+    def generate_quiz(self, node_id: str, title: str) -> list[dict]:
+        """Gera um quiz de múltipla escolha baseado no conteúdo de uma lição."""
         lesson_path = os.path.join(self.licoes_dir, f"{node_id}.md")
         if not os.path.exists(lesson_path):
             raise FileNotFoundError(f"Lição {node_id} não encontrada")
@@ -75,7 +87,10 @@ Responda APENAS com o JSON, sem texto adicional."""
 
         return quiz_data
 
-    def evaluate_quiz(self, node_id, title, quiz_data, user_answers):
+    def evaluate_quiz(
+        self, node_id: str, title: str, quiz_data: list[dict], user_answers: dict
+    ) -> dict:
+        """Avalia as respostas do usuário comparando com o gabarito e gera feedback via IA."""
         lesson_path = os.path.join(self.licoes_dir, f"{node_id}.md")
         lesson_content = ""
         if os.path.exists(lesson_path):

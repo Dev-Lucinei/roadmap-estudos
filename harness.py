@@ -1102,7 +1102,7 @@ class ValidationHarness:
             status="success" if not is_fail else "fail",
             exit_code=0 if not is_fail else 1,
             duration_ms=duration,
-            stdout=f"Validados roadmaps e lições",
+            stdout="Validados roadmaps e lições",
             stderr="",
             errors=errors,
         )
@@ -1119,7 +1119,9 @@ class ValidationHarness:
         elif "ID" in message and "inválido" in message:
             return "Converter ID para kebab-case (apenas a-z, 0-9, -, _)"
         elif "não contém quiz embutido" in message:
-            return "Adicionar bloco ```json com quiz de 3+ perguntas ao final do arquivo"
+            return (
+                "Adicionar bloco ```json com quiz de 3+ perguntas ao final do arquivo"
+            )
         elif "quiz tem menos de 3 perguntas" in message:
             return "Adicionar mais perguntas ao quiz (mínimo 3)"
         elif "deve ter exatamente 4 opções" in message:

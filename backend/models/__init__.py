@@ -1,3 +1,5 @@
+"""Modelos Pydantic para validação de dados da API."""
+
 from .lesson import GenerateLessonRequest, GenerateLessonResponse
 from .quiz import (
     GenerateQuizRequest,

@@ -1,6 +1,7 @@
+"""Serviço de diagnóstico de gaps de conhecimento via IA."""
+
 import json
 import os
-from openai import OpenAI
 from backend.core.config import (
     OPENROUTER_BASE_URL,
     DATA_DIR,
@@ -8,19 +9,30 @@ from backend.core.config import (
     get_api_key,
 )
 
+try:
+    from openai import OpenAI
+except ImportError:
+    OpenAI = None  # type: ignore
+
 
 class DiagnosisService:
+    """Analisa lacunas de conhecimento usando IA e mapa de dependências."""
+
     def __init__(self, data_dir: str = DATA_DIR):
         self.data_dir = data_dir
 
-    def get_client(self) -> OpenAI:
+    def get_client(self) -> "OpenAI":
+        """Retorna cliente OpenAI configurado para OpenRouter."""
         check_api_key()
+        if OpenAI is None:
+            raise ImportError("openai package not installed")
         return OpenAI(
             base_url=OPENROUTER_BASE_URL,
             api_key=get_api_key() or "",
         )
 
     def diagnose(self, topic: str, user_answer: str) -> dict:
+        """Diagnostica o conhecimento do usuário sobre um tópico usando IA."""
         dep_map_path = os.path.join(self.data_dir, "dep_map.json")
         if not os.path.exists(dep_map_path):
             raise FileNotFoundError("Mapa de dependências não encontrado")
