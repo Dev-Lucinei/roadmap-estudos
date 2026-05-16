@@ -31,33 +31,39 @@
     border-radius: 12px;
     padding: 15px 20px;
     cursor: pointer;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
     z-index: 10;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     box-sizing: border-box; /* Padding incluído na altura */
 }
 
 .flowchart-node:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-    border-color: var(--accent-color);
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 8px 30px var(--accent-glow), 0 0 60px var(--accent-glow);
+    border-color: var(--accent-primary);
 }
 
 /* Nível 0 - Nós Centrais */
 .flowchart-node.level-0 {
     background: linear-gradient(135deg, 
-        rgba(138, 43, 226, 0.15), 
-        rgba(75, 0, 130, 0.15)
+        rgba(245, 158, 11, 0.15), 
+        rgba(217, 119, 6, 0.15)
     );
-    border: 2px solid var(--accent-color);
+    border: 2px solid var(--accent-primary);
     font-weight: 600;
     font-size: 1.1rem;
+    animation: nodePulse 3s ease-in-out infinite;
+}
+
+@keyframes nodePulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(245, 158, 11, 0.1); }
+    50% { box-shadow: 0 0 40px rgba(245, 158, 11, 0.2); }
 }
 
 .flowchart-node.level-0:hover {
     background: linear-gradient(135deg, 
-        rgba(138, 43, 226, 0.25), 
-        rgba(75, 0, 130, 0.25)
+        rgba(245, 158, 11, 0.25), 
+        rgba(217, 119, 6, 0.25)
     );
 }
 
@@ -69,7 +75,7 @@
 
 /* Nível 2 - Sub-subtópicos */
 .flowchart-node.level-2 {
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--glass-bg);
     font-size: 0.85rem;
     padding: 10px 15px;
 }
@@ -94,7 +100,7 @@
     left: 10px;
     top: 50%;
     transform: translateY(-50%);
-    color: var(--accent-color);
+    color: var(--accent-primary);
     font-size: 0.8rem;
     transition: transform 0.3s ease;
     pointer-events: none;
@@ -121,7 +127,7 @@
     transform: translateX(-50%);
     width: 20px;
     height: 3px;
-    background: var(--accent-color);
+    background: var(--accent-primary);
     border-radius: 2px;
     opacity: 0.6;
 }
@@ -131,47 +137,47 @@
     position: absolute;
     top: -8px;
     right: -8px;
-    background: var(--accent-color);
+    background: var(--accent-primary);
     color: white;
     font-size: 0.7rem;
     padding: 3px 8px;
     border-radius: 10px;
     font-weight: 600;
     text-transform: uppercase;
-    box-shadow: 0 2px 8px rgba(138, 43, 226, 0.4);
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
 }
 
 /* Cores por Dificuldade */
 .flowchart-node.difficulty-easy {
-    border-left: 4px solid #4ade80;
+    border-left: 4px solid var(--success);
 }
 
 .flowchart-node.difficulty-medium {
-    border-left: 4px solid #fbbf24;
+    border-left: 4px solid var(--medium);
 }
 
 .flowchart-node.difficulty-hard {
-    border-left: 4px solid #f87171;
+    border-left: 4px solid var(--hard);
 }
 
 .flowchart-node.difficulty-easy .flowchart-node-badge {
-    background: #4ade80;
+    background: var(--success);
 }
 
 .flowchart-node.difficulty-medium .flowchart-node-badge {
-    background: #fbbf24;
+    background: var(--medium);
 }
 
 .flowchart-node.difficulty-hard .flowchart-node-badge {
-    background: #f87171;
+    background: var(--hard);
 }
 
 /* Estado Completo */
 .flowchart-node.completed {
-    border-color: #4ade80;
+    border-color: var(--success);
     background: linear-gradient(135deg, 
-        rgba(74, 222, 128, 0.1), 
-        rgba(34, 197, 94, 0.1)
+        rgba(16, 185, 129, 0.1), 
+        rgba(5, 150, 105, 0.1)
     );
 }
 
@@ -180,7 +186,7 @@
     position: absolute;
     top: 8px;
     left: 8px;
-    color: #4ade80;
+    color: var(--success);
     font-size: 1.2rem;
     font-weight: bold;
 }
@@ -204,7 +210,7 @@
 /* Animação das Conexões SVG */
 @keyframes flowchartPathDraw {
     from {
-        stroke-dashoffset: 1000;
+        stroke-dashoffset: 2000;
         opacity: 0;
     }
     to {
@@ -214,9 +220,15 @@
 }
 
 .flowchart-svg path {
-    stroke-dasharray: 1000;
-    animation: flowchartPathDraw 1s ease-out forwards;
+    stroke-dasharray: 2000;
+    animation: flowchartPathDraw 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
+
+.flowchart-svg path:nth-child(1) { animation-delay: 0.1s; }
+.flowchart-svg path:nth-child(2) { animation-delay: 0.2s; }
+.flowchart-svg path:nth-child(3) { animation-delay: 0.3s; }
+.flowchart-svg path:nth-child(4) { animation-delay: 0.4s; }
+.flowchart-svg path:nth-child(5) { animation-delay: 0.5s; }
 
 /* Responsividade */
 @media (max-width: 1400px) {
@@ -270,7 +282,81 @@
 }
 
 .flowchart-control-btn:hover {
-    background: var(--accent-color);
+    background: var(--accent-primary);
     color: white;
     transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+    .flowchart-container {
+        padding: 60px 10px 20px;
+        min-height: auto;
+        touch-action: pan-y pinch-zoom;
+    }
+
+    .flowchart-node {
+        padding: 10px 14px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .flowchart-node.level-0 {
+        font-size: 0.9rem;
+        padding: 12px 16px;
+    }
+
+    .flowchart-node.level-1 {
+        font-size: 0.8rem;
+    }
+
+    .flowchart-node.level-2 {
+        font-size: 0.75rem;
+    }
+
+    .flowchart-node-title {
+        font-size: 0.85rem;
+    }
+
+    .flowchart-node.level-0 .flowchart-node-title {
+        font-size: 0.95rem;
+    }
+
+    .flowchart-node-badge {
+        font-size: 0.6rem;
+        padding: 2px 6px;
+        top: -6px;
+        right: -6px;
+    }
+
+    .flowchart-controls {
+        bottom: 10px;
+        right: 10px;
+        gap: 6px;
+    }
+
+    .flowchart-control-btn {
+        padding: 8px 12px;
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .flowchart-node {
+        padding: 8px 10px;
+        font-size: 0.75rem;
+    }
+
+    .flowchart-node.level-0 {
+        font-size: 0.85rem;
+        padding: 10px 12px;
+    }
+
+    .flowchart-node-title {
+        font-size: 0.8rem;
+    }
+
+    .flowchart-node.level-0 .flowchart-node-title {
+        font-size: 0.9rem;
+    }
 }

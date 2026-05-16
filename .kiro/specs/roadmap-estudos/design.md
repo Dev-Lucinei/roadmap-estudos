@@ -97,6 +97,68 @@ roadmap-estudos/
 **Interface pública**: `python harness.py` (modos: json, lint, type, test, audit, security, structure, content).
 **Erros tratados**: Exit 0 (healthy), Exit 1 (falha de validação), Exit 2 (violação de integridade).
 
+### Component 8: UI/UX Design System — Cartographic Theme
+**Responsabilidade**: Definir e aplicar o sistema de design visual "Cartographic Learning Atlas" em todo o frontend.
+
+**Tokens de Cor (CSS `:root`)**:
+```css
+--bg-deep: #0f172a;
+--bg-surface: #1e293b;
+--bg-card: #1e293b;
+--accent-primary: #f59e0b;
+--accent-secondary: #d97706;
+--accent-glow: rgba(245, 158, 11, 0.15);
+--success: #10b981;
+--text-primary: #f8fafc;
+--text-secondary: #94a3b8;
+--glass-bg: rgba(30, 41, 59, 0.8);
+--glass-border: rgba(245, 158, 11, 0.2);
+--glass-blur: blur(16px);
+```
+
+**Sistema Tipográfico**:
+| Uso | Fonte | Peso | Fallback |
+|-----|-------|------|----------|
+| Títulos (h1-h3) | Playfair Display | 600, 700 | serifa |
+| Corpo | DM Sans | 400, 500 | sans-serif |
+| Código | JetBrains Mono | 400 | monospace |
+
+**Tokens de Motion**:
+```css
+--motion-default: cubic-bezier(0.4, 0, 0.2, 1);
+--motion-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+--duration-fast: 200ms;
+--duration-normal: 300ms;
+--duration-slow: 400ms;
+--stagger-delay: 50ms;
+```
+
+**Matriz de Estados de Componente**:
+| Componente | Loading | Empty | Error | Success |
+|------------|---------|-------|-------|---------|
+| Lista de Roadmaps | Shimmer skeleton (3 cards) | Ilustração + "Crie seu primeiro roadmap" | Card erro + retry | N/A (navegação) |
+| Fluxograma | Skeleton dos nós + SVG tracejado | "Nenhum tópico neste roadmap" | Toast erro + "Tentar novamente" | Confete ao completar nó |
+| Painel de Lição | Shimmer de texto (5 linhas) | "Selecione um tópico" | Toast erro + fallback para conteúdo local | Animação de checkmark |
+| Quiz | Skeleton das perguntas | "Nenhum quiz disponível" | Toast erro + "Gerar novamente" | Score animation + confete |
+| Diagnóstico | Shimmer de análise | "Informe sua área" | Toast erro + retry | Resultado com gradiente |
+| Barra de Progresso | Skeleton bar | 0% — "Comece sua jornada" | N/A | Animação de preenchimento |
+
+**Breakpoints Responsivos**:
+| Nome | Largura | Comportamento |
+|------|---------|---------------|
+| Mobile | < 768px | Layout vertical, bottom sheet, fonte reduzida |
+| Tablet | 768-1023px | Layout híbrido, painel sobreposto |
+| Desktop | 1024-1919px | Layout completo, painel lateral |
+| Wide | ≥ 1920px | Layout completo expandido, glow decorativo |
+
+**Conformidade de Acessibilidade**:
+- Contraste mínimo: 4.5:1 (texto normal), 3:1 (texto grande) — WCAG AA
+- Focus indicator: `outline: 2px solid var(--accent-primary); outline-offset: 2px`
+- `prefers-reduced-motion`: desativa animações não essenciais
+- ARIA labels em todos os componentes interativos
+- Ordem de tabulação natural (sem tabindex positivo)
+- Landmarks: `role="navigation"`, `role="main"`, `role="complementary"`
+
 ## Error Handling Strategy
 
 | Cenário | Componente | Resposta |
@@ -107,6 +169,12 @@ roadmap-estudos/
 | Validação Pydantic | FastAPI Router | HTTP 422 + detalhes dos campos inválidos |
 | Path traversal | Lesson endpoint | Sanitização de caminho, HTTP 400 |
 | Violação de integridade | Guard Harness | Exit 2 + relatório de violações |
+| Timeout de API (frontend) | UI (todos componentes) | Toast "Servidor demorou para responder" + retry |
+| Falha de renderização JS | UI (fluxograma/lição) | Error boundary + "Erro ao renderizar componente" + recarregar |
+| Imagem/ilustração não carrega | UI (empty states) | Fallback para placeholder SVG inline |
+| Fonte não carrega (CDN down) | UI (global) | Fallback para font stack do sistema |
+| Animation frame drop | UI (animações) | `requestAnimationFrame` throttling + desativar animações decorativas |
+| Mobile touch event não dispara | UI (mobile) | Fallback para evento de clique |
 
 ## Testing Strategy
 
@@ -123,3 +191,22 @@ roadmap-estudos/
 - [ ] Todos os arquivos protegidos com hash válido
 - [ ] Docstrings em todas as funções/classes públicas
 - [ ] Lições com quizzes embutidos (mínimo 3 perguntas)
+
+### Testes Visuais (Frontend)
+
+| Tipo | Cobertura Alvo | Ferramentas |
+|------|---------------|-------------|
+| Visual/Regressão | Comparar snapshots dos componentes antes/depois | Teste manual com Lighthouse CI |
+| Responsivo | 3 breakpoints: 375px, 768px, 1440px | DevTools Chrome, Teste manual |
+| Acessibilidade | Contraste WCAG AA, ARIA labels, foco visível | Lighthouse, axe DevTools |
+| Animações | 60fps consistentes, sem layout thrashing | Chrome DevTools Performance tab |
+| Touch | Interações mobile (tap, swipe, long press) | Teste manual em dispositivo real ou emulador |
+
+### Critérios de Aceitação (Adicionais)
+- [ ] Contraste WCAG AA verificado em todas as combinações de cor
+- [ ] Shimmer skeleton presente em todo carregamento assíncrono
+- [ ] Navegação por teclado completa (Tab, Enter, Esc)
+- [ ] `prefers-reduced-motion` desativa animações não essenciais
+- [ ] Background topográfico não causa sobrecarga de renderização
+- [ ] Painel de lição funciona em mobile (bottom sheet) e desktop (slide lateral)
+- [ ] Busca/filtro sanitiza entrada contra XSS

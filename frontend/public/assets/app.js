@@ -3,6 +3,11 @@
 // Configuração API
 const API_URL = "http://localhost:8000/api";
 
+// Mobile detection
+function isMobile() {
+    return window.innerWidth <= 768;
+}
+
 // Referências DOM
 const nodesContainer = document.getElementById('roadmap-nodes');
 const lessonPanel = document.getElementById('lesson-panel');
@@ -74,7 +79,14 @@ async function listRoadmaps() {
         const files = await response.json();
         if (files.length === 0) {
             roadmapSelector.innerHTML = '<option value="">Nenhum tema encontrado</option>';
-            nodesContainer.innerHTML = '<p style="color: red;">Nenhum roadmap disponível. Crie um novo ou verifique o servidor.</p>';
+            nodesContainer.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">🗺️</div>
+                    <div class="empty-state-title">Nenhum roadmap encontrado</div>
+                    <div class="empty-state-description">Crie seu primeiro roadmap de estudos com IA. Escolha um tema como "DevOps", "React" ou "Data Science".</div>
+                    <button class="empty-state-action" onclick="openNewRoadmapModal()">Criar Roadmap</button>
+                </div>
+            `;
             return;
         }
         roadmapSelector.innerHTML = files.map(f => `<option value="${f}">${f.replace('roadmap_', '').replace('.json', '').toUpperCase()}</option>`).join('');
@@ -269,9 +281,12 @@ function toggleSubtopics(nodeId) {
     lessonStartTimes[node.id] = Date.now();
 
     currentLessonNode = node;
-    lessonContent.innerHTML = `<p style="color: #888;">Carregando lição de <strong>${node.title}</strong>...</p>`;
+    showLoadingSkeleton(lessonContent);
     quizContainer.style.display = 'none';
     lessonPanel.classList.add('active');
+    lessonPanel.setAttribute('aria-hidden', 'false');
+    const firstFocusable = lessonPanel.querySelector('button, [tabindex]:not([tabindex="-1"])');
+    if (firstFocusable) setTimeout(() => firstFocusable.focus(), 100);
     
     // Check prerequisites via diagnostic using depMap
     const prereqs = depMap[node.title] || [];
@@ -382,12 +397,7 @@ async function generateLessonContent() {
             // Recarrega a lição com o conteúdo gerado
             await showLesson(currentLessonNode);
             
-            // Notifica sucesso
-            const notification = document.createElement('div');
-            notification.className = 'success-notification';
-            notification.innerHTML = '✅ Conteúdo gerado com sucesso!';
-            document.body.appendChild(notification);
-            setTimeout(() => notification.remove(), 3000);
+            showToast('Conteúdo gerado com sucesso!', 'success');
         } else {
             throw new Error(result.message || 'Erro ao gerar conteúdo');
         }
@@ -458,7 +468,12 @@ window.editNode = (nodeId) => {
 };
 
 window.openNewRoadmapModal = () => {
-    document.getElementById('modal-overlay').style.display = 'flex';
+    const modal = document.getElementById('modal-overlay');
+    if (modal) {
+        modal.style.display = 'flex';
+        const firstInput = modal.querySelector('input, button');
+        if (firstInput) setTimeout(() => firstInput.focus(), 100);
+    }
 };
 
 window.closeModal = () => {
@@ -831,6 +846,10 @@ function updateProgressBar() {
     if (progressFill) progressFill.style.width = `${pct}%`;
     const pctEl = document.getElementById('progress-percent');
     if (pctEl) pctEl.innerText = `${pct}%`;
+    const progressBar = document.querySelector('.progress-container');
+    if (progressBar) {
+        progressBar.setAttribute('aria-valuenow', pct);
+    }
 }
 
 function updateStreak() {
@@ -940,6 +959,9 @@ function showReviewModal(data) {
 
     const modal = document.createElement('div');
     modal.className = 'review-modal';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', data.title);
 
     // Header
     const header = document.createElement('div');
@@ -950,6 +972,7 @@ function showReviewModal(data) {
     const closeBtn = document.createElement('button');
     closeBtn.className = 'review-modal-close';
     closeBtn.textContent = '×';
+    closeBtn.setAttribute('aria-label', 'Fechar');
     closeBtn.onclick = () => overlay.remove();
     header.appendChild(h3);
     header.appendChild(closeBtn);
@@ -1010,6 +1033,7 @@ function showReviewModal(data) {
 window.toggleZenMode = () => document.body.classList.toggle('zen-mode');
 window.closePanel = () => {
     lessonPanel.classList.remove('active');
+    lessonPanel.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('zen-mode');
 };
 
@@ -1064,7 +1088,79 @@ function collapseAllNodes() {
     }, 100);
 }
 
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', function() {
+    init();
+    initSearch();
+    initFilters();
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('modal-overlay');
+            if (modal && modal.style.display !== 'none') {
+                closeModal();
+            }
+            
+            const panel = document.getElementById('lesson-panel');
+            if (panel && panel.classList.contains('active')) {
+                closePanel();
+            }
+            
+            const filterPanel = document.getElementById('filter-panel');
+            if (filterPanel && filterPanel.style.display !== 'none') {
+                filterPanel.style.display = 'none';
+            }
+            return;
+        }
+        
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) {
+                searchInput.focus();
+                searchInput.select();
+            }
+        }
+    });
+
+    document.getElementById('modal-overlay')?.addEventListener('keydown', function(e) {
+        if (e.key !== 'Tab') return;
+        
+        const focusable = this.querySelectorAll('button, input, select, textarea, [tabindex]:not([tabindex="-1"])');
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        
+        if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+        }
+    });
+
+    // Mobile touch interactions (lessonPanel já declarado globalmente na linha 13)
+    if (lessonPanel) {
+        let touchStartX = 0;
+        let touchCurrentX = 0;
+
+        lessonPanel.addEventListener('touchstart', function(e) {
+            touchStartX = e.touches[0].clientX;
+            touchCurrentX = touchStartX;
+        }, { passive: true });
+
+        lessonPanel.addEventListener('touchmove', function(e) {
+            touchCurrentX = e.touches[0].clientX;
+        }, { passive: true });
+
+        lessonPanel.addEventListener('touchend', function() {
+            const diff = touchCurrentX - touchStartX;
+            if (diff > 80 && isMobile()) {
+                closePanel();
+            }
+        }, { passive: true });
+    }
+});
+
 // P1: Removido setInterval(drawConnections, 5000) — causava layout thrashing periódico
 // drawConnections é chamado apenas após eventos reais (resize, render)
 window.addEventListener('resize', () => requestAnimationFrame(drawConnections));
@@ -1087,3 +1183,260 @@ window.regenerateDepMap = async () => {
         alert('Erro ao atualizar mapa de dependências.');
     }
 };
+
+// === SEARCH SYSTEM ===
+
+let searchTimeout = null;
+let searchResults = [];
+
+function initSearch() {
+    const searchInput = document.getElementById('search-input');
+    if (!searchInput) return;
+    
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const query = this.value.trim();
+        
+        if (query.length < 2) {
+            document.getElementById('search-results').style.display = 'none';
+            return;
+        }
+        
+        searchTimeout = setTimeout(() => performSearch(query), 300);
+    });
+    
+    searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            this.blur();
+            document.getElementById('search-results').style.display = 'none';
+        }
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            navigateSearchResults(e.key === 'ArrowDown' ? 1 : -1);
+        }
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const highlighted = document.querySelector('.search-result-item.highlighted');
+            if (highlighted) {
+                highlighted.click();
+            }
+        }
+    });
+    
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.search-bar')) {
+            document.getElementById('search-results').style.display = 'none';
+        }
+    });
+}
+
+function performSearch(query) {
+    const q = query.toLowerCase();
+    const allNodes = window.roadmapData ? flattenRoadmapData(window.roadmapData) : searchLoadedNodes();
+    
+    searchResults = allNodes.filter(node => 
+        node.title.toLowerCase().includes(q)
+    );
+    
+    renderSearchResults(searchResults, q);
+}
+
+function flattenRoadmapData(data) {
+    const results = [];
+    function walk(nodes, path) {
+        if (!nodes) return;
+        if (Array.isArray(nodes)) {
+            nodes.forEach(n => walk(n, path));
+        } else if (nodes.nodes) {
+            nodes.nodes.forEach(n => walk(n, path));
+        } else {
+            results.push({
+                title: nodes.title || nodes.name || '',
+                difficulty: nodes.difficulty || '',
+                id: nodes.id || '',
+                path: path
+            });
+            if (nodes.subtopics) {
+                nodes.subtopics.forEach(s => walk(s, [...path, nodes.title || nodes.name]));
+            }
+        }
+    }
+    walk(data, []);
+    return results;
+}
+
+function searchLoadedNodes() {
+    const nodes = document.querySelectorAll('.flowchart-node');
+    return Array.from(nodes).map(n => ({
+        title: n.querySelector('.flowchart-node-title')?.textContent || '',
+        difficulty: n.classList.contains('difficulty-easy') ? 'easy' : 
+                    n.classList.contains('difficulty-hard') ? 'hard' : 'medium',
+        id: n.dataset.nodeId || '',
+        path: []
+    }));
+}
+
+function renderSearchResults(results, query) {
+    const container = document.getElementById('search-results');
+    if (!container) return;
+    
+    if (results.length === 0) {
+        container.innerHTML = `<div class="search-no-results">Nenhum resultado para "${query}"</div>`;
+        container.style.display = 'block';
+        return;
+    }
+    
+    let html = `<div class="search-result-count">${results.length} resultado${results.length !== 1 ? 's' : ''}</div>`;
+    
+    results.slice(0, 10).forEach((node, i) => {
+        const diffClass = node.difficulty || 'medium';
+        const pathStr = node.path.length > 0 ? node.path.join(' › ') : '';
+        const highlightedTitle = node.title.replace(
+            new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'),
+            match => `<strong>${match}</strong>`
+        );
+        
+        html += `
+            <div class="search-result-item ${i === 0 ? 'highlighted' : ''}" 
+                 data-id="${node.id}" 
+                 role="option" 
+                 aria-selected="false"
+                 onclick="selectSearchResult('${node.id}')">
+                <div>
+                    <div class="result-title">${highlightedTitle}</div>
+                    ${pathStr ? `<div class="result-path">${pathStr}</div>` : ''}
+                </div>
+                <span class="result-difficulty ${diffClass}">${diffClass}</span>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+    container.style.display = 'block';
+}
+
+function navigateSearchResults(direction) {
+    const items = document.querySelectorAll('.search-result-item');
+    const currentIndex = Array.from(items).findIndex(el => el.classList.contains('highlighted'));
+    const nextIndex = Math.max(0, Math.min(items.length - 1, currentIndex + direction));
+    
+    items.forEach(el => el.classList.remove('highlighted'));
+    if (items[nextIndex]) {
+        items[nextIndex].classList.add('highlighted');
+        items[nextIndex].scrollIntoView({ block: 'nearest' });
+    }
+}
+
+function selectSearchResult(nodeId) {
+    document.getElementById('search-results').style.display = 'none';
+    document.getElementById('search-input').value = '';
+    
+    const node = document.querySelector(`[data-node-id="${nodeId}"]`);
+    if (node) {
+        node.click();
+        node.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+// === FILTER SYSTEM ===
+
+function toggleFilterPanel() {
+    const panel = document.getElementById('filter-panel');
+    if (!panel) return;
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+function initFilters() {
+    document.querySelectorAll('.filter-chip').forEach(chip => {
+        chip.addEventListener('click', function() {
+            const filter = this.dataset.filter;
+            const value = this.dataset.value;
+            
+            this.parentElement.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            
+            applyFilters();
+        });
+    });
+}
+
+function applyFilters() {
+    const difficulty = document.querySelector('.filter-chip.active[data-filter="difficulty"]')?.dataset.value || 'all';
+    const status = document.querySelector('.filter-chip.active[data-filter="status"]')?.dataset.value || 'all';
+    
+    document.querySelectorAll('.flowchart-node').forEach(node => {
+        let visible = true;
+        
+        if (difficulty !== 'all') {
+            const nodeDiff = node.classList.contains('difficulty-easy') ? 'easy' :
+                            node.classList.contains('difficulty-hard') ? 'hard' : 'medium';
+            if (nodeDiff !== difficulty) visible = false;
+        }
+        
+        if (status !== 'all') {
+            const isCompleted = node.classList.contains('completed');
+            if ((status === 'completed' && !isCompleted) || (status === 'pending' && isCompleted)) {
+                visible = false;
+            }
+        }
+        
+        node.style.display = visible ? '' : 'none';
+    });
+    
+    if (window.flowchartInstance && window.flowchartInstance.drawConnections) {
+        window.flowchartInstance.drawConnections();
+    }
+}
+
+function clearFilters() {
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.filter-chip[data-value="all"]').forEach(c => c.classList.add('active'));
+    applyFilters();
+    document.getElementById('filter-panel').style.display = 'none';
+}
+
+window.toggleFilterPanel = toggleFilterPanel;
+window.clearFilters = clearFilters;
+window.selectSearchResult = selectSearchResult;
+
+// Toast Notification System
+function showToast(message, type = 'success', duration = 3000) {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    const icons = { success: '✓', error: '✕', warning: '⚠' };
+    
+    toast.innerHTML = `
+        <span class="toast-icon">${icons[type] || '•'}</span>
+        <span class="toast-message">${message}</span>
+    `;
+    
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.classList.add('removing');
+        setTimeout(() => toast.remove(), 300);
+    }, duration);
+}
+
+function showLoadingSkeleton(container) {
+    container.innerHTML = `
+        <div class="skeleton skeleton-title"></div>
+        <div class="skeleton skeleton-text"></div>
+        <div class="skeleton skeleton-text short"></div>
+        <div class="skeleton skeleton-text"></div>
+        <div class="skeleton skeleton-text medium"></div>
+        <div class="skeleton skeleton-card"></div>
+    `;
+}
+
+function hideLoadingSkeleton(container) {
+    container.querySelectorAll('.skeleton').forEach(el => el.remove());
+}

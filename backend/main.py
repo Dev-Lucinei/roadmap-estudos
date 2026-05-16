@@ -1,5 +1,6 @@
 """Roadmap Estudos API - FastAPI Backend."""
 
+from contextlib import asynccontextmanager
 from pathlib import Path
 import sys
 
@@ -19,10 +20,20 @@ from backend.core.config import (  # noqa: E402
     LICOES_DIR,
 )
 
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    """Initialize and cleanup application resources."""
+    DATA_DIR.mkdir(exist_ok=True)
+    LICOES_DIR.mkdir(exist_ok=True)
+    yield
+
+
 app = FastAPI(
     title="Roadmap Estudos API",
     description="API para gestão de roadmaps de estudo com IA",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -39,13 +50,6 @@ app.mount(
     StaticFiles(directory=str(CONFIG_BASE_DIR / "frontend" / "public"), html=True),
     name="static",
 )
-
-
-@app.on_event("startup")
-async def startup_event() -> None:
-    """Initialize directories on startup."""
-    DATA_DIR.mkdir(exist_ok=True)
-    LICOES_DIR.mkdir(exist_ok=True)
 
 
 if __name__ == "__main__":

@@ -3,15 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Antigravity Learning Path - Engenharia & Fullstack</title>
+    <meta name="description" content="Plataforma de roadmaps de estudo com visual cartográfico">
+    <title>Cartographic Learning Atlas — Roadmap de Estudos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/main.css">
     <link rel="stylesheet" href="assets/flowchart_layout.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
 </head>
-<body>
-    <div class="progress-container">
+<body role="application">
+    <a href="#roadmap-view" class="skip-link">Pular para o conteúdo principal</a>
+    <div class="progress-container" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Progresso do roadmap">
         <div id="progress-fill"></div>
         <span id="progress-percent">0%</span>
     </div>
@@ -21,22 +25,48 @@
     </div>
 
     <div id="app-container">
-        <main id="roadmap-view">
+        <main id="roadmap-view" role="main" aria-label="Visualização do roadmap">
             <svg id="roadmap-svg"></svg>
             
             <header class="roadmap-header">
-                <div class="header-controls">
+                <div class="search-bar" role="search" aria-label="Buscar tópicos">
+                    <input type="text" id="search-input" placeholder="Buscar tópicos... (Ctrl+K)" class="search-input">
+                    <div id="search-results" class="search-results" style="display:none;" role="listbox" aria-label="Resultados da busca"></div>
+                </div>
+                <nav class="header-controls" aria-label="Controles do roadmap">
                     <select id="roadmap-selector" onchange="loadRoadmap(this.value)">
                         <option value="">Carregando temas...</option>
                     </select>
-                    <button class="admin-btn" onclick="expandAllNodes()" title="Expandir todos os nós">📂 Expandir</button>
-                    <button class="admin-btn" onclick="collapseAllNodes()" title="Recolher todos os nós">📁 Recolher</button>
-                    <button class="admin-btn" onclick="openNewRoadmapModal()">+ Novo Tema</button>
-                    <button id="edit-mode-btn" class="admin-btn" onclick="toggleEditMode()">✏️ Modo Edição</button>
-                </div>
+                    <button class="filter-btn" onclick="toggleFilterPanel()" title="Filtros" aria-label="Abrir filtros">🔽 Filtrar</button>
+                    <button class="admin-btn" onclick="expandAllNodes()" title="Expandir todos os nós" aria-label="Expandir todos os nós">📂 Expandir</button>
+                    <button class="admin-btn" onclick="collapseAllNodes()" title="Recolher todos os nós" aria-label="Recolher todos os nós">📁 Recolher</button>
+                    <button class="admin-btn" onclick="openNewRoadmapModal()" aria-label="Criar novo tema de estudos">+ Novo Tema</button>
+                    <button id="edit-mode-btn" class="admin-btn" onclick="toggleEditMode()" aria-label="Modo edição do roadmap">✏️ Modo Edição</button>
+                </nav>
                 <h1>Meu Roteiro de Engenharia</h1>
                 <p>Navegue pelos temas ou crie novos roteiros com IA.</p>
             </header>
+            
+            <div id="filter-panel" class="filter-panel" style="display:none;" role="region" aria-label="Filtros do roadmap">
+                <div class="filter-group">
+                    <label class="filter-label">Dificuldade</label>
+                    <div class="filter-options">
+                        <button class="filter-chip active" data-filter="difficulty" data-value="all">Todas</button>
+                        <button class="filter-chip" data-filter="difficulty" data-value="easy">Fácil</button>
+                        <button class="filter-chip" data-filter="difficulty" data-value="medium">Médio</button>
+                        <button class="filter-chip" data-filter="difficulty" data-value="hard">Difícil</button>
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Status</label>
+                    <div class="filter-options">
+                        <button class="filter-chip active" data-filter="status" data-value="all">Todos</button>
+                        <button class="filter-chip" data-filter="status" data-value="completed">Completos</button>
+                        <button class="filter-chip" data-filter="status" data-value="pending">Pendentes</button>
+                    </div>
+                </div>
+                <button class="filter-clear" onclick="clearFilters()">Limpar filtros</button>
+            </div>
             
             <div id="roadmap-nodes">
                 <!-- Nodes renderizados via JS -->
@@ -48,14 +78,14 @@
             </div>
         </main>
 
-        <aside id="lesson-panel">
+        <aside id="lesson-panel" role="complementary" aria-label="Painel de lição" aria-hidden="true">
             <div class="panel-header">
                 <div class="panel-tools">
-                    <button class="zen-btn" onclick="toggleZenMode()" title="Modo Zen">🧘</button>
-                    <button id="generate-lesson-btn" class="admin-btn secondary" onclick="generateLessonContent()" title="Gerar Conteúdo da Lição">📝 Gerar Conteúdo</button>
-                    <button id="generate-quiz-btn" class="admin-btn primary" onclick="generateQuizForCurrentLesson()" title="Gerar Quiz de Avaliação">🧠 Gerar Quiz</button>
+                    <button class="zen-btn" onclick="toggleZenMode()" title="Modo Zen" aria-label="Ativar modo zen">🧘</button>
+                    <button id="generate-lesson-btn" class="admin-btn secondary" onclick="generateLessonContent()" title="Gerar Conteúdo da Lição" aria-label="Gerar conteúdo da lição com IA">📝 Gerar Conteúdo</button>
+                    <button id="generate-quiz-btn" class="admin-btn primary" onclick="generateQuizForCurrentLesson()" title="Gerar Quiz de Avaliação" aria-label="Gerar quiz de avaliação">🧠 Gerar Quiz</button>
                 </div>
-                <button class="close-btn" onclick="closePanel()">×</button>
+                <button class="close-btn" onclick="closePanel()" aria-label="Fechar painel">×</button>
             </div>
             <div id="lesson-scroll-container" class="lesson-scroll-container">
                 <div id="lesson-content" class="lesson-content">
@@ -69,7 +99,7 @@
     </div>
 
     <!-- Modais -->
-    <div id="modal-overlay" class="modal-overlay" style="display:none">
+    <div id="modal-overlay" class="modal-overlay" style="display:none" role="dialog" aria-modal="true" aria-label="Criar novo roadmap">
         <div class="modal-content glass">
             <h3>Gerar Novo Roadmap</h3>
             <p>Digite o tema que deseja estudar (ex: "DevOps", "React", "Cybersecurity"):</p>

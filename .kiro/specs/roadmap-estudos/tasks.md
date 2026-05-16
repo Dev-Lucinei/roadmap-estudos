@@ -115,17 +115,63 @@
 
 ## Fase 7: Motor DSL (PENDENTE)
 
-- [ ] 7.1 Implementar validação de sintaxe DSL
+- [x] 7.1 Implementar validação de sintaxe DSL
   - engine.py: validar comandos, parâmetros e estrutura
   - _Requirements: R.7_
 
-- [ ] 7.2 Implementar execução de comandos DSL
+- [x] 7.2 Implementar execução de comandos DSL
   - engine.py: executar fluxos de aprendizado programáticos
   - _Requirements: R.7_
 
-- [ ] 7.3 Testes completos para motor DSL
+- [x] 7.3 Testes completos para motor DSL
   - engine.py: cobrir sintaxe inválida, comandos, edge cases
   - _Requirements: R.7, R.9_
+
+## Fase 8: UI/UX Overhaul — Cartographic Design System (PENDENTE)
+
+- [x] 8.1 Implementar sistema de design visual (CSS variables, tipografia, paleta)
+  - Substituir tema escuro genérico por tema Cartographic
+  - Playfair Display + DM Sans + JetBrains Mono, paleta âmbar/navy
+  - Background topográfico SVG animado
+  - _Requirements: UI-1_
+
+- [x] 8.2 Implementar sistema de motion e animações
+  - Staggered reveal na carga da página
+  - Transição animada do painel de lição (slide-in/out 300ms)
+  - Hover glow nos nós do fluxograma
+  - Animação de desenho das rotas SVG (stroke-dasharray)
+  - Confete/partículas ao completar nó
+  - Suporte a prefers-reduced-motion
+  - _Requirements: UI-3_
+
+- [x] 8.3 Implementar estados de componente (loading, empty, error, success)
+  - Shimmer skeleton para carregamento de lição/quiz/roadmap
+  - Empty states com ilustrações e ação sugerida
+  - Error state com mensagem amigável e botão retry
+  - Notificações animadas (toast success, error, warning)
+  - _Requirements: UI-2, UI-3_
+
+- [x] 8.4 Implementar busca e filtros
+  - Campo de busca com debounce 300ms e autocomplete
+  - Filtros por dificuldade, status, categoria
+  - Contagem de resultados e botão "Limpar filtro"
+  - Atalho de teclado Ctrl+K para buscar
+  - _Requirements: UI-4_
+
+- [x] 8.5 Implementar responsividade mobile
+  - Layout mobile-first (320px+)
+  - Touch interactions nos nós do fluxograma
+  - Bottom sheet para painel de lição em mobile
+  - Oculta elementos decorativos em telas < 375px
+  - _Requirements: UI-5_
+
+- [x] 8.6 Implementar acessibilidade (WCAG AA)
+  - Focus indicators visíveis em todos os elementos interativos
+  - ARIA labels, roles e landmarks
+  - Suporte a prefers-reduced-motion
+  - Navegação completa por teclado (Tab, Enter, Esc, setas)
+  - Testar com leitor de tela (NVDA/VoiceOver)
+  - _Requirements: UI-6_
 
 ## Fase Final: Qualidade e Auditoria
 
