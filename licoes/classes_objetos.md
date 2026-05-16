@@ -43,38 +43,3 @@ Cada objeto mantém seus próprios valores de `nome` e `preco` de forma independ
 *   [ ] Sei como definir atributos para armazenar o estado de um objeto?
 *   [ ] Sou capaz de criar métodos que representem as ações que um objeto pode realizar?
 *   [ ] Entendo que múltiplos objetos da mesma classe possuem identidades e dados independentes?
-
-```json
-[
-  {
-    "question": "Qual é a relação fundamental entre Classe e Objeto?",
-    "options": [
-      "A Classe é uma instância em execução de um Objeto.",
-      "O Objeto é um modelo abstrato, enquanto a Classe é a aplicação prática.",
-      "A Classe funciona como um molde (blueprint) e o Objeto é uma instância real baseada nesse molde.",
-      "Não há diferença técnica, são sinônimos na Engenharia de Software."
-    ],
-    "answer": 2
-  },
-  {
-    "question": "O que define o 'estado' de um objeto em um determinado momento?",
-    "options": [
-      "Os nomes dos métodos definidos na classe.",
-      "Os valores atribuídos aos seus atributos.",
-      "A quantidade de memória RAM total do sistema.",
-      "O histórico de classes das quais ele herdou características."
-    ],
-    "answer": 1
-  },
-  {
-    "question": "Se criarmos dois objetos 'A' e 'B' a partir da mesma classe 'Usuario', o que acontece se alterarmos um atributo de instância no objeto 'A'?",
-    "options": [
-      "O objeto 'B' terá seu atributo alterado automaticamente para manter a sincronia.",
-      "A classe 'Usuario' será modificada permanentemente.",
-      "O sistema emitirá um erro, pois objetos da mesma classe devem ser idênticos.",
-      "Apenas o objeto 'A' sofrerá a alteração, pois cada objeto possui seu próprio estado."
-    ],
-    "answer": 3
-  }
-]
-```

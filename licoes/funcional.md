@@ -32,38 +32,3 @@ No desenvolvimento moderno, a Programação Funcional é amplamente aplicada no 
 *   [ ] Sei como transformar um dado sem alterar a fonte original (imutabilidade)?
 *   [ ] Compreendo como passar funções como argumentos para outras funções?
 *   [ ] Consigo prever o resultado de uma função baseando-me apenas em seus parâmetros de entrada?
-
-```json
-[
-  {
-    "question": "Qual é a principal característica de uma 'Função Pura'?",
-    "options": [
-      "Ela deve obrigatoriamente utilizar variáveis globais.",
-      "Ela sempre retorna o mesmo resultado para os mesmos argumentos e não possui efeitos colaterais.",
-      "Ela altera o valor dos parâmetros passados por referência para economizar memória.",
-      "Ela só pode ser executada uma única vez durante o ciclo de vida do programa."
-    ],
-    "answer": 1
-  },
-  {
-    "question": "O conceito de imutabilidade na Programação Funcional sugere que:",
-    "options": [
-      "Variáveis devem ser atualizadas constantemente para refletir o estado real.",
-      "Objetos não podem ser criados após a inicialização do sistema.",
-      "Dados não devem ser alterados após criados; em vez disso, criam-se novas estruturas de dados.",
-      "O uso de constantes é proibido para permitir flexibilidade."
-    ],
-    "answer": 2
-  },
-  {
-    "question": "O que define uma 'Função de Alta Ordem' (Higher-Order Function)?",
-    "options": [
-      "Uma função que possui mais de 100 linhas de código.",
-      "Uma função que é executada com prioridade pelo processador.",
-      "Uma função que não aceita argumentos e não retorna valores.",
-      "Uma função que recebe outra função como argumento ou retorna uma função."
-    ],
-    "answer": 3
-  }
-]
-```

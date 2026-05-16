@@ -43,38 +43,3 @@ class ControleRemoto:
 *   [ ] Consigo identificar quais dados devem ser atributos e quais ações devem ser métodos em um requisito?
 *   [ ] Entendo que métodos são a única forma recomendada de alterar o estado (atributos) de um objeto?
 *   [ ] Sei distinguir a definição de um atributo na classe do valor que ele assume em uma instância específica?
-
-```json
-[
-  {
-    "question": "Qual é a principal função dos atributos em um objeto?",
-    "options": [
-      "Definir as ações que o objeto pode realizar.",
-      "Armazenar o estado e as características do objeto.",
-      "Conectar o objeto a um banco de dados externo.",
-      "Garantir que o código seja executado mais rapidamente."
-    ],
-    "answer": 1
-  },
-  {
-    "question": "O que caracteriza um método em Programação Orientada a Objetos?",
-    "options": [
-      "É um valor constante que nunca muda durante a execução.",
-      "É o nome dado à classe quando ela é instanciada.",
-      "É um bloco de código que define um comportamento ou ação do objeto.",
-      "É uma lista de todos os objetos criados no sistema."
-    ],
-    "answer": 2
-  },
-  {
-    "question": "Se um método 'acelerar()' altera a variável 'velocidade' de um carro, 'velocidade' é um:",
-    "options": [
-      "Atributo",
-      "Método",
-      "Parâmetro",
-      "Instância"
-    ],
-    "answer": 0
-  }
-]
-```

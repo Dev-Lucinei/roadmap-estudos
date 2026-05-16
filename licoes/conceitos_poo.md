@@ -29,23 +29,3 @@ Os quatro pilares da Programação Orientada a Objetos (Abstração, Encapsulame
 *   [ ] Sei quando usar uma interface ou classe abstrata para garantir o polimorfismo?
 *   [ ] Entendo a diferença entre ocultar dados (private) e prover comportamento (public)?
 *   [ ] Consigo explicar a relação de hierarquia entre classes sem confundir com associação?
-
-```json
-[
-  {
-    "question": "Qual pilar da POO é responsável por esconder os detalhes internos de funcionamento de um objeto e expor apenas o necessário?",
-    "options": ["Abstração", "Polimorfismo", "Encapsulamento", "Herança"],
-    "answer": 2
-  },
-  {
-    "question": "O conceito de que uma classe filha pode sobrescrever um método da classe pai para fornecer uma implementação específica é um exemplo de:",
-    "options": ["Abstração", "Polimorfismo", "Encapsulamento", "Acoplamento"],
-    "answer": 1
-  },
-  {
-    "question": "Ao criar uma classe 'Veiculo' com atributos genéricos para que 'Carro' e 'Moto' os utilizem, qual pilar está sendo aplicado prioritariamente?",
-    "options": ["Encapsulamento", "Modularização", "Herança", "Composição"],
-    "answer": 2
-  }
-]
-```

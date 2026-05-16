@@ -171,25 +171,3 @@ Sempre que houver dúvida, use parênteses para garantir a ordem desejada.
 *   [ ] Consigo aplicar operadores para criar condições em fluxos de decisão.
 *   [ ] Estou ciente da ordem de precedência dos operadores e a importância dos parênteses.
 *   [ ] Reconheço como os operadores se aplicam a cenários de gamificação e desenvolvimento fullstack.
-
----
-
-```json
-[
-  {
-    "question": "Qual operador é usado para verificar se dois valores são estritamente iguais (mesmo valor e mesmo tipo)?",
-    "options": ["==", "===", "!=", "!=="],
-    "answer": 1
-  },
-  {
-    "question": "Em uma expressão `(10 > 5) && (3 < 2)`, qual será o resultado final?",
-    "options": ["true", "false", "null", "undefined"],
-    "answer": 1
-  },
-  {
-    "question": "Imagine que você quer verificar se um jogador tem pontos suficientes para comprar um item OU se o item está em promoção. Qual operador lógico seria mais apropriado para conectar essas duas condições?",
-    "options": ["&& (E)", "|| (OU)", "! (NÃO)", "% (Módulo)"],
-    "answer": 1
-  }
-]
-```

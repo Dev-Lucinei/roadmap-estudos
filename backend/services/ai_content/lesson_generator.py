@@ -49,31 +49,6 @@ def gerar_conteudo_ia(topico: str, tipo: str) -> str | None:
     5. ## ⚠️ Erros Comuns (2-3 armadilhas a evitar)
     6. ## ✅ Checklist de Domínio (3-5 itens para validar conhecimento)
     
-    ESTRUTURA DO QUIZ (OBRIGATÓRIO):
-    Ao final do documento, adicione um bloco de código JSON contendo EXATAMENTE 3 questões de múltipla escolha focadas APENAS em '{topico}':
-    
-    ```json
-    [
-      {{
-        "question": "Pergunta específica sobre {topico}?",
-        "options": ["Opção A", "Opção B", "Opção C", "Opção D"],
-        "answer": 0
-      }},
-      {{
-        "question": "Segunda pergunta sobre {topico}?",
-        "options": ["Opção A", "Opção B", "Opção C", "Opção D"],
-        "answer": 1
-      }},
-      {{
-        "question": "Terceira pergunta sobre {topico}?",
-        "options": ["Opção A", "Opção B", "Opção C", "Opção D"],
-        "answer": 2
-      }}
-    ]
-    ```
-    
-    Onde "answer" é o índice (0-3) da resposta correta.
-    
     IMPORTANTE: 
     - Use Mermaid.js APENAS se for essencial para explicar um fluxo ou diagrama
     - Mantenha linguagem clara e objetiva

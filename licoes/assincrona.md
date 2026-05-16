@@ -38,38 +38,3 @@ graph TD
 *   [ ] Sei identificar quando uma função deve ser marcada como `async`?
 *   [ ] Entendo que "assíncrono" não significa necessariamente "paralelismo" (multithreading)?
 *   [ ] Consigo tratar erros em fluxos assíncronos usando blocos `try/catch`?
-
-```json
-[
-  {
-    "question": "Qual é a principal vantagem da programação assíncrona em relação à síncrona?",
-    "options": [
-      "Aumentar a velocidade bruta de processamento da CPU",
-      "Permitir que o programa continue executando outras tarefas enquanto aguarda operações de I/O",
-      "Garantir que o código seja executado sempre na ordem exata em que foi escrito",
-      "Eliminar a necessidade de tratar erros no código"
-    ],
-    "answer": 1
-  },
-  {
-    "question": "O que acontece se você chamar uma função 'async' sem utilizar a palavra-chave 'await' (ou .then)?",
-    "options": [
-      "O programa trava imediatamente",
-      "A função é convertida automaticamente em síncrona",
-      "Você recebe um objeto (Promise/Future) em vez do valor de retorno final",
-      "O compilador gera um erro e impede a execução"
-    ],
-    "answer": 2
-  },
-  {
-    "question": "Sobre o Event Loop, qual é sua função primordial na programação assíncrona?",
-    "options": [
-      "Criar novas threads para cada função do sistema",
-      "Interromper o hardware caso uma tarefa demore muito",
-      "Gerenciar a fila de mensagens e decidir quando executar as tarefas agendadas",
-      "Criptografar os dados enviados assincronamente"
-    ],
-    "answer": 2
-  }
-]
-```

@@ -12,55 +12,52 @@ import sys
 import os
 from datetime import datetime, timezone
 
-sys.path.insert(0, os.path.expanduser("~/.agents/skills/orchestrator-agent/hooks"))
-try:
-    from task_updater import update_task_status, get_ready_tasks  # noqa: E402
-except ImportError:
-    # Fallback inline implementation
-    def update_task_status(
-        board_path: str,
-        task_id: str,
-        status: str,
-        output_log: str | None = None,
-        result_path: str | None = None,
-        retry_count: int | None = None,
-        clear_output_log: bool = False,
-    ) -> dict:  # type: ignore
-        """Atualiza o status de uma tarefa no task_board.json."""
-        if not os.path.exists(board_path):
-            raise FileNotFoundError(f"Task board not found at {board_path}")
-        with open(board_path) as f:
-            board = json.load(f)
-        task_found = False
-        for task in board["tasks"]:
-            if task["id"] == task_id:
-                task["status"] = status
-                task["last_update"] = datetime.now(timezone.utc).isoformat()
-                if clear_output_log:
-                    task["output_log"] = ""
-                elif output_log:
-                    task["output_log"] = output_log
-                if result_path:
-                    task["result_path"] = result_path
-                if retry_count is not None:
-                    task["retry_count"] = retry_count
-                task_found = True
-                break
-        if not task_found:
-            raise ValueError(f"Task ID {task_id} not found in task board")
-        board["last_update"] = datetime.now(timezone.utc).isoformat()
-        with open(board_path, "w") as f:
-            json.dump(board, f, indent=2)
-        return board
+def update_task_status(
+    board_path: str,
+    task_id: str,
+    status: str,
+    output_log: str | None = None,
+    result_path: str | None = None,
+    retry_count: int | None = None,
+    clear_output_log: bool = False,
+) -> dict:  # type: ignore
+    """Atualiza o status de uma tarefa no task_board.json."""
+    if not os.path.exists(board_path):
+        raise FileNotFoundError(f"Task board not found at {board_path}")
+    with open(board_path) as f:
+        board = json.load(f)
+    task_found = False
+    for task in board["tasks"]:
+        if task["id"] == task_id:
+            task["status"] = status
+            task["last_update"] = datetime.now(timezone.utc).isoformat()
+            if clear_output_log:
+                task["output_log"] = ""
+            elif output_log:
+                task["output_log"] = output_log
+            if result_path:
+                task["result_path"] = result_path
+            if retry_count is not None:
+                task["retry_count"] = retry_count
+            task_found = True
+            break
+    if not task_found:
+        raise ValueError(f"Task ID {task_id} not found in task board")
+    board["last_update"] = datetime.now(timezone.utc).isoformat()
+    with open(board_path, "w") as f:
+        json.dump(board, f, indent=2)
+    return board
 
-    def get_ready_tasks(task_board: dict) -> list[str]:  # type: ignore
-        """Retorna IDs de tarefas pendentes com todas as dependências concluídas."""
-        return [
-            t["id"]
-            for t in task_board["tasks"]
-            if t["status"] == "pending"
-            and all(d in completed for d in t.get("dependencies", []))
-        ]
+
+def get_ready_tasks(task_board: dict) -> list[str]:  # type: ignore
+    """Retorna IDs de tarefas pendentes com todas as dependências concluídas."""
+    completed = {t["id"] for t in task_board["tasks"] if t.get("status") == "completed"}
+    return [
+        t["id"]
+        for t in task_board["tasks"]
+        if t.get("status") == "pending"
+        and all(d in completed for d in t.get("dependencies", []))
+    ]
 
 
 BOARD_PATH = "task_board.json"
