@@ -2,7 +2,6 @@
 """Gera lições faltantes para todos os roadmaps."""
 
 import json
-import os
 import sys
 from pathlib import Path
 
@@ -10,8 +9,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
-from backend.core.config import LICOES_DIR
-from backend.services.ai_content.lesson_generator import processar_node
+from backend.core.config import LICOES_DIR  # noqa: E402
+from backend.services.ai_content.lesson_generator import processar_node  # noqa: E402
 
 
 def find_missing_lessons():
@@ -58,10 +57,10 @@ def generate_missing(missing, limit=0, dry_run=False):
 
         try:
             processar_node(node_id, title, node_type)
-            print(f"  [{i+1}/{len(missing)}] GERADO {node_id}: {title}")
+            print(f"  [{i + 1}/{len(missing)}] GERADO {node_id}: {title}")
             results["success"] += 1
         except Exception as e:
-            print(f"  [{i+1}/{len(missing)}] FALHA {node_id}: {e}")
+            print(f"  [{i + 1}/{len(missing)}] FALHA {node_id}: {e}")
             results["failed"] += 1
             results["errors"].append({"node_id": node_id, "error": str(e)})
 
@@ -91,8 +90,10 @@ if __name__ == "__main__":
     print("🚀 Gerando lições...")
     results = generate_missing(missing, limit=args.limit)
 
-    print(f"\n✅ Concluído: {results['success']} geradas, "
-          f"{results['failed']} falhas, {results['skipped']} puladas")
+    print(
+        f"\n✅ Concluído: {results['success']} geradas, "
+        f"{results['failed']} falhas, {results['skipped']} puladas"
+    )
     if results["errors"]:
         for err in results["errors"][:5]:
             print(f"  Erro: {err['node_id']} — {err['error']}")

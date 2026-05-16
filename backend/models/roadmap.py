@@ -1,6 +1,7 @@
 """Modelos Pydantic para o endpoint de roadmaps."""
 
 from pydantic import BaseModel, Field
+from typing import Any
 
 
 class CreateRoadmapRequest(BaseModel):
@@ -14,4 +15,4 @@ class CreateRoadmapResponse(BaseModel):
 
     status: str
     tema: str | None = None
-    data: dict | None = None
+    data: dict[str, Any] | None = None

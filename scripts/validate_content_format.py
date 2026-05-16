@@ -4,7 +4,7 @@ Script de Validação de Formato de Conteúdo
 
 Valida que todos os roadmaps e lições seguem os padrões estabelecidos:
 - Roadmaps: estrutura v2.0 com subtopics
-- Lições: formato markdown com quiz JSON embutido
+- Lições: formato markdown (título obrigatório)
 - Nomes de arquivo: sem acentos, kebab-case
 """
 
@@ -116,54 +116,7 @@ class ContentValidator:
                     f"⚠️ {filepath.name}: deve começar com título markdown (#)"
                 )
 
-            # Verifica se tem quiz JSON embutido
-            quiz_match = re.search(r"```json\s*(\[[\s\S]*?\])\s*```", content)
-            if quiz_match:
-                try:
-                    quiz_data = json.loads(quiz_match.group(1))
-
-                    if not isinstance(quiz_data, list):
-                        self.errors.append(
-                            f"❌ {filepath.name}: quiz deve ser um array"
-                        )
-                        return False
-
-                    if len(quiz_data) < 3:
-                        self.warnings.append(
-                            f"⚠️ {filepath.name}: quiz tem menos de 3 perguntas"
-                        )
-
-                    # Valida estrutura de cada pergunta
-                    for i, q in enumerate(quiz_data):
-                        required = ["question", "options", "answer"]
-                        for field in required:
-                            if field not in q:
-                                self.errors.append(
-                                    f"❌ {filepath.name}: pergunta {i} falta campo '{field}'"
-                                )
-                                return False
-
-                        if not isinstance(q["options"], list) or len(q["options"]) != 4:
-                            self.errors.append(
-                                f"❌ {filepath.name}: pergunta {i} deve ter exatamente 4 opções"
-                            )
-                            return False
-
-                        if (
-                            not isinstance(q["answer"], int)
-                            or q["answer"] < 0
-                            or q["answer"] > 3
-                        ):
-                            self.errors.append(
-                                f"❌ {filepath.name}: pergunta {i} 'answer' deve ser 0-3"
-                            )
-                            return False
-
-                except json.JSONDecodeError:
-                    self.errors.append(f"❌ {filepath.name}: quiz JSON inválido")
-                    return False
-            else:
-                self.warnings.append(f"⚠️ {filepath.name}: não contém quiz embutido")
+            # (Validação de quiz removida - quizzes agora são gerados sob demanda)
 
             self.success_count += 1
             return True

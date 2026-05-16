@@ -309,21 +309,10 @@ function toggleSubtopics(nodeId) {
         if (!response.ok) throw new Error('Lição não encontrada.');
         let markdown = await response.text();
         
-        const quizMatch = markdown.match(/```json\s*(\[\s*\{[\s\S]*\}\s*\])\s*```/);
-        let quizData = null;
-        if (quizMatch) {
-            try {
-                quizData = JSON.parse(quizMatch[1]);
-                markdown = markdown.replace(quizMatch[0], '');
-            } catch (e) { console.error("Erro Quiz:", e); }
-        }
-
         lessonContent.innerHTML = marked.parse(markdown);
         setTimeout(() => mermaid.run({ nodes: document.querySelectorAll('.mermaid') }), 300);
 
-        if (quizData && !completedNodes.includes(node.id)) {
-            renderQuiz(quizData);
-        } else if (completedNodes.includes(node.id)) {
+        if (completedNodes.includes(node.id)) {
             renderCompleteStatus();
         } else {
             renderSimpleComplete(node.id);
@@ -713,41 +702,6 @@ function displayQuizEvaluation(evaluation, userAnswers) {
     actionsDiv.appendChild(retryBtn);
     actionsDiv.appendChild(continueBtn);
     quizContainer.appendChild(actionsDiv);
-}
-
-function renderQuiz(questions) {
-    quizContainer.innerHTML = '<h3>🧠 Quiz de Validação</h3>';
-    quizContainer.style.display = 'block';
-    questions.forEach((q, idx) => {
-        const qDiv = document.createElement('div');
-        qDiv.className = 'quiz-question';
-        qDiv.innerHTML = `<p><strong>${idx + 1}. ${q.question}</strong></p>`;
-        q.options.forEach((opt, optIdx) => {
-            const btn = document.createElement('button');
-            btn.className = 'quiz-option';
-            btn.innerText = opt;
-            btn.onclick = () => {
-                const options = qDiv.querySelectorAll('.quiz-option');
-                options.forEach(b => b.classList.remove('selected', 'correct', 'wrong'));
-                btn.classList.add('selected');
-                if (optIdx === q.answer) btn.classList.add('correct');
-                else btn.classList.add('wrong');
-                checkQuizCompletion(questions);
-            };
-            qDiv.appendChild(btn);
-        });
-        quizContainer.appendChild(qDiv);
-    });
-}
-
-function checkQuizCompletion(questions) {
-    const qCount = questions.length;
-    // P1: Escopo restrito ao quizContainer atual — evita contagem cruzada entre sessões
-    const correctCount = quizContainer.querySelectorAll('.quiz-option.correct.selected').length;
-    if (correctCount === qCount) {
-        completeNode(currentLessonNode.id);
-        renderCompleteStatus();
-    }
 }
 
 function renderCompleteStatus() {

@@ -93,7 +93,12 @@ class ApiRoutes:
         title = data.get("title")
         quiz_data = data.get("quiz_data")
         user_answers = data.get("user_answers")
-        if all([node_id, title, quiz_data, user_answers]):
+        if (
+            isinstance(node_id, str)
+            and isinstance(title, str)
+            and isinstance(quiz_data, list)
+            and isinstance(user_answers, dict)
+        ):
             try:
                 evaluation = quiz_service.evaluate_quiz(
                     node_id, title, quiz_data, user_answers

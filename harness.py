@@ -462,7 +462,7 @@ class ValidationHarness:
     def _parse_mypy_errors(self, output: str) -> list[ValidationError]:
         """Extrai erros do mypy com sugestões contextuais."""
         errors: list[ValidationError] = []
-        pattern = r"(.+\.py):(\d+):\s+(error|warning|note):\s+(.*)"
+        pattern = r"(.+\.py):(\d+):(?:\d+:)?\s+(error|warning|note):\s+(.*)"
 
         for match in re.findall(pattern, output):
             file, line, level, message = match
@@ -1004,7 +1004,7 @@ class ValidationHarness:
         # Importa o validador de conteúdo
         try:
             sys.path.insert(0, str(BASE_DIR / "scripts"))
-            from validate_content_format import ContentValidator
+            from validate_content_format import ContentValidator  # type: ignore
 
             validator = ContentValidator()
             validator.validate_all()
@@ -1491,6 +1491,20 @@ class ValidationHarness:
                 print(f"      Correção: {err.fix_instruction}")
                 if err.auto_fixable:
                     print(f"      ⚡ Auto-fix: {err.auto_fix_command}")
+
+            # Fallback: Se falhou mas não temos erros parseados, mostra o output bruto
+            if r.status == "fail" and not r.errors and not r.tool_missing:
+                print(
+                    "   ⚠️  Falha detectada, mas nenhum erro foi identificado pelo parser."
+                )
+                if r.stdout:
+                    print("   📄 [STDOUT]:")
+                    for line in r.stdout.splitlines()[:5]:
+                        print(f"      {line}")
+                if r.stderr:
+                    print("   ❌ [STDERR]:")
+                    for line in r.stderr.splitlines()[:5]:
+                        print(f"      {line}")
 
     def _print_action_plan(self):
         """Imprime o plano de ação consolidado."""

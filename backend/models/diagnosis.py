@@ -1,6 +1,7 @@
 """Modelos Pydantic para o endpoint de diagnóstico."""
 
 from pydantic import BaseModel, Field
+from typing import Any
 
 
 class DiagnoseRequest(BaseModel):
@@ -14,4 +15,4 @@ class DiagnoseResponse(BaseModel):
     """Resposta do diagnóstico de conhecimento."""
 
     status: str
-    result: dict | None = None
+    result: dict[str, Any] | None = None

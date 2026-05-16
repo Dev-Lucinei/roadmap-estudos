@@ -13,7 +13,11 @@ VALID_DSL = {
     "name": "Test Flow",
     "steps": [
         {"id": "step-1", "type": "lesson", "params": {"topic": "Python"}},
-        {"id": "step-2", "type": "quiz", "params": {"topic": "Python", "question_count": 5}},
+        {
+            "id": "step-2",
+            "type": "quiz",
+            "params": {"topic": "Python", "question_count": 5},
+        },
     ],
 }
 
@@ -46,7 +50,7 @@ class TestDSLExecutionEngine:
         assert result["steps_count"] == 2
         assert len(result["executed_steps"]) == 2
 
-    def test_execute_invalid_dsl_returns_validation_error(self):
+    def test_execute_invalid_dsl_returns_validation_err(self):
         """Testa que execute() com DSL inválido retorna validation_error."""
         engine = DSLExecutionEngine()
         result = engine.execute({})
@@ -215,7 +219,12 @@ class TestDSLExecutionEngine:
             "name": "test",
             "steps": [
                 {"id": "s1", "type": "lesson", "params": {"topic": "A"}},
-                {"id": "s2", "type": "lesson", "params": {"topic": "B"}, "depends_on": ["nonexistent"]},
+                {
+                    "id": "s2",
+                    "type": "lesson",
+                    "params": {"topic": "B"},
+                    "depends_on": ["nonexistent"],
+                },
             ],
         }
         result = engine.validate(dsl)
@@ -229,8 +238,18 @@ class TestDSLExecutionEngine:
             "version": "1.0",
             "name": "test",
             "steps": [
-                {"id": "s1", "type": "lesson", "params": {"topic": "A"}, "depends_on": ["s2"]},
-                {"id": "s2", "type": "lesson", "params": {"topic": "B"}, "depends_on": ["s1"]},
+                {
+                    "id": "s1",
+                    "type": "lesson",
+                    "params": {"topic": "A"},
+                    "depends_on": ["s2"],
+                },
+                {
+                    "id": "s2",
+                    "type": "lesson",
+                    "params": {"topic": "B"},
+                    "depends_on": ["s1"],
+                },
             ],
         }
         result = engine.validate(dsl)
@@ -244,7 +263,12 @@ class TestDSLExecutionEngine:
             "version": "1.0",
             "name": "test",
             "steps": [
-                {"id": "s1", "type": "lesson", "params": {"topic": "A"}, "depends_on": ["s1"]},
+                {
+                    "id": "s1",
+                    "type": "lesson",
+                    "params": {"topic": "A"},
+                    "depends_on": ["s1"],
+                },
             ],
         }
         result = engine.validate(dsl)
@@ -272,7 +296,11 @@ class TestDSLExecutionEngine:
             "version": "1.0",
             "name": "test",
             "steps": [
-                {"id": "s1", "type": "roadmap", "params": {"theme": "DevOps", "depth": "ultra"}},
+                {
+                    "id": "s1",
+                    "type": "roadmap",
+                    "params": {"theme": "DevOps", "depth": "ultra"},
+                },
             ],
         }
         result = engine.validate(dsl)
@@ -286,7 +314,11 @@ class TestDSLExecutionEngine:
             "version": "1.0",
             "name": "test",
             "steps": [
-                {"id": "s1", "type": "quiz", "params": {"topic": "X", "question_count": 0}},
+                {
+                    "id": "s1",
+                    "type": "quiz",
+                    "params": {"topic": "X", "question_count": 0},
+                },
             ],
         }
         result = engine.validate(dsl)
@@ -300,7 +332,11 @@ class TestDSLExecutionEngine:
             "version": "1.0",
             "name": "test",
             "steps": [
-                {"id": "s1", "type": "quiz", "params": {"topic": "X", "question_count": 5, "pass_score": -1}},
+                {
+                    "id": "s1",
+                    "type": "quiz",
+                    "params": {"topic": "X", "question_count": 5, "pass_score": -1},
+                },
             ],
         }
         result = engine.validate(dsl)
@@ -331,9 +367,17 @@ class TestDSLExecutionEngine:
             "name": "All types",
             "steps": [
                 {"id": "s1", "type": "lesson", "params": {"topic": "Python"}},
-                {"id": "s2", "type": "quiz", "params": {"topic": "Python", "question_count": 5}},
+                {
+                    "id": "s2",
+                    "type": "quiz",
+                    "params": {"topic": "Python", "question_count": 5},
+                },
                 {"id": "s3", "type": "diagnosis", "params": {"topic": "Python"}},
-                {"id": "s4", "type": "roadmap", "params": {"theme": "DevOps", "depth": "beginner"}},
+                {
+                    "id": "s4",
+                    "type": "roadmap",
+                    "params": {"theme": "DevOps", "depth": "beginner"},
+                },
                 {"id": "s5", "type": "review", "params": {"topic": "Python"}},
                 {"id": "s6", "type": "project", "params": {"title": "Meu Projeto"}},
             ],
@@ -348,7 +392,11 @@ class TestDSLExecutionEngine:
             "version": "1.0",
             "name": "test",
             "steps": [
-                {"id": "s1", "type": "project", "params": {"title": "Projeto", "description": "Descrição"}},
+                {
+                    "id": "s1",
+                    "type": "project",
+                    "params": {"title": "Projeto", "description": "Descrição"},
+                },
             ],
         }
         result = engine.validate(dsl)
@@ -361,7 +409,11 @@ class TestDSLExecutionEngine:
             "version": "1.0",
             "name": "test",
             "steps": [
-                {"id": "s1", "type": "project", "params": {"title": "Projeto", "description": 123}},
+                {
+                    "id": "s1",
+                    "type": "project",
+                    "params": {"title": "Projeto", "description": 123},
+                },
             ],
         }
         result = engine.validate(dsl)
@@ -391,13 +443,17 @@ class TestDSLExecutionEngine:
             "name": "test",
             "steps": [
                 {"id": "s1", "type": "lesson", "params": {"topic": "A"}},
-                {"id": "s2", "type": "lesson", "params": {"topic": "B"}, "depends_on": "s1"},
+                {
+                    "id": "s2",
+                    "type": "lesson",
+                    "params": {"topic": "B"},
+                    "depends_on": "s1",
+                },
             ],
         }
         result = engine.validate(dsl)
         assert result["valid"] is False
         assert any("deve ser uma lista" in e["message"] for e in result["errors"])
-
 
     def test_execute_complete_flow_all_types(self):
         """Testa execução com todos os 6 tipos de step."""
@@ -407,9 +463,17 @@ class TestDSLExecutionEngine:
             "name": "Complete Flow",
             "steps": [
                 {"id": "s1", "type": "lesson", "params": {"topic": "Python"}},
-                {"id": "s2", "type": "quiz", "params": {"topic": "Python", "question_count": 5}},
+                {
+                    "id": "s2",
+                    "type": "quiz",
+                    "params": {"topic": "Python", "question_count": 5},
+                },
                 {"id": "s3", "type": "diagnosis", "params": {"topic": "Python"}},
-                {"id": "s4", "type": "roadmap", "params": {"theme": "DevOps", "depth": "beginner"}},
+                {
+                    "id": "s4",
+                    "type": "roadmap",
+                    "params": {"theme": "DevOps", "depth": "beginner"},
+                },
                 {"id": "s5", "type": "review", "params": {"topic": "Python"}},
                 {"id": "s6", "type": "project", "params": {"title": "Projeto"}},
             ],
@@ -430,7 +494,12 @@ class TestDSLExecutionEngine:
             "name": "Dependencies",
             "steps": [
                 {"id": "s1", "type": "lesson", "params": {"topic": "Python"}},
-                {"id": "s2", "type": "quiz", "params": {"topic": "Python", "question_count": 5}, "depends_on": ["s1"]},
+                {
+                    "id": "s2",
+                    "type": "quiz",
+                    "params": {"topic": "Python", "question_count": 5},
+                    "depends_on": ["s1"],
+                },
             ],
         }
         result = engine.execute(dsl)
@@ -441,12 +510,17 @@ class TestDSLExecutionEngine:
     def test_execute_with_unsatisfied_dependency(self):
         """Testa que step é skipped quando dependência não foi executada."""
         engine = DSLExecutionEngine()
-        step = {"id": "s2", "type": "lesson", "params": {"topic": "Python"}, "depends_on": ["s1"]}
+        step = {
+            "id": "s2",
+            "type": "lesson",
+            "params": {"topic": "Python"},
+            "depends_on": ["s1"],
+        }
         result = engine._execute_step(step, [])
         assert result["status"] == "skipped"
         assert "não foi executada" in result["reason"]
 
-    def test_execute_unknown_type_returns_validation_error(self):
+    def test_execute_unknown_type_returns_validation_err(self):
         """Testa execução com tipo de step desconhecido retorna validation_error."""
         engine = DSLExecutionEngine()
         dsl = {
@@ -469,7 +543,9 @@ class TestDSLExecutionEngine:
                 {"id": "s1", "type": "lesson", "params": {"topic": "Python"}},
             ],
         }
-        with patch.object(engine, '_execute_lesson', side_effect=Exception("Simulated error")):
+        with patch.object(
+            engine, "_execute_lesson", side_effect=Exception("Simulated error")
+        ):
             result = engine.execute(dsl)
         assert result["status"] == "partial"
         assert len(result["failed_steps"]) == 1
@@ -484,7 +560,11 @@ class TestDSLExecutionEngine:
             "name": "Shared context",
             "steps": [
                 {"id": "s1", "type": "lesson", "params": {"topic": "Python"}},
-                {"id": "s2", "type": "quiz", "params": {"topic": "Python", "question_count": 5}},
+                {
+                    "id": "s2",
+                    "type": "quiz",
+                    "params": {"topic": "Python", "question_count": 5},
+                },
             ],
         }
         result = engine.execute(dsl)
@@ -493,21 +573,20 @@ class TestDSLExecutionEngine:
         assert "s2_result" in result["context"]
         assert result["context"]["last_topic"] == "Python"
 
-    def test_execute_invalid_dsl_structure_returns_validation_error(self):
+    def test_execute_invalid_dsl_structure_returns_validation_err(self):
         """Testa execução de DSL estruturalmente inválida."""
         engine = DSLExecutionEngine()
         result = engine.execute(42)
         assert result["status"] == "validation_error"
         assert "errors" in result
 
-    def test_execute_empty_steps_returns_validation_error(self):
+    def test_execute_empty_steps_returns_validation_err(self):
         """Testa execução de DSL com steps vazio."""
         engine = DSLExecutionEngine()
         dsl = {"version": "1.0", "name": "Empty", "steps": []}
         result = engine.execute(dsl)
         assert result["status"] == "validation_error"
         assert "errors" in result
-
 
     # ------------------------------------------------------------------ #
     # NOVOS TESTES - TASK-7.3: Edge Cases para Validacao (8)            #
@@ -563,7 +642,12 @@ class TestDSLExecutionEngine:
             "name": "test",
             "steps": [
                 {"id": "s1", "type": "lesson", "params": {"topic": "A"}},
-                {"id": "s2", "type": "lesson", "params": {"topic": "B"}, "depends_on": ["s3"]},
+                {
+                    "id": "s2",
+                    "type": "lesson",
+                    "params": {"topic": "B"},
+                    "depends_on": ["s3"],
+                },
                 {"id": "s3", "type": "lesson", "params": {"topic": "C"}},
             ],
         }
@@ -579,7 +663,12 @@ class TestDSLExecutionEngine:
             "name": "test",
             "steps": [
                 {"id": "s1", "type": "lesson", "params": {"topic": "A"}},
-                {"id": "s2", "type": "lesson", "params": {"topic": "B"}, "depends_on": ["s1", "s1"]},
+                {
+                    "id": "s2",
+                    "type": "lesson",
+                    "params": {"topic": "B"},
+                    "depends_on": ["s1", "s1"],
+                },
             ],
         }
         result = engine.validate(dsl)
@@ -628,10 +717,30 @@ class TestDSLExecutionEngine:
             "name": "Complex chain",
             "steps": [
                 {"id": "nivel-1", "type": "lesson", "params": {"topic": "A"}},
-                {"id": "nivel-2", "type": "lesson", "params": {"topic": "B"}, "depends_on": ["nivel-1"]},
-                {"id": "nivel-3", "type": "lesson", "params": {"topic": "C"}, "depends_on": ["nivel-2"]},
-                {"id": "nivel-4", "type": "lesson", "params": {"topic": "D"}, "depends_on": ["nivel-3"]},
-                {"id": "nivel-5", "type": "lesson", "params": {"topic": "E"}, "depends_on": ["nivel-4"]},
+                {
+                    "id": "nivel-2",
+                    "type": "lesson",
+                    "params": {"topic": "B"},
+                    "depends_on": ["nivel-1"],
+                },
+                {
+                    "id": "nivel-3",
+                    "type": "lesson",
+                    "params": {"topic": "C"},
+                    "depends_on": ["nivel-2"],
+                },
+                {
+                    "id": "nivel-4",
+                    "type": "lesson",
+                    "params": {"topic": "D"},
+                    "depends_on": ["nivel-3"],
+                },
+                {
+                    "id": "nivel-5",
+                    "type": "lesson",
+                    "params": {"topic": "E"},
+                    "depends_on": ["nivel-4"],
+                },
             ],
         }
         result = engine.validate(dsl)
@@ -649,9 +758,24 @@ class TestDSLExecutionEngine:
             "name": "Chain",
             "steps": [
                 {"id": "s1", "type": "lesson", "params": {"topic": "Python"}},
-                {"id": "s2", "type": "lesson", "params": {"topic": "Django"}, "depends_on": ["s1"]},
-                {"id": "s3", "type": "lesson", "params": {"topic": "Flask"}, "depends_on": ["s2"]},
-                {"id": "s4", "type": "lesson", "params": {"topic": "API"}, "depends_on": ["s3"]},
+                {
+                    "id": "s2",
+                    "type": "lesson",
+                    "params": {"topic": "Django"},
+                    "depends_on": ["s1"],
+                },
+                {
+                    "id": "s3",
+                    "type": "lesson",
+                    "params": {"topic": "Flask"},
+                    "depends_on": ["s2"],
+                },
+                {
+                    "id": "s4",
+                    "type": "lesson",
+                    "params": {"topic": "API"},
+                    "depends_on": ["s3"],
+                },
             ],
         }
         result = engine.execute(dsl)
@@ -666,7 +790,12 @@ class TestDSLExecutionEngine:
             "version": "1.0",
             "name": "Missing dep",
             "steps": [
-                {"id": "s2", "type": "lesson", "params": {"topic": "B"}, "depends_on": ["s1"]},
+                {
+                    "id": "s2",
+                    "type": "lesson",
+                    "params": {"topic": "B"},
+                    "depends_on": ["s1"],
+                },
             ],
         }
         result = engine.execute(dsl)
@@ -681,14 +810,34 @@ class TestDSLExecutionEngine:
             "name": "Fail chain",
             "steps": [
                 {"id": "s1", "type": "lesson", "params": {"topic": "A"}},
-                {"id": "s2", "type": "lesson", "params": {"topic": "B"}, "depends_on": ["s1"]},
-                {"id": "s3", "type": "lesson", "params": {"topic": "C"}, "depends_on": ["s2"]},
+                {
+                    "id": "s2",
+                    "type": "lesson",
+                    "params": {"topic": "B"},
+                    "depends_on": ["s1"],
+                },
+                {
+                    "id": "s3",
+                    "type": "lesson",
+                    "params": {"topic": "C"},
+                    "depends_on": ["s2"],
+                },
             ],
         }
-        with patch.object(engine, '_execute_lesson', side_effect=[
-            {"topic": "A", "difficulty": "medium", "duration_minutes": 30, "content_generated": False, "note": ""},
-            Exception("Step B failed"),
-        ]):
+        with patch.object(
+            engine,
+            "_execute_lesson",
+            side_effect=[
+                {
+                    "topic": "A",
+                    "difficulty": "medium",
+                    "duration_minutes": 30,
+                    "content_generated": False,
+                    "note": "",
+                },
+                Exception("Step B failed"),
+            ],
+        ):
             result = engine.execute(dsl)
         assert result["status"] == "partial"
         assert len(result["executed_steps"]) == 1
@@ -701,7 +850,13 @@ class TestDSLExecutionEngine:
         """Testa que execute retorna todas as chaves esperadas no resultado."""
         engine = DSLExecutionEngine()
         result = engine.execute(VALID_DSL)
-        assert set(result.keys()) == {"status", "steps_count", "executed_steps", "failed_steps", "context"}
+        assert set(result.keys()) == {
+            "status",
+            "steps_count",
+            "executed_steps",
+            "failed_steps",
+            "context",
+        }
 
     def test_execute_empty_depends_on_allowed(self):
         """Testa que depends_on vazio [] funciona como sem dependencia."""
@@ -710,8 +865,18 @@ class TestDSLExecutionEngine:
             "version": "1.0",
             "name": "Empty dep",
             "steps": [
-                {"id": "s1", "type": "lesson", "params": {"topic": "Python"}, "depends_on": []},
-                {"id": "s2", "type": "lesson", "params": {"topic": "Django"}, "depends_on": []},
+                {
+                    "id": "s1",
+                    "type": "lesson",
+                    "params": {"topic": "Python"},
+                    "depends_on": [],
+                },
+                {
+                    "id": "s2",
+                    "type": "lesson",
+                    "params": {"topic": "Django"},
+                    "depends_on": [],
+                },
             ],
         }
         result = engine.execute(dsl)
@@ -726,7 +891,12 @@ class TestDSLExecutionEngine:
             "name": "Context chain",
             "steps": [
                 {"id": "step-a", "type": "lesson", "params": {"topic": "Python"}},
-                {"id": "step-b", "type": "lesson", "params": {"topic": "Django"}, "depends_on": ["step-a"]},
+                {
+                    "id": "step-b",
+                    "type": "lesson",
+                    "params": {"topic": "Django"},
+                    "depends_on": ["step-a"],
+                },
             ],
         }
         result = engine.execute(dsl)
@@ -747,7 +917,11 @@ class TestDSLExecutionEngine:
             "name": "Validate then execute",
             "steps": [
                 {"id": "s1", "type": "lesson", "params": {"topic": "Python"}},
-                {"id": "s2", "type": "quiz", "params": {"topic": "Python", "question_count": 5}},
+                {
+                    "id": "s2",
+                    "type": "quiz",
+                    "params": {"topic": "Python", "question_count": 5},
+                },
             ],
         }
         validation = engine.validate(dsl)

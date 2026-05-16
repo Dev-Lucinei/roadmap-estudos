@@ -2,7 +2,9 @@
 
 import json
 import os
+from pathlib import Path
 import re
+from typing import Any
 from backend.core.config import (
     OPENROUTER_API_KEY,
     OPENROUTER_BASE_URL,
@@ -19,7 +21,7 @@ except ImportError:
 class QuizService:
     """Serviço para gerar e avaliar quizzes a partir de lições."""
 
-    def __init__(self, licoes_dir: str = LICOES_DIR):
+    def __init__(self, licoes_dir: str | Path = LICOES_DIR):
         self.licoes_dir = licoes_dir
 
     def get_client(self) -> "OpenAI":
@@ -32,7 +34,7 @@ class QuizService:
             api_key=OPENROUTER_API_KEY,
         )
 
-    def generate_quiz(self, node_id: str, title: str) -> list[dict]:
+    def generate_quiz(self, node_id: str, title: str) -> list[dict[str, Any]]:
         """Gera um quiz de múltipla escolha baseado no conteúdo de uma lição."""
         lesson_path = os.path.join(self.licoes_dir, f"{node_id}.md")
         if not os.path.exists(lesson_path):
@@ -76,7 +78,8 @@ Responda APENAS com o JSON, sem texto adicional."""
             temperature=0.7,
         )
 
-        response_text = completion.choices[0].message.content.strip()
+        content = completion.choices[0].message.content
+        response_text = content.strip() if content else ""
         json_match = re.search(r"\[[\s\S]*\]", response_text)
         if not json_match:
             raise ValueError("Resposta da IA não contém JSON válido")
@@ -88,8 +91,12 @@ Responda APENAS com o JSON, sem texto adicional."""
         return quiz_data
 
     def evaluate_quiz(
-        self, node_id: str, title: str, quiz_data: list[dict], user_answers: dict
-    ) -> dict:
+        self,
+        node_id: str,
+        title: str,
+        quiz_data: list[dict[str, Any]],
+        user_answers: dict[str, int],
+    ) -> dict[str, Any]:
         """Avalia as respostas do usuário comparando com o gabarito e gera feedback via IA."""
         lesson_path = os.path.join(self.licoes_dir, f"{node_id}.md")
         lesson_content = ""
@@ -148,7 +155,8 @@ Responda APENAS com o JSON, sem texto adicional."""
             temperature=0.5,
         )
 
-        response_text = completion.choices[0].message.content.strip()
+        content = completion.choices[0].message.content
+        response_text = content.strip() if content else ""
         json_match = re.search(r"\{[\s\S]*\}", response_text)
         if not json_match:
             raise ValueError("Resposta da IA não contém JSON válido")

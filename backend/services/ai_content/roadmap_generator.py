@@ -3,6 +3,7 @@
 import json
 import os
 import re
+from typing import Any
 from backend.core.config import (
     OPENROUTER_API_KEY,
     OPENROUTER_BASE_URL,
@@ -29,7 +30,7 @@ def get_client() -> "OpenAI":
     )
 
 
-def gerar_roadmap_ia(tema: str) -> dict | None:
+def gerar_roadmap_ia(tema: str) -> dict[str, Any] | None:
     """Gera um roadmap de estudos via OpenRouter API."""
     client = get_client()
     prompt = f"""
@@ -82,11 +83,17 @@ def gerar_roadmap_ia(tema: str) -> dict | None:
     )
 
     content = response.choices[0].message.content
+    if not content:
+        return None
+
     try:
         # Remover markdown code blocks se existirem
         content = re.sub(r"```json\s*", "", content)
         content = re.sub(r"```\s*$", "", content)
-        json_str = re.search(r"(\{[\s\S]*\})", content).group(1)
+        match = re.search(r"(\{[\s\S]*\})", content)
+        if not match:
+            return None
+        json_str = match.group(1)
         roadmap_data = json.loads(json_str)
 
         # Validar estrutura
@@ -99,7 +106,7 @@ def gerar_roadmap_ia(tema: str) -> dict | None:
         return None
 
 
-def salvar_roadmap(tema: str, dados: dict) -> str:
+def salvar_roadmap(tema: str, dados: dict[str, Any]) -> str:
     """Salva um roadmap no diretório de dados."""
     if not os.path.exists(DATA_DIR):
         os.makedirs(DATA_DIR)

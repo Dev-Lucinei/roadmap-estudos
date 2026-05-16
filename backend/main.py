@@ -3,6 +3,7 @@
 from contextlib import asynccontextmanager
 from pathlib import Path
 import sys
+from typing import AsyncGenerator
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 if str(BASE_DIR) not in sys.path:
@@ -22,7 +23,7 @@ from backend.core.config import (  # noqa: E402
 
 
 @asynccontextmanager
-async def lifespan(_app: FastAPI):
+async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     """Initialize and cleanup application resources."""
     DATA_DIR.mkdir(exist_ok=True)
     LICOES_DIR.mkdir(exist_ok=True)

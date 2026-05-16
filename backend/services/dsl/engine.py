@@ -3,18 +3,20 @@
 import re
 from typing import Any
 
-_VALID_TYPES = frozenset({"lesson", "quiz", "diagnosis", "roadmap", "review", "project"})
+_VALID_TYPES = frozenset(
+    {"lesson", "quiz", "diagnosis", "roadmap", "review", "project"}
+)
 _VALID_DEPTHS = frozenset({"beginner", "intermediate", "advanced"})
 
 
 class DSLExecutionEngine:
     """Motor de execução declarativa da DSL."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the engine with an empty context."""
         self.context: dict[str, Any] = {}
 
-    def execute(self, dsl: dict) -> dict:
+    def execute(self, dsl: dict[str, Any]) -> dict[str, Any]:
         """Execute a DSL flow after validation.
 
         Args:
@@ -30,7 +32,7 @@ class DSLExecutionEngine:
                 "errors": validation["errors"],
             }
 
-        executed_steps = []
+        executed_steps: list[dict[str, Any]] = []
         failed_steps = []
 
         for step in dsl.get("steps", []):
@@ -49,7 +51,9 @@ class DSLExecutionEngine:
             "context": self.context,
         }
 
-    def _execute_step(self, step: dict, executed_steps: list) -> dict:
+    def _execute_step(
+        self, step: dict[str, Any], executed_steps: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         step_type = step["type"]
         step_id = step["id"]
         params = step.get("params", {})
@@ -74,7 +78,12 @@ class DSLExecutionEngine:
 
         handler = handlers.get(step_type)
         if not handler:
-            return {"id": step_id, "type": step_type, "status": "failed", "error": f"Unknown type: {step_type}"}
+            return {
+                "id": step_id,
+                "type": step_type,
+                "status": "failed",
+                "error": f"Unknown type: {step_type}",
+            }
 
         try:
             result = handler(step_id, params)
@@ -94,7 +103,7 @@ class DSLExecutionEngine:
                 "error": str(e),
             }
 
-    def _execute_lesson(self, step_id: str, params: dict) -> dict:
+    def _execute_lesson(self, step_id: str, params: dict[str, Any]) -> dict[str, Any]:
         return {
             "topic": params.get("topic", ""),
             "difficulty": params.get("difficulty", "medium"),
@@ -103,7 +112,7 @@ class DSLExecutionEngine:
             "note": "Implementação real requer OPENROUTER_API_KEY",
         }
 
-    def _execute_quiz(self, step_id: str, params: dict) -> dict:
+    def _execute_quiz(self, step_id: str, params: dict[str, Any]) -> dict[str, Any]:
         return {
             "topic": params.get("topic", ""),
             "question_count": params.get("question_count", 5),
@@ -111,30 +120,32 @@ class DSLExecutionEngine:
             "questions_generated": False,
         }
 
-    def _execute_diagnosis(self, step_id: str, params: dict) -> dict:
+    def _execute_diagnosis(
+        self, step_id: str, params: dict[str, Any]
+    ) -> dict[str, Any]:
         return {
             "topic": params.get("topic", ""),
             "prerequisites_checked": params.get("prerequisites", []),
         }
 
-    def _execute_roadmap(self, step_id: str, params: dict) -> dict:
+    def _execute_roadmap(self, step_id: str, params: dict[str, Any]) -> dict[str, Any]:
         return {
             "theme": params.get("theme", ""),
             "depth": params.get("depth", "intermediate"),
         }
 
-    def _execute_review(self, step_id: str, params: dict) -> dict:
+    def _execute_review(self, step_id: str, params: dict[str, Any]) -> dict[str, Any]:
         return {
             "topic": params.get("topic", ""),
         }
 
-    def _execute_project(self, step_id: str, params: dict) -> dict:
+    def _execute_project(self, step_id: str, params: dict[str, Any]) -> dict[str, Any]:
         return {
             "title": params.get("title", ""),
             "description": params.get("description", ""),
         }
 
-    def validate(self, dsl: Any) -> dict:
+    def validate(self, dsl: Any) -> dict[str, Any]:
         """Validate a complete DSL definition.
 
         Args:
@@ -377,7 +388,9 @@ class DSLExecutionEngine:
                 step_type = step.get("type", "")
                 if step_type in _VALID_TYPES:
                     errors.extend(
-                        self._validate_params(step_type, step["params"], step_id, f"{prefix}.params")
+                        self._validate_params(
+                            step_type, step["params"], step_id, f"{prefix}.params"
+                        )
                     )
 
             if "depends_on" in step:
@@ -418,7 +431,9 @@ class DSLExecutionEngine:
 
         return errors
 
-    def _validate_params(self, step_type: str, params: dict, step_id: str, path: str) -> list[dict]:
+    def _validate_params(
+        self, step_type: str, params: dict, step_id: str, path: str
+    ) -> list[dict]:
         """Validate parameters for a specific step type.
 
         Args:
@@ -645,7 +660,11 @@ class DSLExecutionEngine:
 
         adj: list[list[int]] = [[] for _ in range(n)]
         for i, step in enumerate(steps):
-            if isinstance(step, dict) and "depends_on" in step and isinstance(step["depends_on"], list):
+            if (
+                isinstance(step, dict)
+                and "depends_on" in step
+                and isinstance(step["depends_on"], list)
+            ):
                 for dep in step["depends_on"]:
                     if isinstance(dep, str) and dep in id_to_idx:
                         adj[i].append(id_to_idx[dep])
@@ -653,18 +672,25 @@ class DSLExecutionEngine:
         cycles: list[list[str]] = []
 
         def dfs(u: int) -> None:
+            """Execute a depth-first search to detect cycles in the dependency graph."""
             color[u] = GRAY
             for v in adj[u]:
                 if color[v] == GRAY:
                     path: list[str] = []
-                    cur = u
-                    while cur != v:
-                        path.append(steps[cur]["id"] if isinstance(steps[cur], dict) else str(cur))
+                    cur: int | None = u
+                    while cur is not None and cur != v:
+                        path.append(
+                            steps[cur]["id"]
+                            if isinstance(steps[cur], dict)
+                            else str(cur)
+                        )
                         cur = parent.get(cur)
-                        if cur is None:
-                            break
-                    path.append(steps[v]["id"] if isinstance(steps[v], dict) else str(v))
-                    path.append(steps[u]["id"] if isinstance(steps[u], dict) else str(u))
+                    path.append(
+                        steps[v]["id"] if isinstance(steps[v], dict) else str(v)
+                    )
+                    path.append(
+                        steps[u]["id"] if isinstance(steps[u], dict) else str(u)
+                    )
                     path.reverse()
                     cycles.append(path)
                 elif color[v] == WHITE:

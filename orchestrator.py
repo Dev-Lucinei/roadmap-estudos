@@ -12,6 +12,7 @@ import sys
 import os
 from datetime import datetime, timezone
 
+
 def update_task_status(
     board_path: str,
     task_id: str,

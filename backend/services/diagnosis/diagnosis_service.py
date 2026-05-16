@@ -2,6 +2,8 @@
 
 import json
 import os
+from pathlib import Path
+from typing import Any
 from backend.core.config import (
     OPENROUTER_BASE_URL,
     DATA_DIR,
@@ -18,7 +20,7 @@ except ImportError:
 class DiagnosisService:
     """Analisa lacunas de conhecimento usando IA e mapa de dependências."""
 
-    def __init__(self, data_dir: str = DATA_DIR):
+    def __init__(self, data_dir: str | Path = DATA_DIR):
         self.data_dir = data_dir
 
     def get_client(self) -> "OpenAI":
@@ -31,7 +33,7 @@ class DiagnosisService:
             api_key=get_api_key() or "",
         )
 
-    def diagnose(self, topic: str, user_answer: str) -> dict:
+    def diagnose(self, topic: str, user_answer: str) -> dict[str, Any]:
         """Diagnostica o conhecimento do usuário sobre um tópico usando IA."""
         dep_map_path = os.path.join(self.data_dir, "dep_map.json")
         if not os.path.exists(dep_map_path):
@@ -65,7 +67,8 @@ class DiagnosisService:
             temperature=0.7,
         )
 
-        diagnosis = completion.choices[0].message.content.strip()
+        content = completion.choices[0].message.content
+        diagnosis = content.strip() if content else ""
         words = diagnosis.split()
         if len(words) > 100:
             diagnosis = " ".join(words[:100]) + "..."
