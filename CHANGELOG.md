@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## [Unreleased]
+
+### Changed
+- Simplificado harness.py para usar harness_core compartilhado
+- Reduzido código duplicado em ~90%
+- Mantidas todas as funcionalidades específicas de cada projeto
+
+---
+
 ## [v3.0.1] - 2026-05-12
 
 ### Corrigido
