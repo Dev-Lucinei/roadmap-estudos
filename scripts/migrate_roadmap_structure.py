@@ -6,7 +6,9 @@ Converte roadmaps do formato antigo (children + side) para o novo formato (subto
 
 Uso:
     python scripts/migrate_roadmap_structure.py data/python_fundamentos.json
-    python scripts/migrate_roadmap_structure.py data/python_fundamentos.json --output data/python_fundamentos_v2.json
+    python scripts/migrate_roadmap_structure.py \\
+        data/python_fundamentos.json \\
+        --output data/python_fundamentos_v2.json
 """
 
 import json

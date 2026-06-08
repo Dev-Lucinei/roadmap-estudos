@@ -395,9 +395,12 @@ def build_report(
                 "Qualquer tentativa de edição será detectada e bloqueada."
             ),
             "seal_workflow": (
-                "REGRA CRÍTICA: Arquivos protegidos só podem ser commitados se estiverem SELADOS. "
-                "Selar = Aprovar com senha. Se arquivos estão desbloqueados, agentes podem ter modificado. "
-                "Workflow correto: --unlock → editar → --seal (aprovar) → commit."
+                "REGRA CRÍTICA: Arquivos protegidos só podem ser "
+                "commitados se estiverem SELADOS. "
+                "Selar = Aprovar com senha. Se arquivos estão "
+                "desbloqueados, agentes podem ter modificado. "
+                "Workflow correto: --unlock → editar → "
+                "--seal (aprovar) → commit."
             ),
             "allowed_actions": [
                 "Executar harness.py para validar",

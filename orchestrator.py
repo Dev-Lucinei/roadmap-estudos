@@ -8,9 +8,10 @@ Uso:
 """
 
 import json
-import sys
 import os
+import sys
 from datetime import datetime, timezone
+from typing import Any
 
 
 def update_task_status(
@@ -21,12 +22,12 @@ def update_task_status(
     result_path: str | None = None,
     retry_count: int | None = None,
     clear_output_log: bool = False,
-) -> dict:  # type: ignore
+) -> dict[str, Any]:
     """Atualiza o status de uma tarefa no task_board.json."""
     if not os.path.exists(board_path):
         raise FileNotFoundError(f"Task board not found at {board_path}")
     with open(board_path) as f:
-        board = json.load(f)
+        board: dict[str, Any] = json.load(f)
     task_found = False
     for task in board["tasks"]:
         if task["id"] == task_id:
@@ -56,8 +57,7 @@ def get_ready_tasks(task_board: dict) -> list[str]:  # type: ignore
     return [
         t["id"]
         for t in task_board["tasks"]
-        if t.get("status") == "pending"
-        and all(d in completed for d in t.get("dependencies", []))
+        if t.get("status") == "pending" and all(d in completed for d in t.get("dependencies", []))
     ]
 
 
@@ -67,9 +67,7 @@ BOARD_PATH = "task_board.json"
 def cmd_update(args: list[str]) -> None:
     """Executa o comando update: altera status de uma tarefa."""
     if len(args) < 2:
-        print(
-            "Uso: python orchestrator.py update <task_id> <status> [output_log] [result_path]"
-        )
+        print("Uso: python orchestrator.py update <task_id> <status> [output_log] [result_path]")
         sys.exit(1)
     task_id = args[0]
     status = args[1]
@@ -95,7 +93,8 @@ def cmd_ready() -> None:
             for tid in ready:
                 task = next(t for t in board["tasks"] if t["id"] == tid)
                 print(
-                    f"   {tid} | agente={task.get('assigned_agent', 'TBD')} | input={task.get('input_data', '')}"
+                    f"   {tid} | agente={task.get('assigned_agent', 'TBD')}"
+                    f" | input={task.get('input_data', '')}"
                 )
         else:
             print("📋 Nenhuma tarefa pronta. Verifique dependências.")

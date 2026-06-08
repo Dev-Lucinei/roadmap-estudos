@@ -39,6 +39,7 @@ class RoadmapHarness(ValidationHarness):
     def run_content(self) -> None:
         """Verifica formato de roadmaps e lições gerados."""
         import time
+
         from harness_core import ValidationError
 
         start = time.time()
@@ -46,7 +47,7 @@ class RoadmapHarness(ValidationHarness):
 
         try:
             sys.path.insert(0, str(self.base_dir / "scripts"))
-            from validate_content_format import ContentValidator  # type: ignore
+            from validate_content_format import ContentValidator
 
             validator = ContentValidator()
             validator.validate_all()
@@ -158,9 +159,7 @@ class RoadmapHarness(ValidationHarness):
         elif "ID" in message and "inválido" in message:
             return "Converter ID para kebab-case (apenas a-z, 0-9, -, _)"
         elif "não contém quiz embutido" in message:
-            return (
-                "Adicionar bloco ```json com quiz de 3+ perguntas ao final do arquivo"
-            )
+            return "Adicionar bloco ```json com quiz de 3+ perguntas ao final do arquivo"
         elif "quiz tem menos de 3 perguntas" in message:
             return "Adicionar mais perguntas ao quiz (mínimo 3)"
         elif "deve ter exatamente 4 opções" in message:
