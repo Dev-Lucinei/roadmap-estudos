@@ -2,6 +2,49 @@
 
 Este documento é a **fonte da verdade** para qualquer agente que colabore neste projeto. Leia-o integralmente antes de iniciar qualquer alteração.
 
+---
+
+## 🔗 Diretrizes & Padrões Globais
+
+Este projeto integra o diretório centralizado de diretrizes do workspace: **`/home/lucinei/Projetos/.agents/`**
+
+### Precedência de Regras
+```
+policies/ (Global - non-negotiable) > rules/ (Projeto) > standards/ (Fallback)
+```
+
+### Recursos Disponíveis
+
+| Categoria | Caminho | Descrição |
+|-----------|---------|-----------|
+| **Políticas** | [`/.agents/policies/`](file:///home/lucinei/Projetos/.agents/policies/) | Regras de segurança, proteção de dados e controle de acesso (obrigatórias) |
+| **Regras** | [`/.agents/rules/`](file:///home/lucinei/Projetos/.agents/rules/) | Padrões de codificação e workflow DSL |
+| **Padrões** | [`/.agents/standards/`](file:///home/lucinei/Projetos/.agents/standards/) | Stack, qualidade, documentação e estrutura |
+| **ADRs** | [`/.agents/adr/`](file:///home/lucinei/Projetos/.agents/adr/) | Decisões arquiteturais (core + domain) |
+| **Templates** | [`/.agents/templates/`](file:///home/lucinei/Projetos/.agents/templates/) | Templates para briefings, PRDs, ADRs e CHANGELOGs |
+
+### Políticas Mandatórias (Non-Negotiable)
+- **[Segurança](file:///home/lucinei/Projetos/.agents/policies/security.md):** Deny list de comandos, anti-patterns proibidos e guardrails
+- **[Proteção de Dados](file:///home/lucinei/Projetos/.agents/policies/data-protection.md):** Diretrizes PII e dados em logs
+- **[Controle de Acesso](file:///home/lucinei/Projetos/.agents/policies/access-control.md):** Credenciais e secrets
+
+### Padrões de Qualidade (Quality Gates)
+Após qualquer alteração, o código deve passar nas 4 validações:
+1. `python harness.py` — Validação do harness
+2. `pytest --cov-fail-under=85` — Cobertura ≥ 85%
+3. `ruff check && ruff format --check` — Lint e formatação
+4. `mypy --strict` — Checagem de tipos
+
+### ADRs Core (Obrigatórios)
+- **[ADR-001](file:///home/lucinei/Projetos/.agents/adr/core/ADR-001-harness-validation.md):** Harness de Validação Unificado
+- **[ADR-002](file:///home/lucinei/Projetos/.agents/adr/core/ADR-002-pydantic-settings.md):** Configurações via pydantic-settings
+- **[ADR-003](file:///home/lucinei/Projetos/.agents/adr/core/ADR-003-fastapi-di.md):** FastAPI com DI via Depends
+- **[ADR-004](file:///home/lucinei/Projetos/.agents/adr/core/ADR-004-process-standards.md):** Padrões de Processos (DoR, DoD, WIP Limits)
+
+### ADRs de Domínio (Opcionais - aplicáveis a este projeto)
+- **[ADR-005](file:///home/lucinei/Projetos/.agents/adr/domain/ADR-005-artifact-provenance.md):** Metadados de Proveniência em Artefatos de IA/ML
+- **[ADR-007](file:///home/lucinei/Projetos/.agents/adr/domain/ADR-007-multi-provider-ia.md):** Arquitetura Multi-Provider para Modelos de IA
+
 ## 🛠️ Stack Técnica & Arquitetura
 - **Backend**: Python 3.11+ com **FastAPI** (servidor assíncrono em `backend/main.py`)
 - **Frontend**: HTML5, Vanilla CSS, JavaScript (ES6+ com **escopo global** para compatibilidade)
