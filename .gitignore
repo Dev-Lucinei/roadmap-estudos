@@ -27,3 +27,12 @@ Thumbs.db
 
 # Lock files (keep uv.lock)
 # package-lock.json
+
+# Backups
+*.bak
+*.backup
+
+# Coverage
+.coverage
+.coverage.*
+htmlcov/

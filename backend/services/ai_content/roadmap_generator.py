@@ -1,20 +1,29 @@
 """Geração de roadmaps de estudo via OpenRouter API."""
 
 import json
+import logging
 import os
 import re
-from typing import Any
+from typing import Any, cast
+
 from backend.core.config import (
+    DATA_DIR,
     OPENROUTER_API_KEY,
     OPENROUTER_BASE_URL,
-    DATA_DIR,
     check_api_key,
 )
+
+logger = logging.getLogger(__name__)
 
 try:
     from openai import OpenAI
 except ImportError:
-    OpenAI = None  # type: ignore
+    OpenAI = None  # type: ignore[assignment,misc]
+
+
+# Type aliases for roadmap structure
+RoadmapNode = dict[str, Any]
+RoadmapData = dict[str, str | list[RoadmapNode]]
 
 
 def get_client() -> "OpenAI":
@@ -30,53 +39,52 @@ def get_client() -> "OpenAI":
     )
 
 
-def gerar_roadmap_ia(tema: str) -> dict[str, Any] | None:
+def gerar_roadmap_ia(tema: str) -> RoadmapData | None:
     """Gera um roadmap de estudos via OpenRouter API."""
     client = get_client()
-    prompt = f"""
-    Você é um arquiteto de currículo técnico. Gere um objeto JSON que represente um roadmap de estudos sobre o tema '{tema}'.
-    
-    O JSON deve seguir este formato estrito (estrutura v2.0 com subtopics):
-    {{
-      "title": "Título do Roadmap",
-      "description": "Breve descrição do roadmap (opcional)",
-      "nodes": [
-        {{
-          "id": "id-unico-kebab-case",
-          "title": "Nome do Tópico Central",
-          "type": "central",
-          "group": "Nome da Seção (ex: Fundamentos)",
-          "difficulty": "easy|medium|hard",
-          "content": "Breve descrição do tópico",
-          "subtopics": [
-            {{
-              "id": "subtopico-1",
-              "title": "Nome do Subtópico",
-              "difficulty": "easy|medium|hard",
-              "content": "Descrição opcional",
-              "subtopics": [
-                {{
-                  "id": "sub-subtopico-1",
-                  "title": "Nome do Sub-subtópico",
-                  "difficulty": "easy|medium|hard"
-                }}
-              ]
-            }}
-          ]
-        }}
-      ]
-    }}
-    
-    REGRAS IMPORTANTES:
-    1. Use APENAS a estrutura com "subtopics" (objetos aninhados), NÃO use "children" ou "side"
-    2. IDs devem ser em kebab-case (ex: "introducao-poo", "classes-objetos")
-    3. Cada nó central deve ter de 4 a 8 subtópicos
-    4. Subtópicos podem ter seus próprios subtópicos (até 2 níveis de profundidade)
-    5. Agrupe os tópicos em pelo menos 3 seções lógicas (groups diferentes)
-    6. Distribua as dificuldades: 40% easy, 40% medium, 20% hard
-    7. O output deve ser APENAS o JSON válido, sem explicações ou markdown
-    8. Garanta que todos os IDs sejam únicos
-    """
+    prompt = (
+        f"Você é um arquiteto de currículo técnico. Gere um objeto JSON que represente "
+        f"um roadmap de estudos sobre o tema '{tema}'.\n\n"
+        "O JSON deve seguir este formato estrito (estrutura v2.0 com subtopics):\n"
+        "{\n"
+        '  "title": "Título do Roadmap",\n'
+        '  "description": "Breve descrição do roadmap (opcional)",\n'
+        '  "nodes": [\n'
+        "    {\n"
+        '      "id": "id-unico-kebab-case",\n'
+        '      "title": "Nome do Tópico Central",\n'
+        '      "type": "central",\n'
+        '      "group": "Nome da Seção (ex: Fundamentos)",\n'
+        '      "difficulty": "easy|medium|hard",\n'
+        '      "content": "Breve descrição do tópico",\n'
+        '      "subtopics": [\n'
+        "        {\n"
+        '          "id": "subtopico-1",\n'
+        '          "title": "Nome do Subtópico",\n'
+        '          "difficulty": "easy|medium|hard",\n'
+        '          "content": "Descrição opcional",\n'
+        '          "subtopics": [\n'
+        "            {\n"
+        '              "id": "sub-subtopico-1",\n'
+        '              "title": "Nome do Sub-subtópico",\n'
+        '              "difficulty": "easy|medium|hard"\n'
+        "            }\n"
+        "          ]\n"
+        "        }\n"
+        "      ]\n"
+        "    }\n"
+        "  ]\n"
+        "}\n\n"
+        "REGRAS IMPORTANTES:\n"
+        "1. Use APENAS a estrutura com 'subtopics' (objetos aninhados)\n"
+        "2. IDs devem ser em kebab-case (ex: 'introducao-poo', 'classes-objetos')\n"
+        "3. Cada nó central deve ter de 4 a 8 subtópicos\n"
+        "4. Subtópicos podem ter seus próprios subtópicos (até 2 níveis de profundidade)\n"
+        "5. Agrupe os tópicos em pelo menos 3 seções lógicas (groups diferentes)\n"
+        "6. Distribua as dificuldades: 40% easy, 40% medium, 20% hard\n"
+        "7. O output deve ser APENAS o JSON válido, sem explicações ou markdown\n"
+        "8. Garanta que todos os IDs sejam únicos"
+    )
 
     response = client.chat.completions.create(
         model="openrouter/auto", messages=[{"role": "user", "content": prompt}]
@@ -100,13 +108,13 @@ def gerar_roadmap_ia(tema: str) -> dict[str, Any] | None:
         if not roadmap_data.get("nodes"):
             raise ValueError("JSON não contém 'nodes'")
 
-        return roadmap_data
+        return cast(RoadmapData, roadmap_data)
     except Exception as e:
-        print(f"Erro ao parsear JSON: {e}")
+        logger.error("Erro ao parsear JSON: %s", e)
         return None
 
 
-def salvar_roadmap(tema: str, dados: dict[str, Any]) -> str:
+def salvar_roadmap(tema: str, dados: RoadmapData) -> str:
     """Salva um roadmap no diretório de dados."""
     if not os.path.exists(DATA_DIR):
         os.makedirs(DATA_DIR)

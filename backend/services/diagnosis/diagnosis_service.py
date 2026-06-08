@@ -4,9 +4,10 @@ import json
 import os
 from pathlib import Path
 from typing import Any
+
 from backend.core.config import (
-    OPENROUTER_BASE_URL,
     DATA_DIR,
+    OPENROUTER_BASE_URL,
     check_api_key,
     get_api_key,
 )
@@ -14,7 +15,7 @@ from backend.core.config import (
 try:
     from openai import OpenAI
 except ImportError:
-    OpenAI = None  # type: ignore
+    OpenAI = None  # type: ignore[assignment,misc]
 
 
 class DiagnosisService:
@@ -45,20 +46,17 @@ class DiagnosisService:
         prerequisites = dep_map.get(topic, [])
         client = self.get_client()
 
-        prompt = f"""
-        Analise a seguinte resposta do usuário sobre o tópico "{topic}":
-        "{user_answer}"
-        
-        Pré-requisitos para este tópico: {", ".join(prerequisites) if prerequisites else "Nenhum"}
-        
-        Forneça um diagnóstico conciso (máximo 100 palavras) que:
-        1. Identifique se há lacunas de conhecimento nos pré-requisitos
-        2. Se houver lacunas, explique qual pré-requisito está faltando e por que é importante
-        3. Se não houver lacunas, confirme que o usuário pode avançar
-        4. Inclua uma fórmula/regra relevante e um erro comum
-        
-        Responda APENAS com o diagnóstico, sem formatação extra.
-        """
+        prompt = (
+            f'Analise a seguinte resposta do usuário sobre o tópico "{topic}":'
+            f"\n{user_answer}\n"
+            f"\nPré-requisitos: {', '.join(prerequisites) or 'Nenhum'}\n"
+            "\nForneça um diagnóstico conciso (máximo 100 palavras) que:\n"
+            "1. Identifique se há lacunas de conhecimento nos pré-requisitos\n"
+            "2. Se houver lacunas, explique qual pré-requisito está faltando\n"
+            "3. Se não houver lacunas, confirme que o usuário pode avançar\n"
+            "4. Inclua uma fórmula/regra relevante e um erro comum\n"
+            "\nResponda APENAS com o diagnóstico, sem formatação extra."
+        )
 
         completion = client.chat.completions.create(
             model="openrouter/auto",

@@ -1,14 +1,14 @@
 """Modelos Pydantic para validação de dados da API."""
 
+from .diagnosis import DiagnoseRequest, DiagnoseResponse
 from .lesson import GenerateLessonRequest, GenerateLessonResponse
 from .quiz import (
-    GenerateQuizRequest,
-    GenerateQuizResponse,
     EvaluateQuizRequest,
     EvaluateQuizResponse,
+    GenerateQuizRequest,
+    GenerateQuizResponse,
 )
 from .roadmap import CreateRoadmapRequest, CreateRoadmapResponse
-from .diagnosis import DiagnoseRequest, DiagnoseResponse
 
 __all__ = [
     "GenerateLessonRequest",

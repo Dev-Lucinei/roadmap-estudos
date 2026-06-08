@@ -10,9 +10,9 @@ Uso:
 """
 
 import json
-import sys
 import os
-from typing import Dict, Any
+import sys
+from typing import Any, Dict
 
 
 def migrate_node(node: Dict[str, Any], all_nodes: Dict[str, Dict]) -> Dict[str, Any]:
@@ -62,9 +62,7 @@ def migrate_node(node: Dict[str, Any], all_nodes: Dict[str, Dict]) -> Dict[str, 
                                 {
                                     "id": grandchild_id,
                                     "title": grandchild["title"],
-                                    "difficulty": grandchild.get(
-                                        "difficulty", "medium"
-                                    ),
+                                    "difficulty": grandchild.get("difficulty", "medium"),
                                 }
                             )
 

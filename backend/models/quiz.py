@@ -1,7 +1,8 @@
 """Modelos Pydantic para o sistema de quizzes."""
 
-from pydantic import BaseModel, Field
 from typing import Any
+
+from pydantic import BaseModel, Field
 
 
 class GenerateQuizRequest(BaseModel):

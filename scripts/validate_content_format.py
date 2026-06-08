@@ -76,9 +76,7 @@ class ContentValidator:
                 required_fields = ["id", "title"]
                 for field in required_fields:
                     if field not in node:
-                        self.errors.append(
-                            f"❌ {filepath.name}: nó {i} falta campo '{field}'"
-                        )
+                        self.errors.append(f"❌ {filepath.name}: nó {i} falta campo '{field}'")
                         return False
 
                 # Valida IDs (kebab-case)
@@ -106,15 +104,11 @@ class ContentValidator:
 
             # Verifica se tem conteúdo
             if len(content.strip()) < 100:
-                self.warnings.append(
-                    f"⚠️ {filepath.name}: conteúdo muito curto (< 100 chars)"
-                )
+                self.warnings.append(f"⚠️ {filepath.name}: conteúdo muito curto (< 100 chars)")
 
             # Verifica se tem título (# no início)
             if not content.strip().startswith("#"):
-                self.warnings.append(
-                    f"⚠️ {filepath.name}: deve começar com título markdown (#)"
-                )
+                self.warnings.append(f"⚠️ {filepath.name}: deve começar com título markdown (#)")
 
             # (Validação de quiz removida - quizzes agora são gerados sob demanda)
 
@@ -133,9 +127,7 @@ class ContentValidator:
 
         # Valida roadmaps
         print("\n📚 Validando Roadmaps...")
-        roadmap_files = [
-            f for f in DATA_DIR.glob("*.json") if f.name.startswith("roadmap_")
-        ]
+        roadmap_files = [f for f in DATA_DIR.glob("*.json") if f.name.startswith("roadmap_")]
 
         for filepath in sorted(roadmap_files):
             if self.validate_roadmap_filename(filepath.name):

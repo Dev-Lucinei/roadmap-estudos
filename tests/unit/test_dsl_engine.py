@@ -4,7 +4,7 @@ import os
 import sys
 from unittest.mock import patch
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from backend.services.dsl.engine import DSLExecutionEngine
 
@@ -543,9 +543,7 @@ class TestDSLExecutionEngine:
                 {"id": "s1", "type": "lesson", "params": {"topic": "Python"}},
             ],
         }
-        with patch.object(
-            engine, "_execute_lesson", side_effect=Exception("Simulated error")
-        ):
+        with patch.object(engine, "_execute_lesson", side_effect=Exception("Simulated error")):
             result = engine.execute(dsl)
         assert result["status"] == "partial"
         assert len(result["failed_steps"]) == 1

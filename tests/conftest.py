@@ -1,9 +1,9 @@
 """Fixtures compartilhadas para os testes."""
 
 import os
+import shutil
 import sys
 import tempfile
-import shutil
 from unittest.mock import Mock, patch
 
 import pytest
@@ -90,7 +90,8 @@ Variáveis em Python são dinâmicas e não requerem declaração de tipo.
 ```json
 [
   {"question": "Qual o tipo de x = 5?", "options": ["int", "str", "list", "dict"], "answer": 0},
-  {"question": "Python é fortemente tipado?", "options": ["Sim", "Não", "Talvez", "Depende"], "answer": 0}
+  {"question": "Python é fortemente tipado?",
+   "options": ["Sim", "Não", "Talvez", "Depende"], "answer": 0}
 ]
 ```
 """

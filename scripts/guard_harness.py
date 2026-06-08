@@ -85,9 +85,7 @@ def unlock_all() -> None:
             unlock_file(abs_path)
     if HASH_FILE.exists():
         unlock_file(HASH_FILE)
-    print(
-        "\n✅ Arquivos desbloqueados. Faça suas alterações e execute --seal quando terminar."
-    )
+    print("\n✅ Arquivos desbloqueados. Faça suas alterações e execute --seal quando terminar.")
 
 
 def check_seal_status() -> None:
@@ -382,9 +380,7 @@ def build_report(
     return {
         "schema": "guard_harness/1.0",
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "status": "VIOLATED"
-        if critical
-        else ("WARNING" if all_violations else "INTACT"),
+        "status": "VIOLATED" if critical else ("WARNING" if all_violations else "INTACT"),
         "protected_files": PROTECTED_FILES,
         "hash_file": str(HASH_FILE.relative_to(BASE_DIR)),
         "summary": {
@@ -465,9 +461,7 @@ def print_human_report(report: dict) -> None:
 
 def main() -> None:
     """Ponto de entrada CLI."""
-    parser = argparse.ArgumentParser(
-        description="Guard Harness — Verificador de Integridade"
-    )
+    parser = argparse.ArgumentParser(description="Guard Harness — Verificador de Integridade")
     parser.add_argument(
         "--seal",
         action="store_true",

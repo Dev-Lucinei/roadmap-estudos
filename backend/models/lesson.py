@@ -1,7 +1,8 @@
 """Modelos Pydantic para o endpoint de geração de lições."""
 
-from pydantic import BaseModel, Field
 from typing import Literal
+
+from pydantic import BaseModel, Field
 
 
 class GenerateLessonRequest(BaseModel):

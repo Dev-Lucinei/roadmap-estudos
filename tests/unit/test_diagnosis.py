@@ -4,12 +4,12 @@ Unit tests for diagnostic functionality.
 
 import json
 import os
-import sys
-import unittest
-import tempfile
 import shutil
+import sys
+import tempfile
+import unittest
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 
 class TestDiagnosisLogic(unittest.TestCase):
@@ -59,7 +59,9 @@ class TestDiagnosisLogic(unittest.TestCase):
     def test_gap_detection_logic(self):
         """Test logic for detecting knowledge gaps."""
         # Sample diagnosis text that indicates a gap
-        gap_diagnosis = "Você precisa revisar variáveis antes de avançar. Lacuna em compreensão de tipos."
+        gap_diagnosis = (
+            "Você precisa revisar variáveis antes de avançar. Lacuna em compreensão de tipos."
+        )
         gap_indicators = [
             "falta",
             "não sabe",
@@ -68,16 +70,14 @@ class TestDiagnosisLogic(unittest.TestCase):
             "lacuna",
             "não entende",
         ]
-        has_gap = any(
-            indicator in gap_diagnosis.lower() for indicator in gap_indicators
-        )
+        has_gap = any(indicator in gap_diagnosis.lower() for indicator in gap_indicators)
         self.assertTrue(has_gap)
 
         # Sample diagnosis text that indicates no gap
-        no_gap_diagnosis = "Entendo o conceito de variáveis. Uma regra importante é usar nomes descritivos."
-        has_gap = any(
-            indicator in no_gap_diagnosis.lower() for indicator in gap_indicators
+        no_gap_diagnosis = (
+            "Entendo o conceito de variáveis. Uma regra importante é usar nomes descritivos."
         )
+        has_gap = any(indicator in no_gap_diagnosis.lower() for indicator in gap_indicators)
         self.assertFalse(has_gap)
 
     def test_word_count_limit(self):

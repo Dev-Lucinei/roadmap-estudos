@@ -1,8 +1,8 @@
 """Roadmap Estudos API - FastAPI Backend."""
 
+import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
-import sys
 from typing import AsyncGenerator
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -17,6 +17,8 @@ from fastapi.staticfiles import StaticFiles  # noqa: E402
 from backend.api.routes_fastapi import router as api_router  # noqa: E402
 from backend.core.config import (  # noqa: E402
     BASE_DIR as CONFIG_BASE_DIR,
+)
+from backend.core.config import (  # noqa: E402
     DATA_DIR,
     LICOES_DIR,
 )

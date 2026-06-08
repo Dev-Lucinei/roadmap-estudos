@@ -3,9 +3,7 @@
 import re
 from typing import Any
 
-_VALID_TYPES = frozenset(
-    {"lesson", "quiz", "diagnosis", "roadmap", "review", "project"}
-)
+_VALID_TYPES = frozenset({"lesson", "quiz", "diagnosis", "roadmap", "review", "project"})
 _VALID_DEPTHS = frozenset({"beginner", "intermediate", "advanced"})
 
 
@@ -120,9 +118,7 @@ class DSLExecutionEngine:
             "questions_generated": False,
         }
 
-    def _execute_diagnosis(
-        self, step_id: str, params: dict[str, Any]
-    ) -> dict[str, Any]:
+    def _execute_diagnosis(self, step_id: str, params: dict[str, Any]) -> dict[str, Any]:
         return {
             "topic": params.get("topic", ""),
             "prerequisites_checked": params.get("prerequisites", []),
@@ -167,8 +163,8 @@ class DSLExecutionEngine:
                 "warnings": [],
             }
 
-        errors: list[dict] = []
-        warnings: list[dict] = []
+        errors: list[dict[str, str]] = []
+        warnings: list[dict[str, str]] = []
 
         errors.extend(self._validate_structure(dsl))
 
@@ -182,7 +178,7 @@ class DSLExecutionEngine:
             "warnings": warnings,
         }
 
-    def _validate_structure(self, dsl: dict) -> list[dict]:
+    def _validate_structure(self, dsl: dict[str, Any]) -> list[dict[str, str]]:
         """Validate the root structure of a DSL definition.
 
         Args:
@@ -191,7 +187,7 @@ class DSLExecutionEngine:
         Returns:
             List of validation errors found
         """
-        errors: list[dict] = []
+        errors: list[dict[str, str]] = []
 
         if "version" not in dsl:
             errors.append(
@@ -213,7 +209,10 @@ class DSLExecutionEngine:
             errors.append(
                 {
                     "path": "version",
-                    "message": f"Formato de 'version' inválido: '{dsl['version']}'. Deve ser 'X.Y' (major.minor)",
+                    "message": (
+                        f"Formato de 'version' inválido: '{dsl['version']}'."
+                        " Deve ser 'X.Y' (major.minor)"
+                    ),
                     "severity": "error",
                 }
             )
@@ -271,7 +270,7 @@ class DSLExecutionEngine:
 
         return errors
 
-    def _validate_steps(self, steps: list) -> list[dict]:
+    def _validate_steps(self, steps: list[dict[str, Any]]) -> list[dict[str, str]]:
         """Validate each step in a DSL definition.
 
         Args:
@@ -280,7 +279,7 @@ class DSLExecutionEngine:
         Returns:
             List of validation errors found
         """
-        errors: list[dict] = []
+        errors: list[dict[str, str]] = []
         seen_ids: dict[str, int] = {}
 
         for i, step in enumerate(steps):
@@ -320,7 +319,10 @@ class DSLExecutionEngine:
                     errors.append(
                         {
                             "path": f"{prefix}.id",
-                            "message": f"ID '{sid}' não está em kebab-case (apenas letras minúsculas, números e hífens)",
+                            "message": (
+                                f"ID '{sid}' não está em kebab-case"
+                                " (apenas letras minúsculas, números e hífens)"
+                            ),
                             "severity": "error",
                         }
                     )
@@ -328,7 +330,9 @@ class DSLExecutionEngine:
                     errors.append(
                         {
                             "path": f"{prefix}.id",
-                            "message": f"ID duplicado '{sid}' encontrado nos steps {seen_ids[sid]} e {i}",
+                            "message": (
+                                f"ID duplicado '{sid}' encontrado nos steps {seen_ids[sid]} e {i}"
+                            ),
                             "severity": "error",
                         }
                     )
@@ -355,7 +359,10 @@ class DSLExecutionEngine:
                 errors.append(
                     {
                         "path": f"{prefix}.type",
-                        "message": f"Tipo inválido '{step['type']}' no step '{step_id}'. Tipos válidos: {', '.join(sorted(_VALID_TYPES))}",
+                        "message": (
+                            f"Tipo inválido '{step['type']}' no step '{step_id}'. "
+                            f"Tipos válidos: {', '.join(sorted(_VALID_TYPES))}"
+                        ),
                         "severity": "error",
                     }
                 )
@@ -408,7 +415,10 @@ class DSLExecutionEngine:
                             errors.append(
                                 {
                                     "path": f"{prefix}.depends_on",
-                                    "message": f"Item de 'depends_on' no step '{step_id}' deve ser uma string",
+                                    "message": (
+                                        f"Item de 'depends_on' no step '{step_id}'"
+                                        " deve ser uma string"
+                                    ),
                                     "severity": "error",
                                 }
                             )
@@ -416,7 +426,10 @@ class DSLExecutionEngine:
                             errors.append(
                                 {
                                     "path": f"{prefix}.depends_on",
-                                    "message": f"Dependência '{dep}' no step '{step_id}' referencia id inexistente",
+                                    "message": (
+                                        f"Dependência '{dep}' no step '{step_id}'"
+                                        " referencia id inexistente"
+                                    ),
                                     "severity": "error",
                                 }
                             )
@@ -424,7 +437,10 @@ class DSLExecutionEngine:
                             errors.append(
                                 {
                                     "path": f"{prefix}.depends_on",
-                                    "message": f"Dependência futura: step '{step_id}' depende de '{dep}' que está em posição posterior",
+                                    "message": (
+                                        f"Dependência futura: step '{step_id}'"
+                                        f" depende de '{dep}' que está em posição posterior"
+                                    ),
                                     "severity": "error",
                                 }
                             )
@@ -432,8 +448,8 @@ class DSLExecutionEngine:
         return errors
 
     def _validate_params(
-        self, step_type: str, params: dict, step_id: str, path: str
-    ) -> list[dict]:
+        self, step_type: str, params: dict[str, Any], step_id: str, path: str
+    ) -> list[dict[str, str]]:
         """Validate parameters for a specific step type.
 
         Args:
@@ -445,7 +461,7 @@ class DSLExecutionEngine:
         Returns:
             List of validation errors found
         """
-        errors: list[dict] = []
+        errors: list[dict[str, str]] = []
 
         if step_type == "lesson":
             if "topic" not in params:
@@ -487,7 +503,9 @@ class DSLExecutionEngine:
                 errors.append(
                     {
                         "path": f"{path}.question_count",
-                        "message": f"Campo obrigatório 'question_count' ausente em step '{step_id}'",
+                        "message": (
+                            f"Campo obrigatório 'question_count' ausente em step '{step_id}'"
+                        ),
                         "severity": "error",
                     }
                 )
@@ -497,7 +515,9 @@ class DSLExecutionEngine:
                     errors.append(
                         {
                             "path": f"{path}.question_count",
-                            "message": f"'question_count' em step '{step_id}' deve ser um inteiro",
+                            "message": (
+                                f"'question_count' em step '{step_id}' deve ser um inteiro"
+                            ),
                             "severity": "error",
                         }
                     )
@@ -505,7 +525,9 @@ class DSLExecutionEngine:
                     errors.append(
                         {
                             "path": f"{path}.question_count",
-                            "message": f"'question_count' em step '{step_id}' deve estar entre 1 e 20",
+                            "message": (
+                                f"'question_count' em step '{step_id}' deve estar entre 1 e 20"
+                            ),
                             "severity": "error",
                         }
                     )
@@ -585,7 +607,11 @@ class DSLExecutionEngine:
                 errors.append(
                     {
                         "path": f"{path}.depth",
-                        "message": f"Profundidade inválida '{params['depth']}' em step '{step_id}'. Valores válidos: {', '.join(sorted(_VALID_DEPTHS))}",
+                        "message": (
+                            f"Profundidade inválida '{params['depth']}'"
+                            f" em step '{step_id}'. "
+                            f"Valores válidos: {', '.join(sorted(_VALID_DEPTHS))}"
+                        ),
                         "severity": "error",
                     }
                 )
@@ -637,7 +663,7 @@ class DSLExecutionEngine:
 
         return errors
 
-    def _check_cycles(self, steps: list) -> list[dict]:
+    def _check_cycles(self, steps: list[dict[str, Any]]) -> list[dict[str, str]]:
         """Detect cycles in step dependency graph using DFS.
 
         Args:
@@ -646,7 +672,7 @@ class DSLExecutionEngine:
         Returns:
             List of validation errors for cycles found
         """
-        errors: list[dict] = []
+        errors: list[dict[str, str]] = []
 
         id_to_idx: dict[str, int] = {}
         for i, step in enumerate(steps):
@@ -679,18 +705,10 @@ class DSLExecutionEngine:
                     path: list[str] = []
                     cur: int | None = u
                     while cur is not None and cur != v:
-                        path.append(
-                            steps[cur]["id"]
-                            if isinstance(steps[cur], dict)
-                            else str(cur)
-                        )
+                        path.append(steps[cur]["id"] if isinstance(steps[cur], dict) else str(cur))
                         cur = parent.get(cur)
-                    path.append(
-                        steps[v]["id"] if isinstance(steps[v], dict) else str(v)
-                    )
-                    path.append(
-                        steps[u]["id"] if isinstance(steps[u], dict) else str(u)
-                    )
+                    path.append(steps[v]["id"] if isinstance(steps[v], dict) else str(v))
+                    path.append(steps[u]["id"] if isinstance(steps[u], dict) else str(u))
                     path.reverse()
                     cycles.append(path)
                 elif color[v] == WHITE:
