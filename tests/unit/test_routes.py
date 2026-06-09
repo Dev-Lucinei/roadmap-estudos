@@ -84,7 +84,16 @@ class TestGenerateLesson:
             result = ApiRoutes.generate_lesson(data)
             assert result["status"] == "success"
             assert result["node_id"] == "n1"
-            mock.assert_called_once_with("n1", "Python", "subtopic")
+            mock.assert_called_once_with(
+                "n1",
+                "Python",
+                "subtopic",
+                content=None,
+                group=None,
+                difficulty=None,
+                roadmap_title=None,
+                subtopics=None,
+            )
 
     def test_with_type(self):
         data = {

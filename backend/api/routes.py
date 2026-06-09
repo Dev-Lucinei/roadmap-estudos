@@ -50,13 +50,23 @@ class ApiRoutes:
         return {}
 
     @staticmethod
-    def generate_lesson(data: dict[str, str]) -> dict[str, str] | None:
+    def generate_lesson(data: dict[str, object]) -> dict[str, str] | None:
         """Gera uma lição para o nó especificado."""
         node_id = data.get("node_id")
         title = data.get("title")
         node_type = data.get("type", "subtopic")
-        if node_id and title:
-            processar_node(node_id, title, node_type)
+        if isinstance(node_id, str) and isinstance(title, str):
+            subtopics = data.get("subtopics")
+            processar_node(
+                node_id,
+                title,
+                str(node_type),
+                content=str(data.get("content", "")) or None,
+                group=str(data.get("group", "")) or None,
+                difficulty=str(data.get("difficulty", "")) or None,
+                roadmap_title=str(data.get("roadmap_title", "")) or None,
+                subtopics=subtopics if isinstance(subtopics, list) else None,
+            )
             return {"status": "success", "node_id": node_id}
         return None
 

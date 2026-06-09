@@ -84,7 +84,16 @@ async def get_dep_map() -> dict[str, list[str]]:
 @router.post("/api/generate-lesson", response_model=GenerateLessonResponse)
 async def generate_lesson(req: GenerateLessonRequest) -> GenerateLessonResponse:
     """Gera uma lição para o nó especificado."""
-    processar_node(req.node_id, req.title, req.type)
+    processar_node(
+        req.node_id,
+        req.title,
+        req.type,
+        content=req.content,
+        group=req.group,
+        difficulty=req.difficulty,
+        roadmap_title=req.roadmap_title,
+        subtopics=req.subtopics,
+    )
     return GenerateLessonResponse(status="success", node_id=req.node_id)
 
 
@@ -95,7 +104,21 @@ async def create_roadmap(req: CreateRoadmapRequest) -> CreateRoadmapResponse:
     if not roadmap_data:
         raise HTTPException(status_code=500, detail="Erro ao gerar roadmap")
     salvar_roadmap(req.tema, roadmap_data)
-    return CreateRoadmapResponse(status="success", tema=req.tema, data=roadmap_data)
+
+    import re
+    import unicodedata
+
+    tema_norm = unicodedata.normalize("NFKD", req.tema)
+    tema_norm = tema_norm.encode("ASCII", "ignore").decode("ASCII")
+    tema_norm = tema_norm.lower().replace(" ", "_")
+    tema_norm = re.sub(r"[^a-z0-9_]", "", tema_norm)
+
+    return CreateRoadmapResponse(
+        status="success",
+        tema=req.tema,
+        file=tema_norm,
+        data=roadmap_data,
+    )
 
 
 @router.post("/api/quiz/generate", response_model=GenerateQuizResponse)

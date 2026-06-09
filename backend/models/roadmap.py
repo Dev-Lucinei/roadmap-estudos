@@ -16,4 +16,5 @@ class CreateRoadmapResponse(BaseModel):
 
     status: str
     tema: str | None = None
+    file: str | None = None
     data: dict[str, Any] | None = None

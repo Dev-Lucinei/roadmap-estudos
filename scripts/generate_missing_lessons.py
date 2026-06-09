@@ -23,17 +23,32 @@ def find_missing_lessons():
         with open(rf) as f:
             data = json.load(f)
 
-        def walk(node):
+        roadmap_title = data.get("title", "")
+
+        def walk(node, parent_group: str = "", roadmap_titulo: str = ""):
             nid = node.get("id", "")
             title = node.get("title", "")
             node_type = node.get("type", "subtopic")
+            group = node.get("group", parent_group)
+            difficulty = node.get("difficulty")
+            content = node.get("content")
+            subtopics_titles = [sub.get("title", "") for sub in node.get("subtopics", [])]
+
             if nid:
-                all_nodes[nid] = {"title": title, "type": node_type}
+                all_nodes[nid] = {
+                    "title": title,
+                    "type": node_type,
+                    "content": content,
+                    "group": group,
+                    "difficulty": difficulty,
+                    "roadmap_title": roadmap_titulo,
+                    "subtopics": subtopics_titles if subtopics_titles else None,
+                }
             for sub in node.get("subtopics", []):
-                walk(sub)
+                walk(sub, parent_group=group, roadmap_titulo=roadmap_titulo)
 
         for node in data.get("nodes", []):
-            walk(node)
+            walk(node, roadmap_titulo=roadmap_title)
 
     missing = {nid: info for nid, info in all_nodes.items() if nid not in existing}
     return missing
@@ -47,17 +62,23 @@ def generate_missing(missing, limit=0, dry_run=False):
         if limit and i >= limit:
             break
 
-        title = info["title"]
-        node_type = info["type"]
-
         if dry_run:
-            print(f"  [DRY] {node_id}: {title} ({node_type})")
+            print(f"  [DRY] {node_id}: {info['title']} ({info['type']})")
             results["skipped"] += 1
             continue
 
         try:
-            processar_node(node_id, title, node_type)
-            print(f"  [{i + 1}/{len(missing)}] GERADO {node_id}: {title}")
+            processar_node(
+                node_id,
+                info["title"],
+                info["type"],
+                content=info.get("content"),
+                group=info.get("group"),
+                difficulty=info.get("difficulty"),
+                roadmap_title=info.get("roadmap_title"),
+                subtopics=info.get("subtopics"),
+            )
+            print(f"  [{i + 1}/{len(missing)}] GERADO {node_id}: {info['title']}")
             results["success"] += 1
         except Exception as e:
             print(f"  [{i + 1}/{len(missing)}] FALHA {node_id}: {e}")

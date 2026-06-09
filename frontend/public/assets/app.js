@@ -231,7 +231,9 @@ function createNodeElement(node, level = 0) {
                 title: subtopic.title || subtopic,
                 subtopics: subtopic.subtopics || [],
                 type: 'subtopic',
-                difficulty: subtopic.difficulty || node.difficulty
+                difficulty: subtopic.difficulty || node.difficulty,
+                content: subtopic.content || null,
+                group: node.group || null
             };
             
             // RECURSÃO: cria elemento para o subtópico (que pode ter seus próprios subtópicos)
@@ -359,7 +361,12 @@ async function generateLessonContent() {
         const payload = {
             node_id: currentLessonNode.id,
             title: currentLessonNode.title,
-            type: currentLessonNode.type || 'subtopic'
+            type: currentLessonNode.type || 'subtopic',
+            content: currentLessonNode.content || null,
+            group: currentLessonNode.group || null,
+            difficulty: currentLessonNode.difficulty || null,
+            roadmap_title: currentRoadmap?.title || null,
+            subtopics: currentLessonNode.subtopics?.map(s => s.title || s) || null
         };
 
         console.log('[DEBUG] Enviando requisição para:', `${API_URL}/generate-lesson`);

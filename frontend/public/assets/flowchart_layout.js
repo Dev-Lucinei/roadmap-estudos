@@ -86,11 +86,15 @@ class FlowchartLayout {
                 const rightSubtopics = [];
                 
                 node.subtopics.forEach((subtopic, idx) => {
-                    this.allNodes.set(subtopic.id, subtopic);
+                    const enrichedSubtopic = {
+                        ...subtopic,
+                        group: subtopic.group || node.group || null
+                    };
+                    this.allNodes.set(enrichedSubtopic.id, enrichedSubtopic);
                     if (idx % 2 === 0) {
-                        leftSubtopics.push(subtopic);
+                        leftSubtopics.push(enrichedSubtopic);
                     } else {
-                        rightSubtopics.push(subtopic);
+                        rightSubtopics.push(enrichedSubtopic);
                     }
                 });
 
@@ -139,15 +143,16 @@ class FlowchartLayout {
                         currentLeftY += 20; // Gap antes dos sub-subtópicos
                         
                         subtopic.subtopics.forEach((subsubtopic, subIdx) => {
-                            this.allNodes.set(subsubtopic.id, subsubtopic);
+                            const enrichedSubsub = { ...subsubtopic, group: subsubtopic.group || subtopic.group || node.group || null };
+                            this.allNodes.set(enrichedSubsub.id, enrichedSubsub);
                             const subsubY = currentLeftY;
-                            positions.set(subsubtopic.id, {
+                            positions.set(enrichedSubsub.id, {
                                 x: centerX - (horizontalGap * 2),
                                 y: subsubY,
                                 width: 180,
                                 height: 50,
                                 level: 2,
-                                node: subsubtopic,
+                                node: enrichedSubsub,
                                 parent: subtopic.id,
                                 hasSubtopics: false
                             });
@@ -156,7 +161,7 @@ class FlowchartLayout {
                             
                             this.connections.push({
                                 from: subtopic.id,
-                                to: subsubtopic.id,
+                                to: enrichedSubsub.id,
                                 type: 'subtopic'
                             });
                         });
@@ -192,15 +197,16 @@ class FlowchartLayout {
                         currentRightY += 20; // Gap antes dos sub-subtópicos
                         
                         subtopic.subtopics.forEach((subsubtopic, subIdx) => {
-                            this.allNodes.set(subsubtopic.id, subsubtopic);
+                            const enrichedSubsub = { ...subsubtopic, group: subsubtopic.group || subtopic.group || node.group || null };
+                            this.allNodes.set(enrichedSubsub.id, enrichedSubsub);
                             const subsubY = currentRightY;
-                            positions.set(subsubtopic.id, {
+                            positions.set(enrichedSubsub.id, {
                                 x: centerX + (horizontalGap * 2),
                                 y: subsubY,
                                 width: 180,
                                 height: 50,
                                 level: 2,
-                                node: subsubtopic,
+                                node: enrichedSubsub,
                                 parent: subtopic.id,
                                 hasSubtopics: false
                             });
@@ -209,7 +215,7 @@ class FlowchartLayout {
                             
                             this.connections.push({
                                 from: subtopic.id,
-                                to: subsubtopic.id,
+                                to: enrichedSubsub.id,
                                 type: 'subtopic'
                             });
                         });

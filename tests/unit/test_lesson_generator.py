@@ -43,7 +43,7 @@ class TestGerarConteudoIa:
             "backend.services.ai_content.lesson_generator.get_client",
             return_value=mock_client,
         ):
-            result = gerar_conteudo_ia("Python", "subtopic")
+            result = gerar_conteudo_ia(tema="Python", tipo="subtopic")
             assert result == "# Lição\nConteúdo"
 
     def test_none_content(self):
@@ -56,7 +56,7 @@ class TestGerarConteudoIa:
             "backend.services.ai_content.lesson_generator.get_client",
             return_value=mock_client,
         ):
-            result = gerar_conteudo_ia("Python")
+            result = gerar_conteudo_ia(tema="Python")
             assert result is None
 
     def test_empty_content(self):
@@ -69,8 +69,35 @@ class TestGerarConteudoIa:
             "backend.services.ai_content.lesson_generator.get_client",
             return_value=mock_client,
         ):
-            result = gerar_conteudo_ia("Python")
+            result = gerar_conteudo_ia(tema="Python")
             assert result == ""
+
+    def test_with_full_context(self):
+        mock_response = Mock()
+        mock_response.choices = [Mock(message=Mock(content="# Lição"))]
+        mock_client = Mock()
+        mock_client.chat.completions.create.return_value = mock_response
+
+        with patch(
+            "backend.services.ai_content.lesson_generator.get_client",
+            return_value=mock_client,
+        ):
+            result = gerar_conteudo_ia(
+                tema="Classes e Objetos",
+                tipo="subtopic",
+                content="Definição de classes e instanciamento de objetos",
+                group="Fundamentos POO",
+                difficulty="easy",
+                roadmap_title="Programação Orientada a Objetos em Python",
+                subtopics=["Herança", "Polimorfismo"],
+            )
+            assert result == "# Lição"
+            call_args = mock_client.chat.completions.create.call_args
+            messages = call_args.kwargs.get("messages") or call_args[1]["messages"]
+            assert len(messages) == 2
+            assert messages[0]["role"] == "system"
+            assert "Arquiteto Pedagógico" in messages[0]["content"]
+            assert "Fundamentos POO" in messages[1]["content"]
 
 
 class TestProcessarNode:
@@ -128,3 +155,30 @@ class TestProcessarNode:
                     "topic",
                     output_dir=str(tmp_path),
                 )
+
+    def test_passes_context_to_gerar_conteudo_ia(self, tmp_path):
+        mock_response = Mock()
+        mock_response.choices = [Mock(message=Mock(content="# Lesson"))]
+        mock_client = Mock()
+        mock_client.chat.completions.create.return_value = mock_response
+
+        with patch(
+            "backend.services.ai_content.lesson_generator.get_client",
+            return_value=mock_client,
+        ):
+            processar_node(
+                "n1",
+                "Classes e Objetos",
+                "subtopic",
+                output_dir=str(tmp_path),
+                content="Definição de classes",
+                group="Fundamentos POO",
+                difficulty="easy",
+                roadmap_title="POO em Python",
+                subtopics=["Herança"],
+            )
+            call_args = mock_client.chat.completions.create.call_args
+            messages = call_args.kwargs.get("messages") or call_args[1]["messages"]
+            user_prompt = messages[1]["content"]
+            assert "Fundamentos POO" in user_prompt
+            assert "POO em Python" in user_prompt
