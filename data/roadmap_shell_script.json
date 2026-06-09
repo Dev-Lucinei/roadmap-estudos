@@ -1,0 +1,180 @@
+{
+    "title": "Roadmap de Estudos: Shell Script",
+    "description": "Guia estruturado para aprender Shell Script desde os fundamentos até automação avançada.",
+    "nodes": [
+        {
+            "id": "introducao-shell-script",
+            "title": "Introdução ao Shell Script",
+            "type": "central",
+            "group": "Fundamentos",
+            "difficulty": "easy",
+            "content": "Visão geral do shell, ambientes e primeiros passos.",
+            "subtopics": [
+                {
+                    "id": "o-que-e-shell",
+                    "title": "O que é Shell",
+                    "difficulty": "easy",
+                    "content": "Definição e propósito do shell.",
+                    "subtopics": []
+                },
+                {
+                    "id": "ambientes-de-shell",
+                    "title": "Ambientes de Shell",
+                    "difficulty": "easy",
+                    "content": "Bash, Zsh, sh e diferenças principais.",
+                    "subtopics": []
+                },
+                {
+                    "id": "primeiro-script",
+                    "title": "Seu Primeiro Script",
+                    "difficulty": "easy",
+                    "content": "Criando, salvando e executando um script simples.",
+                    "subtopics": []
+                },
+                {
+                    "id": "permissoes-executar",
+                    "title": "Permissões de Execução",
+                    "difficulty": "medium",
+                    "content": "Uso de chmod, shebang e boas práticas de permissão.",
+                    "subtopics": []
+                },
+                {
+                    "id": "variaveis-basicas",
+                    "title": "Variáveis Básicas",
+                    "difficulty": "medium",
+                    "content": "Declaração, expansão e escopo de variáveis.",
+                    "subtopics": [
+                        {
+                            "id": "variaveis-ambiente",
+                            "title": "Variáveis de Ambiente",
+                            "difficulty": "easy"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "controle-fluxo",
+            "title": "Estruturas de Controle",
+            "type": "central",
+            "group": "Estruturas de Controle",
+            "difficulty": "medium",
+            "content": "Como controlar o fluxo de execução em scripts.",
+            "subtopics": [
+                {
+                    "id": "condicionais-if-else",
+                    "title": "Condicionais If/Else",
+                    "difficulty": "easy",
+                    "content": "Estruturas condicionais básicas.",
+                    "subtopics": []
+                },
+                {
+                    "id": "case-switch",
+                    "title": "Case/Switch",
+                    "difficulty": "hard",
+                    "content": "Seleção múltipla de opções.",
+                    "subtopics": []
+                },
+                {
+                    "id": "loops-for-while",
+                    "title": "Loops For e While",
+                    "difficulty": "medium",
+                    "content": "Iteração sobre listas e condições.",
+                    "subtopics": []
+                },
+                {
+                    "id": "loops-nested",
+                    "title": "Loops Aninhados",
+                    "difficulty": "hard",
+                    "content": "Uso de loops dentro de loops.",
+                    "subtopics": [
+                        {
+                            "id": "break-continue",
+                            "title": "Break e Continue",
+                            "difficulty": "easy"
+                        },
+                        {
+                            "id": "nested-loops",
+                            "title": "Loops Aninhados Avançados",
+                            "difficulty": "medium"
+                        }
+                    ]
+                },
+                {
+                    "id": "testes-e-conditions",
+                    "title": "Testes e Conditions",
+                    "difficulty": "easy",
+                    "content": "Comandos de teste e operadores de condição.",
+                    "subtopics": []
+                }
+            ]
+        },
+        {
+            "id": "automacao-shell",
+            "title": "Automação e Ferramentas",
+            "type": "central",
+            "group": "Automação e Ferramentas",
+            "difficulty": "medium",
+            "content": "Aplicações avançadas de scripts para automação.",
+            "subtopics": [
+                {
+                    "id": "script-para-tarefas",
+                    "title": "Scripts para Tarefas Repetitivas",
+                    "difficulty": "easy",
+                    "content": "Automatizando rotinas diárias.",
+                    "subtopics": []
+                },
+                {
+                    "id": "cron-jobs",
+                    "title": "Cron Jobs",
+                    "difficulty": "hard",
+                    "content": "Agendamento de scripts com cron.",
+                    "subtopics": []
+                },
+                {
+                    "id": "manipulacao-de-arquivos",
+                    "title": "Manipulação de Arquivos",
+                    "difficulty": "medium",
+                    "content": "Operações com arquivos e diretórios.",
+                    "subtopics": [
+                        {
+                            "id": "sed-awk",
+                            "title": "Sed e Awk",
+                            "difficulty": "hard"
+                        },
+                        {
+                            "id": "grep",
+                            "title": "Grep",
+                            "difficulty": "medium"
+                        }
+                    ]
+                },
+                {
+                    "id": "funcoes",
+                    "title": "Funções em Shell",
+                    "difficulty": "medium",
+                    "content": "Definindo e reutilizando funções.",
+                    "subtopics": [
+                        {
+                            "id": "parametros-funcao",
+                            "title": "Parâmetros de Função",
+                            "difficulty": "easy"
+                        },
+                        {
+                            "id": "retorno-valor",
+                            "title": "Retorno de Valor",
+                            "difficulty": "medium"
+                        }
+                    ]
+                },
+                {
+                    "id": "debugging",
+                    "title": "Debugging de Scripts",
+                    "difficulty": "hard",
+                    "content": "Técnicas de depuração e tratamento de erros.",
+                    "subtopics": []
+                }
+            ]
+        }
+    ]
+}
