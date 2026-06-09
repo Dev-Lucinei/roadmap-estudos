@@ -487,6 +487,7 @@ window.submitGenerateRoadmap = async () => {
     try {
         const response = await fetch(`${API_URL}/generate-roadmap`, {
             method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ tema })
         });
         const result = await response.json();

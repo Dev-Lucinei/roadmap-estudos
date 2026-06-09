@@ -4,7 +4,7 @@ import os
 import shutil
 import sys
 import tempfile
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 import pytest
 
@@ -97,14 +97,14 @@ Variáveis em Python são dinâmicas e não requerem declaração de tipo.
 """
 
 
-def create_mock_openai_response(content="Test response"):
+def create_mock_openai_response(content: str = "Test response") -> Mock:
     """Factory para criar mock de resposta OpenAI."""
     mock = Mock()
     mock.choices = [Mock(message=Mock(content=content))]
     return mock
 
 
-def create_mock_openai_client(content="Test response"):
+def create_mock_openai_client(content: str = "Test response") -> Mock:
     """Factory para criar mock completo do cliente OpenAI."""
     mock_response = create_mock_openai_response(content)
 
@@ -115,19 +115,9 @@ def create_mock_openai_client(content="Test response"):
 
 
 @pytest.fixture
-def mock_openai_success():
-    """Fixture que mocka OpenAI com resposta de sucesso."""
-    with patch("openai.OpenAI") as mock_class:
-        client = create_mock_openai_client("Resposta de sucesso da IA")
-        mock_class.return_value = client
-        yield client
+def mock_openai_client():
+    """Fixture que retorna factory de mock client OpenAI.
 
-
-@pytest.fixture
-def mock_openai_error():
-    """Fixture que mocka OpenAI com erro."""
-    with patch("openai.OpenAI") as mock_class:
-        client = Mock()
-        client.chat.completions.create.side_effect = Exception("Erro da API")
-        mock_class.return_value = client
-        yield client
+    Uso: mock_openai_client("conteúdo personalizado") retorna um mock client.
+    """
+    return create_mock_openai_client

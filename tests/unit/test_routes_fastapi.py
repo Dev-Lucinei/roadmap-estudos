@@ -12,9 +12,9 @@ from fastapi.testclient import TestClient
 from backend.main import app
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def client():
-    """Create a test client."""
+    """Create a test client (shared per module)."""
     return TestClient(app, raise_server_exceptions=False)
 
 

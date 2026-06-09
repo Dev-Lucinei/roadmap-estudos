@@ -1,7 +1,7 @@
 """Tests for lesson_generator service."""
 
 import os
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -33,11 +33,8 @@ class TestGetClient:
 class TestGerarConteudoIa:
     """Tests for gerar_conteudo_ia function."""
 
-    def test_successful_generation(self):
-        mock_response = Mock()
-        mock_response.choices = [Mock(message=Mock(content="# Lição\nConteúdo"))]
-        mock_client = Mock()
-        mock_client.chat.completions.create.return_value = mock_response
+    def test_successful_generation(self, mock_openai_client):
+        mock_client = mock_openai_client("# Lição\nConteúdo")
 
         with patch(
             "backend.services.ai_content.lesson_generator.get_client",
@@ -46,11 +43,8 @@ class TestGerarConteudoIa:
             result = gerar_conteudo_ia(tema="Python", tipo="subtopic")
             assert result == "# Lição\nConteúdo"
 
-    def test_none_content(self):
-        mock_response = Mock()
-        mock_response.choices = [Mock(message=Mock(content=None))]
-        mock_client = Mock()
-        mock_client.chat.completions.create.return_value = mock_response
+    def test_none_content(self, mock_openai_client):
+        mock_client = mock_openai_client(None)
 
         with patch(
             "backend.services.ai_content.lesson_generator.get_client",
@@ -59,11 +53,8 @@ class TestGerarConteudoIa:
             result = gerar_conteudo_ia(tema="Python")
             assert result is None
 
-    def test_empty_content(self):
-        mock_response = Mock()
-        mock_response.choices = [Mock(message=Mock(content="   "))]
-        mock_client = Mock()
-        mock_client.chat.completions.create.return_value = mock_response
+    def test_empty_content(self, mock_openai_client):
+        mock_client = mock_openai_client("   ")
 
         with patch(
             "backend.services.ai_content.lesson_generator.get_client",
@@ -72,11 +63,8 @@ class TestGerarConteudoIa:
             result = gerar_conteudo_ia(tema="Python")
             assert result == ""
 
-    def test_with_full_context(self):
-        mock_response = Mock()
-        mock_response.choices = [Mock(message=Mock(content="# Lição"))]
-        mock_client = Mock()
-        mock_client.chat.completions.create.return_value = mock_response
+    def test_with_full_context(self, mock_openai_client):
+        mock_client = mock_openai_client("# Lição")
 
         with patch(
             "backend.services.ai_content.lesson_generator.get_client",
@@ -103,11 +91,8 @@ class TestGerarConteudoIa:
 class TestProcessarNode:
     """Tests for processar_node function."""
 
-    def test_successful_processing(self, tmp_path):
-        mock_response = Mock()
-        mock_response.choices = [Mock(message=Mock(content="# Lesson"))]
-        mock_client = Mock()
-        mock_client.chat.completions.create.return_value = mock_response
+    def test_successful_processing(self, tmp_path, mock_openai_client):
+        mock_client = mock_openai_client("# Lesson")
 
         with patch(
             "backend.services.ai_content.lesson_generator.get_client",
@@ -123,12 +108,9 @@ class TestProcessarNode:
             with open(result) as f:
                 assert f.read() == "# Lesson"
 
-    def test_creates_output_dir(self, tmp_path):
+    def test_creates_output_dir(self, tmp_path, mock_openai_client):
         output_dir = str(tmp_path / "subdir")
-        mock_response = Mock()
-        mock_response.choices = [Mock(message=Mock(content="# Content"))]
-        mock_client = Mock()
-        mock_client.chat.completions.create.return_value = mock_response
+        mock_client = mock_openai_client("# Content")
 
         with patch(
             "backend.services.ai_content.lesson_generator.get_client",
@@ -138,11 +120,8 @@ class TestProcessarNode:
             assert os.path.exists(output_dir)
             assert os.path.exists(result)
 
-    def test_raises_on_empty_content(self, tmp_path):
-        mock_response = Mock()
-        mock_response.choices = [Mock(message=Mock(content=None))]
-        mock_client = Mock()
-        mock_client.chat.completions.create.return_value = mock_response
+    def test_raises_on_empty_content(self, tmp_path, mock_openai_client):
+        mock_client = mock_openai_client(None)
 
         with patch(
             "backend.services.ai_content.lesson_generator.get_client",
@@ -156,11 +135,8 @@ class TestProcessarNode:
                     output_dir=str(tmp_path),
                 )
 
-    def test_passes_context_to_gerar_conteudo_ia(self, tmp_path):
-        mock_response = Mock()
-        mock_response.choices = [Mock(message=Mock(content="# Lesson"))]
-        mock_client = Mock()
-        mock_client.chat.completions.create.return_value = mock_response
+    def test_passes_context_to_gerar_conteudo_ia(self, tmp_path, mock_openai_client):
+        mock_client = mock_openai_client("# Lesson")
 
         with patch(
             "backend.services.ai_content.lesson_generator.get_client",

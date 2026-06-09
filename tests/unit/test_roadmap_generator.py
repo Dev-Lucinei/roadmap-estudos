@@ -2,7 +2,7 @@
 
 import json
 import os
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -40,7 +40,7 @@ class TestGetClient:
 class TestGerarRoadmapIa:
     """Tests for gerar_roadmap_ia function."""
 
-    def test_successful_generation(self):
+    def test_successful_generation(self, mock_openai_client):
         roadmap_json = json.dumps(
             {
                 "title": "Python",
@@ -54,10 +54,7 @@ class TestGerarRoadmapIa:
                 ],
             }
         )
-        mock_response = Mock()
-        mock_response.choices = [Mock(message=Mock(content=roadmap_json))]
-        mock_client = Mock()
-        mock_client.chat.completions.create.return_value = mock_response
+        mock_client = mock_openai_client(roadmap_json)
 
         with patch(
             "backend.services.ai_content.roadmap_generator.get_client",
@@ -67,11 +64,8 @@ class TestGerarRoadmapIa:
             assert result is not None
             assert result["title"] == "Python"
 
-    def test_none_content(self):
-        mock_response = Mock()
-        mock_response.choices = [Mock(message=Mock(content=None))]
-        mock_client = Mock()
-        mock_client.chat.completions.create.return_value = mock_response
+    def test_none_content(self, mock_openai_client):
+        mock_client = mock_openai_client(None)
 
         with patch(
             "backend.services.ai_content.roadmap_generator.get_client",
@@ -80,11 +74,8 @@ class TestGerarRoadmapIa:
             result = gerar_roadmap_ia("Python")
             assert result is None
 
-    def test_invalid_json(self):
-        mock_response = Mock()
-        mock_response.choices = [Mock(message=Mock(content="not json at all"))]
-        mock_client = Mock()
-        mock_client.chat.completions.create.return_value = mock_response
+    def test_invalid_json(self, mock_openai_client):
+        mock_client = mock_openai_client("not json at all")
 
         with patch(
             "backend.services.ai_content.roadmap_generator.get_client",
@@ -93,11 +84,8 @@ class TestGerarRoadmapIa:
             result = gerar_roadmap_ia("Python")
             assert result is None
 
-    def test_no_nodes_in_json(self):
-        mock_response = Mock()
-        mock_response.choices = [Mock(message=Mock(content=json.dumps({"title": "No nodes"})))]
-        mock_client = Mock()
-        mock_client.chat.completions.create.return_value = mock_response
+    def test_no_nodes_in_json(self, mock_openai_client):
+        mock_client = mock_openai_client(json.dumps({"title": "No nodes"}))
 
         with patch(
             "backend.services.ai_content.roadmap_generator.get_client",
@@ -106,16 +94,13 @@ class TestGerarRoadmapIa:
             result = gerar_roadmap_ia("Python")
             assert result is None
 
-    def test_json_with_markdown_blocks(self):
+    def test_json_with_markdown_blocks(self, mock_openai_client):
         roadmap = {
             "title": "Test",
             "nodes": [{"id": "n1", "title": "T"}],
         }
         content = f"```json\n{json.dumps(roadmap)}\n```"
-        mock_response = Mock()
-        mock_response.choices = [Mock(message=Mock(content=content))]
-        mock_client = Mock()
-        mock_client.chat.completions.create.return_value = mock_response
+        mock_client = mock_openai_client(content)
 
         with patch(
             "backend.services.ai_content.roadmap_generator.get_client",

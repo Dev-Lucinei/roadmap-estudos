@@ -87,7 +87,20 @@ def gerar_roadmap_ia(tema: str) -> RoadmapData | None:
     )
 
     response = client.chat.completions.create(
-        model="openrouter/auto", messages=[{"role": "user", "content": prompt}]
+        model="openrouter/auto",
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "Você é um arquiteto de currículo técnico."
+                    " Gere APENAS JSON válido, sem explicações"
+                    " ou markdown."
+                ),
+            },
+            {"role": "user", "content": prompt},
+        ],
+        max_tokens=4000,
+        temperature=0.7,
     )
 
     content = response.choices[0].message.content

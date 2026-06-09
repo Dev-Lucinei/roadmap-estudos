@@ -4,7 +4,7 @@ import json
 import os
 import shutil
 import tempfile
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -48,7 +48,7 @@ class TestGenerateQuiz:
         with pytest.raises(FileNotFoundError, match="não encontrada"):
             quiz_service.generate_quiz("nonexistent", "T")
 
-    def test_successful_generation(self, quiz_service, lesson_file):
+    def test_successful_generation(self, quiz_service, lesson_file, mock_openai_client):
         quiz_json = json.dumps(
             [
                 {
@@ -69,27 +69,21 @@ class TestGenerateQuiz:
                 },
             ]
         )
-        mock_response = Mock()
-        mock_response.choices = [Mock(message=Mock(content=quiz_json))]
-        mock_client = Mock()
-        mock_client.chat.completions.create.return_value = mock_response
+        mock_client = mock_openai_client(quiz_json)
 
         with patch.object(quiz_service, "get_client", return_value=mock_client):
             result = quiz_service.generate_quiz("test-node", "Python")
             assert len(result) == 3
             assert result[0]["question"] == "Q1?"
 
-    def test_invalid_json_response(self, quiz_service, lesson_file):
-        mock_response = Mock()
-        mock_response.choices = [Mock(message=Mock(content="not json"))]
-        mock_client = Mock()
-        mock_client.chat.completions.create.return_value = mock_response
+    def test_invalid_json_response(self, quiz_service, lesson_file, mock_openai_client):
+        mock_client = mock_openai_client("not json")
 
         with patch.object(quiz_service, "get_client", return_value=mock_client):
             with pytest.raises(ValueError, match="JSON válido"):
                 quiz_service.generate_quiz("test-node", "Python")
 
-    def test_too_few_questions(self, quiz_service, lesson_file):
+    def test_too_few_questions(self, quiz_service, lesson_file, mock_openai_client):
         quiz_json = json.dumps(
             [
                 {
@@ -99,10 +93,7 @@ class TestGenerateQuiz:
                 }
             ]
         )
-        mock_response = Mock()
-        mock_response.choices = [Mock(message=Mock(content=quiz_json))]
-        mock_client = Mock()
-        mock_client.chat.completions.create.return_value = mock_response
+        mock_client = mock_openai_client(quiz_json)
 
         with patch.object(quiz_service, "get_client", return_value=mock_client):
             with pytest.raises(ValueError, match="pelo menos 3"):
@@ -112,7 +103,7 @@ class TestGenerateQuiz:
 class TestEvaluateQuiz:
     """Tests for evaluate_quiz method."""
 
-    def test_successful_evaluation(self, quiz_service, lesson_file):
+    def test_successful_evaluation(self, quiz_service, lesson_file, mock_openai_client):
         eval_json = json.dumps(
             {
                 "score": 80,
@@ -121,10 +112,7 @@ class TestEvaluateQuiz:
                 "details": [],
             }
         )
-        mock_response = Mock()
-        mock_response.choices = [Mock(message=Mock(content=eval_json))]
-        mock_client = Mock()
-        mock_client.chat.completions.create.return_value = mock_response
+        mock_client = mock_openai_client(eval_json)
 
         quiz_data = [
             {
@@ -145,12 +133,9 @@ class TestEvaluateQuiz:
             assert result["score"] == 80
             assert result["passed"] is True
 
-    def test_evaluation_without_lesson(self, quiz_service):
+    def test_evaluation_without_lesson(self, quiz_service, mock_openai_client):
         eval_json = json.dumps({"score": 50, "passed": False, "feedback": "ok"})
-        mock_response = Mock()
-        mock_response.choices = [Mock(message=Mock(content=eval_json))]
-        mock_client = Mock()
-        mock_client.chat.completions.create.return_value = mock_response
+        mock_client = mock_openai_client(eval_json)
 
         quiz_data = [
             {
@@ -169,12 +154,9 @@ class TestEvaluateQuiz:
             )
             assert result["score"] == 50
 
-    def test_evaluation_skips_unanswered(self, quiz_service, lesson_file):
+    def test_evaluation_skips_unanswered(self, quiz_service, lesson_file, mock_openai_client):
         eval_json = json.dumps({"score": 0, "passed": False, "feedback": "none"})
-        mock_response = Mock()
-        mock_response.choices = [Mock(message=Mock(content=eval_json))]
-        mock_client = Mock()
-        mock_client.chat.completions.create.return_value = mock_response
+        mock_client = mock_openai_client(eval_json)
 
         quiz_data = [
             {
@@ -198,11 +180,8 @@ class TestEvaluateQuiz:
             )
             assert "score" in result
 
-    def test_evaluation_invalid_json(self, quiz_service, lesson_file):
-        mock_response = Mock()
-        mock_response.choices = [Mock(message=Mock(content="not json"))]
-        mock_client = Mock()
-        mock_client.chat.completions.create.return_value = mock_response
+    def test_evaluation_invalid_json(self, quiz_service, lesson_file, mock_openai_client):
+        mock_client = mock_openai_client("not json")
 
         quiz_data = [
             {
@@ -221,16 +200,13 @@ class TestEvaluateQuiz:
                     {"0": 0},
                 )
 
-    def test_evaluation_empty_lesson_content(self, quiz_service):
+    def test_evaluation_empty_lesson_content(self, quiz_service, mock_openai_client):
         path = os.path.join(str(quiz_service.licoes_dir), "empty.md")
         with open(path, "w") as f:
             f.write("Simple content without json")
 
         eval_json = json.dumps({"score": 100, "passed": True, "feedback": "Great"})
-        mock_response = Mock()
-        mock_response.choices = [Mock(message=Mock(content=eval_json))]
-        mock_client = Mock()
-        mock_client.chat.completions.create.return_value = mock_response
+        mock_client = mock_openai_client(eval_json)
 
         quiz_data = [
             {

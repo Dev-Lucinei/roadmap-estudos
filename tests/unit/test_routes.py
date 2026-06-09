@@ -149,13 +149,12 @@ class TestHandleQuizGenerate:
 
     def test_valid_generate(self):
         quiz_data = [{"question": "Q1", "options": ["A"], "answer": 0}]
-        with patch.object(ApiRoutes, "handle_quiz_generate") as mock:
-            mock.return_value = {
-                "status": "success",
-                "quiz": quiz_data,
-            }
-            result = mock({"node_id": "n1", "title": "T"})
+        with patch("backend.api.routes.quiz_service") as mock_qs:
+            mock_qs.generate_quiz.return_value = quiz_data
+            result = ApiRoutes.handle_quiz_generate({"node_id": "n1", "title": "T"})
             assert result["status"] == "success"
+            assert result["quiz"] == quiz_data
+            mock_qs.generate_quiz.assert_called_once_with("n1", "T")
 
     def test_missing_params(self):
         result = ApiRoutes.handle_quiz_generate({})
@@ -167,13 +166,15 @@ class TestHandleDiagnose:
     """Tests for ApiRoutes.handle_diagnose."""
 
     def test_valid_diagnose(self):
-        with patch.object(ApiRoutes, "handle_diagnose") as mock:
-            mock.return_value = {
-                "status": "hit",
-                "message": "OK",
-            }
-            result = mock({"topic": "T", "user_answer": "A"})
+        diagnosis_result = {
+            "status": "hit",
+            "message": "OK",
+        }
+        with patch("backend.api.routes.diagnosis_service") as mock_diag:
+            mock_diag.diagnose.return_value = diagnosis_result
+            result = ApiRoutes.handle_diagnose({"topic": "T", "user_answer": "A"})
             assert result["status"] == "hit"
+            mock_diag.diagnose.assert_called_once_with("T", "A")
 
     def test_missing_params(self):
         result = ApiRoutes.handle_diagnose({})
