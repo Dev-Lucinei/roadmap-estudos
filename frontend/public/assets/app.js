@@ -1051,6 +1051,11 @@ function collapseAllNodes() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    if (localStorage.getItem('sidebarCollapsed') === 'true') {
+        document.getElementById('tools-sidebar').classList.add('collapsed');
+        document.body.classList.add('sidebar-collapsed');
+    }
+
     init();
     initSearch();
     initFilters();
@@ -1144,6 +1149,16 @@ window.regenerateDepMap = async () => {
     } catch (e) {
         alert('Erro ao atualizar mapa de dependências.');
     }
+};
+
+window.toggleSidebar = () => {
+    const sidebar = document.getElementById('tools-sidebar');
+    if (!sidebar) return;
+    
+    const isCollapsed = sidebar.classList.toggle('collapsed');
+    document.body.classList.toggle('sidebar-collapsed', isCollapsed);
+    
+    localStorage.setItem('sidebarCollapsed', isCollapsed);
 };
 
 // === SEARCH SYSTEM ===

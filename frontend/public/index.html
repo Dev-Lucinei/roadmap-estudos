@@ -25,48 +25,63 @@
     </div>
 
     <div id="app-container">
-        <main id="roadmap-view" role="main" aria-label="Visualização do roadmap">
-            <svg id="roadmap-svg"></svg>
-            
-            <header class="roadmap-header">
+        <aside id="tools-sidebar" class="tools-sidebar">
+            <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Alternar Menu">
+                <span class="toggle-icon">☰</span>
+            </button>
+            <div class="sidebar-content">
                 <div class="search-bar" role="search" aria-label="Buscar tópicos">
                     <input type="text" id="search-input" placeholder="Buscar tópicos... (Ctrl+K)" class="search-input">
                     <div id="search-results" class="search-results" style="display:none;" role="listbox" aria-label="Resultados da busca"></div>
                 </div>
-                <nav class="header-controls" aria-label="Controles do roadmap">
-                    <select id="roadmap-selector" onchange="loadRoadmap(this.value)">
-                        <option value="">Carregando temas...</option>
-                    </select>
-                    <button class="filter-btn" onclick="toggleFilterPanel()" title="Filtros" aria-label="Abrir filtros">🔽 Filtrar</button>
-                    <button class="admin-btn" onclick="expandAllNodes()" title="Expandir todos os nós" aria-label="Expandir todos os nós">📂 Expandir</button>
-                    <button class="admin-btn" onclick="collapseAllNodes()" title="Recolher todos os nós" aria-label="Recolher todos os nós">📁 Recolher</button>
-                    <button class="admin-btn" onclick="openNewRoadmapModal()" aria-label="Criar novo tema de estudos">+ Novo Tema</button>
-                    <button id="edit-mode-btn" class="admin-btn" onclick="toggleEditMode()" aria-label="Modo edição do roadmap">✏️ Modo Edição</button>
+                <select id="roadmap-selector" onchange="loadRoadmap(this.value)">
+                    <option value="">Carregando temas...</option>
+                </select>
+                <button class="filter-btn" onclick="toggleFilterPanel()" title="Filtros" aria-label="Abrir filtros">🔽 <span>Filtrar</span></button>
+                <div id="filter-panel" class="filter-panel" style="display:none;" role="region" aria-label="Filtros do roadmap">
+                    <div class="filter-group">
+                        <label class="filter-label">Dificuldade</label>
+                        <div class="filter-options">
+                            <button class="filter-chip active" data-filter="difficulty" data-value="all">Todas</button>
+                            <button class="filter-chip" data-filter="difficulty" data-value="easy">Fácil</button>
+                            <button class="filter-chip" data-filter="difficulty" data-value="medium">Médio</button>
+                            <button class="filter-chip" data-filter="difficulty" data-value="hard">Difícil</button>
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Status</label>
+                        <div class="filter-options">
+                            <button class="filter-chip active" data-filter="status" data-value="all">Todos</button>
+                            <button class="filter-chip" data-filter="status" data-value="completed">Completos</button>
+                            <button class="filter-chip" data-filter="status" data-value="pending">Pendentes</button>
+                        </div>
+                    </div>
+                    <button class="filter-clear" onclick="clearFilters()">Limpar filtros</button>
+                </div>
+                <nav class="sidebar-actions" aria-label="Ações do roadmap">
+                    <button class="admin-btn" onclick="expandAllNodes()" title="Expandir Tudo">
+                        <span class="btn-icon">📂</span> <span class="btn-text">Expandir</span>
+                    </button>
+                    <button class="admin-btn" onclick="collapseAllNodes()" title="Recolher Tudo">
+                        <span class="btn-icon">📁</span> <span class="btn-text">Recolher</span>
+                    </button>
+                    <button class="admin-btn" onclick="openNewRoadmapModal()" title="Novo Tema">
+                        <span class="btn-icon">➕</span> <span class="btn-text">Novo Tema</span>
+                    </button>
+                    <button id="edit-mode-btn" class="admin-btn" onclick="toggleEditMode()" title="Modo Edição">
+                        <span class="btn-icon">✏️</span> <span class="btn-text">Modo Edição</span>
+                    </button>
                 </nav>
+            </div>
+        </aside>
+
+        <main id="roadmap-view" role="main" aria-label="Visualização do roadmap">
+            <svg id="roadmap-svg"></svg>
+            
+            <header class="roadmap-header">
                 <h1>Meu Roteiro de Engenharia</h1>
                 <p>Navegue pelos temas ou crie novos roteiros com IA.</p>
             </header>
-            
-            <div id="filter-panel" class="filter-panel" style="display:none;" role="region" aria-label="Filtros do roadmap">
-                <div class="filter-group">
-                    <label class="filter-label">Dificuldade</label>
-                    <div class="filter-options">
-                        <button class="filter-chip active" data-filter="difficulty" data-value="all">Todas</button>
-                        <button class="filter-chip" data-filter="difficulty" data-value="easy">Fácil</button>
-                        <button class="filter-chip" data-filter="difficulty" data-value="medium">Médio</button>
-                        <button class="filter-chip" data-filter="difficulty" data-value="hard">Difícil</button>
-                    </div>
-                </div>
-                <div class="filter-group">
-                    <label class="filter-label">Status</label>
-                    <div class="filter-options">
-                        <button class="filter-chip active" data-filter="status" data-value="all">Todos</button>
-                        <button class="filter-chip" data-filter="status" data-value="completed">Completos</button>
-                        <button class="filter-chip" data-filter="status" data-value="pending">Pendentes</button>
-                    </div>
-                </div>
-                <button class="filter-clear" onclick="clearFilters()">Limpar filtros</button>
-            </div>
             
             <div id="roadmap-nodes">
                 <!-- Nodes renderizados via JS -->

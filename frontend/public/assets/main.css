@@ -53,15 +53,6 @@ body::before {
     100% { transform: translate(-20px, -10px) scale(1.05); }
 }
 
-/* Header Controls */
-.header-controls {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    margin-bottom: 20px;
-    align-items: center;
-}
-
 #roadmap-selector {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
@@ -133,7 +124,7 @@ body::before {
     animation: fadeInUp 0.5s 0.1s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.header-controls .admin-btn {
+.sidebar-actions .admin-btn {
     animation: fadeInUp 0.5s 0.15s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
@@ -165,6 +156,12 @@ body::before {
     flex: 1;
     position: relative;
     padding: 60px 20px;
+    margin-left: 280px;
+    transition: margin-left 0.3s ease;
+}
+
+body.sidebar-collapsed #roadmap-view {
+    margin-left: 60px;
 }
 
 #roadmap-svg {
@@ -177,7 +174,7 @@ body::before {
 
 .roadmap-header {
     text-align: center;
-    margin-bottom: 80px;
+    margin-bottom: 40px;
 }
 
 .roadmap-header h1 {
@@ -937,11 +934,15 @@ body.edit-mode .node-actions { opacity: 1; }
     }
 }
 
-body.zen-mode .header-controls,
+body.zen-mode .tools-sidebar,
 body.zen-mode .streak-badge,
 body.zen-mode #roadmap-nodes,
 body.zen-mode #flowchart-container {
     display: none !important;
+}
+
+body.zen-mode #roadmap-view {
+    margin-left: 0 !important;
 }
 
 body.zen-mode #lesson-panel {
@@ -1480,6 +1481,127 @@ button:focus:not(:focus-visible) {
 }
 
 /* ==========================================
+   SIDEBAR DE FERRAMENTAS (ESQUERDA)
+   ========================================== */
+
+.tools-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 280px;
+    height: 100vh;
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border-right: 1px solid var(--glass-border);
+    z-index: 1002;
+    transition: width 0.3s ease, padding 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.tools-sidebar.collapsed {
+    width: 60px;
+    padding: 20px 8px;
+}
+
+.tools-sidebar.collapsed .search-bar,
+.tools-sidebar.collapsed #roadmap-selector,
+.tools-sidebar.collapsed .filter-btn,
+.tools-sidebar.collapsed #filter-panel,
+.tools-sidebar.collapsed .btn-text {
+    display: none !important;
+}
+
+.tools-sidebar.collapsed .sidebar-actions .admin-btn {
+    justify-content: center;
+    padding: 10px 0;
+    border: none;
+    background: transparent;
+    gap: 0 !important;
+}
+
+.sidebar-content::before {
+    content: '';
+    display: block;
+    width: 30px;
+    height: 1px;
+    background: var(--glass-border);
+    margin: 0 auto 12px;
+}
+
+.tools-sidebar.collapsed .sidebar-actions .admin-btn:hover {
+    background: var(--accent-glow);
+    border-radius: 8px;
+    box-shadow: 0 0 15px var(--accent-glow);
+}
+
+.tools-sidebar.collapsed .sidebar-actions .admin-btn:hover .btn-icon {
+    transform: scale(1.15);
+    transition: transform 0.2s ease;
+}
+
+.sidebar-toggle {
+    position: relative;
+    width: 100%;
+    height: 44px;
+    background: var(--accent-primary);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1003;
+    color: #0f172a;
+    font-size: 1rem;
+    margin-bottom: 8px;
+}
+
+.sidebar-toggle:hover {
+    box-shadow: 0 0 20px var(--accent-glow);
+}
+
+.toggle-icon {
+    display: inline-block;
+    transition: transform 0.3s ease;
+}
+
+.tools-sidebar.collapsed .toggle-icon {
+    transform: rotate(180deg);
+}
+
+.sidebar-content {
+    margin-top: 50px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.sidebar-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.sidebar-actions .admin-btn {
+    width: 100%;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+body.zen-mode .tools-sidebar {
+    display: none !important;
+}
+
+body.zen-mode #roadmap-view {
+    margin-left: 0 !important;
+}
+
+/* ==========================================
    Mobile Responsiveness
    ========================================== */
 
@@ -1490,6 +1612,54 @@ button:focus:not(:focus-visible) {
 
     #roadmap-view {
         padding: 50px 12px 20px;
+        margin-left: 0 !important;
+    }
+
+    .tools-sidebar {
+        position: fixed;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100% !important;
+        height: auto;
+        max-height: 60vh;
+        border-right: none;
+        border-top: 1px solid var(--glass-border);
+        z-index: 1002;
+        overflow-y: auto;
+    }
+
+    .tools-sidebar.collapsed {
+        width: 100% !important;
+        max-height: 60px;
+    }
+
+    .tools-sidebar.collapsed .sidebar-content span,
+    .tools-sidebar.collapsed .search-bar,
+    .tools-sidebar.collapsed #roadmap-selector,
+    .tools-sidebar.collapsed .filter-btn,
+    .tools-sidebar.collapsed #filter-panel,
+    .tools-sidebar.collapsed .sidebar-actions .admin-btn span {
+        display: none !important;
+    }
+
+    .sidebar-toggle {
+        right: auto;
+        left: 50%;
+        transform: translateX(-50%);
+        top: -30px;
+        width: 40px;
+        height: 30px;
+        border-radius: 8px 8px 0 0;
+    }
+
+    .tools-sidebar.collapsed .toggle-icon {
+        transform: rotate(180deg);
+    }
+
+    .sidebar-content {
+        margin-top: 10px;
     }
 
     .roadmap-header {
@@ -1505,14 +1675,13 @@ button:focus:not(:focus-visible) {
         padding: 0 10px;
     }
 
-    .header-controls {
+    .sidebar-actions {
+        flex-direction: row;
         flex-wrap: wrap;
         gap: 8px;
-        justify-content: center;
     }
 
-    .header-controls .admin-btn,
-    .header-controls .filter-btn {
+    .sidebar-actions .admin-btn {
         font-size: 0.75rem;
         padding: 6px 10px;
     }
@@ -1615,8 +1784,7 @@ button:focus:not(:focus-visible) {
         font-size: 1.2rem;
     }
 
-    .header-controls .admin-btn,
-    .header-controls .filter-btn {
+    .sidebar-actions .admin-btn {
         font-size: 0.7rem;
         padding: 5px 8px;
     }
@@ -1660,12 +1828,11 @@ button:focus:not(:focus-visible) {
         display: none;
     }
 
-    .header-controls {
+    .sidebar-actions {
         gap: 4px;
     }
 
-    .header-controls .admin-btn,
-    .header-controls .filter-btn {
+    .sidebar-actions .admin-btn {
         font-size: 0.65rem;
         padding: 4px 6px;
     }
@@ -1678,3 +1845,5 @@ button:focus:not(:focus-visible) {
         font-size: 1rem;
     }
 }
+
+
