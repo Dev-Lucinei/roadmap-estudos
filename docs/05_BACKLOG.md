@@ -19,7 +19,7 @@
 
 ## Fase 1 — CRÍTICO (Segurança & Config)
 
-### [ ] TASK-001: Criar arquivo `.env.example`
+### [x] TASK-001: Criar arquivo `.env.example`
 **Descrição**: Criar template de variáveis de ambiente sem valores reais
 **Arquivos**:
 - `.env.example` (novo)
@@ -34,7 +34,7 @@
 
 ---
 
-### [ ] TASK-002: Remover backups proibidos
+### [x] TASK-002: Remover backups proibidos
 **Descrição**: Deletar arquivos `.bak` e `.backup` que violam política de segurança
 **Arquivos**:
 - `scripts/guard_harness.py.backup` (deletar)
@@ -49,7 +49,7 @@
 
 ---
 
-### [ ] TASK-003: Configurar tools no pyproject.toml
+### [x] TASK-003: Configurar tools no pyproject.toml
 **Descrição**: Adicionar seções `[tool.ruff]`, `[tool.mypy]` e `[tool.pytest.ini_options]` conforme standards/stack-defaults.md
 **Arquivos**:
 - `pyproject.toml`
@@ -65,7 +65,7 @@
 
 ---
 
-### [ ] TASK-004: Adicionar pydantic-settings
+### [x] TASK-004: Adicionar pydantic-settings
 **Descrição**: Migrar `backend/core/config.py` para usar `pydantic-settings` em vez de parsing manual de `.env`
 **Arquivos**:
 - `pyproject.toml` (adicionar dependência)
@@ -97,7 +97,7 @@
 
 ---
 
-### [ ] TASK-006: Proteger rota de lições contra path traversal
+### [x] TASK-006: Proteger rota de lições contra path traversal
 **Descrição**: Validar que `lesson_file` não acessa diretórios fora de `LICOES_DIR`
 **Arquivos**:
 - `backend/api/routes_fastapi.py` (função `get_lesson`)
@@ -112,7 +112,7 @@
 
 ---
 
-### [ ] TASK-007: Proteger rotas de roadmap contra path traversal
+### [x] TASK-007: Proteger rotas de roadmap contra path traversal
 **Descrição**: Sanitizar `roadmap_id` para conter apenas caracteres seguros
 **Arquivos**:
 - `backend/api/routes_fastapi.py` (função `load_roadmap`)
@@ -127,7 +127,7 @@
 
 ---
 
-### [ ] TASK-008: Substituir print() por logging
+### [x] TASK-008: Substituir print() por logging
 **Descrição**: Substituir `print()` por `logging` estruturado em todos os services
 **Arquivos**:
 - `backend/services/ai_content/lesson_generator.py`
@@ -145,7 +145,7 @@
 
 ---
 
-### [ ] TASK-009: Substituir except Exception genérico
+### [x] TASK-009: Substituir except Exception genérico
 **Descrição**: Capturar exceções específicas em vez de `except Exception` nos endpoints
 **Arquivos**:
 - `backend/api/routes_fastapi.py` (funções `generate_quiz`, `evaluate_quiz`)
@@ -162,7 +162,7 @@
 
 ## Fase 2 — ALTO (Quality Gates)
 
-### [ ] TASK-010: Configurar cobertura mínima
+### [x] TASK-010: Configurar cobertura mínima
 **Descrição**: Adicionar configuração de cobertura no pyproject.toml
 **Arquivos**:
 - `pyproject.toml`
@@ -177,7 +177,7 @@
 
 ---
 
-### [ ] TASK-011: Criar subestrutura de testes
+### [x] TASK-011: Criar subestrutura de testes
 **Descrição**: Criar diretórios `tests/unit/` e `tests/integration/` e mover testes
 **Arquivos**:
 - `tests/unit/` (novo)
