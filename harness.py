@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """Roadmap-Estudos Validation Harness — Agent-Ready Edition."""
 
+import logging
 import sys
 from pathlib import Path
 
+logger = logging.getLogger(__name__)
+
 sys.path.insert(0, str(Path(__file__).parent))
 
-from harness_core import HarnessConfig, StepResult, ValidationHarness
+from harness_core import HarnessConfig, StepResult, ValidationHarness  # noqa: E402
 
 CONFIG = HarnessConfig(
     src_dir="backend",
@@ -118,7 +121,7 @@ class RoadmapHarness(ValidationHarness):
                     auto_fix_command=None,
                 )
             )
-        except Exception as e:
+        except (AttributeError, TypeError) as e:
             errors.append(
                 ValidationError(
                     type="content",
@@ -197,8 +200,8 @@ def main() -> None:
     if cmd in dispatch:
         dispatch[cmd]()
     else:
-        print(f"Comando desconhecido: '{cmd}'")
-        print(f"Disponíveis: {', '.join(dispatch.keys())}, json")
+        logger.error("Comando desconhecido: '%s'", cmd)
+        logger.info("Disponíveis: %s, json", ', '.join(dispatch.keys()))
         sys.exit(1)
 
     harness.print_human()

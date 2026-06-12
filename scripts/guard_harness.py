@@ -25,10 +25,13 @@ Política:
 import argparse
 import hashlib
 import json
+import logging
 import subprocess
 import sys
 import time
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 def run_sudo_command(command: list[str]) -> None:
@@ -39,7 +42,7 @@ def run_sudo_command(command: list[str]) -> None:
         subprocess.run(["sudo", "-v"], check=True)  # valida sessão sudo
         subprocess.run(["sudo"] + command, check=True)
     except subprocess.CalledProcessError:
-        print("❌ Falha ao executar comando sudo:", " ".join(command))
+        logger.error("❌ Falha ao executar comando sudo: %s", " ".join(command))
         sys.exit(EXIT_VIOLATION)
 
 
@@ -50,7 +53,7 @@ def unlock_file(path: Path) -> None:
         subprocess.run(["sudo", "chattr", "-i", str(path)], check=False)
         # Remove permissão de leitura-only (444) para permitir escrita
         subprocess.run(["sudo", "chmod", "644", str(path)], check=False)
-    except Exception:
+    except (OSError, subprocess.CalledProcessError):
         pass
 
 
@@ -63,7 +66,7 @@ def lock_file(path: Path) -> None:
         subprocess.run(["sudo", "chmod", "444", str(path)], check=False)
         # Aplica atributo imutável (requer sudo)
         subprocess.run(["sudo", "chattr", "+i", str(path)], check=False)
-    except Exception:
+    except (OSError, subprocess.CalledProcessError):
         pass
 
 
@@ -77,25 +80,27 @@ HASH_FILE = BASE_DIR / ".harness.hash"
 
 def unlock_all() -> None:
     """Desbloqueia todos os arquivos protegidos temporariamente."""
-    print("\n🔓 Desbloqueando arquivos protegidos...")
-    print("⚠️  Será solicitada sua senha de usuário\n")
+    logger.info("\n🔓 Desbloqueando arquivos protegidos...")
+    logger.info("⚠️  Será solicitada sua senha de usuário\n")
     for rel_path in PROTECTED_FILES:
         abs_path = BASE_DIR / rel_path
         if abs_path.exists():
             unlock_file(abs_path)
     if HASH_FILE.exists():
         unlock_file(HASH_FILE)
-    print("\n✅ Arquivos desbloqueados. Faça suas alterações e execute --seal quando terminar.")
+    logger.info(
+        "\n✅ Arquivos desbloqueados. Faça suas alterações e execute --seal quando terminar."
+    )
 
 
 def check_seal_status() -> None:
     """Verifica e exibe o status de bloqueio dos arquivos protegidos."""
-    print("\n🔍 Status dos arquivos protegidos:\n")
+    logger.info("\n🔍 Status dos arquivos protegidos:\n")
     all_files = PROTECTED_FILES + [".harness.hash"]
     for rel_path in all_files:
         abs_path = BASE_DIR / rel_path if rel_path != ".harness.hash" else HASH_FILE
         if not abs_path.exists():
-            print(f"  ❌ NÃO EXISTE:   {rel_path}")
+            logger.error("  ❌ NÃO EXISTE:   %s", rel_path)
             continue
         try:
             result = subprocess.run(
@@ -104,14 +109,14 @@ def check_seal_status() -> None:
             if result.returncode == 0:
                 attrs = result.stdout.split()[0]
                 if "i" in attrs:
-                    print(f"  🔒 SELADO:       {rel_path}")
+                    logger.info("  🔒 SELADO:       %s", rel_path)
                 else:
-                    print(f"  🔓 DESBLOQUEADO: {rel_path}")
+                    logger.info("  🔓 DESBLOQUEADO: %s", rel_path)
             else:
-                print(f"  ⚠️  ERRO:        {rel_path} (não foi possível verificar)")
-        except Exception:
-            print(f"  ⚠️  ERRO:        {rel_path} (lsattr não disponível)")
-    print()
+                logger.warning("  ⚠️  ERRO:        %s (não foi possível verificar)", rel_path)
+        except (OSError, subprocess.CalledProcessError):
+            logger.warning("  ⚠️  ERRO:        %s (lsattr não disponível)", rel_path)
+    logger.info("")
 
 
 # Arquivos cujo hash é rastreado e cuja integridade é obrigatória
@@ -155,18 +160,18 @@ def _process_file_hashes(verbose: bool, hashes: dict[str, str]) -> None:
         abs_path = BASE_DIR / rel_path
         if not abs_path.exists():
             if verbose:
-                print(f"⚠️  Arquivo não encontrado, pulando: {rel_path}")
+                logger.warning("⚠️  Arquivo não encontrado, pulando: %s", rel_path)
             continue
         unlock_file(abs_path)
         digest = sha256_file(abs_path)
         hashes[rel_path] = digest
         if verbose:
-            print(f"  ✔ {rel_path}\\n    {digest}")
+            logger.info("  ✔ %s\n    %s", rel_path, digest)
 
 
 def _reapply_protection(verbose: bool) -> None:
     if verbose:
-        print("\\n🔒 Reaplicando proteção...")
+        logger.info("\n🔒 Reaplicando proteção...")
     lock_file(HASH_FILE)
     for rel_path in PROTECTED_FILES:
         abs_path = BASE_DIR / rel_path
@@ -178,7 +183,7 @@ def seal(verbose: bool = True) -> dict[str, str]:
     """Calcula e persiste o hash de todos os arquivos protegidos."""
     hashes: dict[str, str] = {}
     if verbose:
-        print("🔐 Preparando ambiente (desbloqueando arquivos)...")
+        logger.info("🔐 Preparando ambiente (desbloqueando arquivos)...")
     if HASH_FILE.exists():
         unlock_file(HASH_FILE)
 
@@ -191,8 +196,8 @@ def seal(verbose: bool = True) -> dict[str, str]:
     _reapply_protection(verbose)
 
     if verbose:
-        print("\\n✅ Sistema selado com sucesso.")
-        print(f"📁 Hash salvo em: {HASH_FILE.relative_to(BASE_DIR)}")
+        logger.info("\n✅ Sistema selado com sucesso.")
+        logger.info("📁 Hash salvo em: %s", HASH_FILE.relative_to(BASE_DIR))
     return hashes
 
 
@@ -207,7 +212,7 @@ def load_expected_hashes() -> dict[str, str] | None:
         return None
     try:
         return json.loads(HASH_FILE.read_text(encoding="utf-8"))
-    except Exception:
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
         return None
 
 
@@ -428,33 +433,33 @@ def print_human_report(report: dict) -> None:
     icons = {"INTACT": "✅", "WARNING": "⚠️ ", "VIOLATED": "🚨"}
     icon = icons.get(status, "❓")
 
-    print("\n" + "═" * 60)
-    print("  GUARD HARNESS — VERIFICAÇÃO DE INTEGRIDADE")
-    print("═" * 60)
-    print(f"\n{icon} STATUS: {status}")
+    print("\n" + "═" * 60)  # noqa: T201
+    print("  GUARD HARNESS — VERIFICAÇÃO DE INTEGRIDADE")  # noqa: T201
+    print("═" * 60)  # noqa: T201
+    print(f"\n{icon} STATUS: {status}")  # noqa: T201
 
     if not report["violations"]:
-        print("\n  Todos os arquivos protegidos estão íntegros.")
+        print("\n  Todos os arquivos protegidos estão íntegros.")  # noqa: T201
     else:
-        print(
+        print(  # noqa: T201
             f"\n  {report['summary']['critical']} violações críticas · "
             f"{report['summary']['warnings']} avisos\n"
         )
 
         for v in report["violations"]:
             sev_icon = "🔴" if v["severity"] == "CRITICAL" else "🟡"
-            print(f"  {sev_icon} [{v['type']}] {v['file']}")
-            print(f"     {v['message']}")
-            print(f"     → {v['instruction']}")
+            print(f"  {sev_icon} [{v['type']}] {v['file']}")  # noqa: T201
+            print(f"     {v['message']}")  # noqa: T201
+            print(f"     → {v['instruction']}")  # noqa: T201
             if "forensics" in v:
-                print(f"     🔍 Diagnóstico: {v['forensics'].get('diff_command', '')}")
-            print()
+                print(f"     🔍 Diagnóstico: {v['forensics'].get('diff_command', '')}")  # noqa: T201
+            print()  # noqa: T201
 
-    print("═" * 60 + "\n")
-    print("Para desbloquear o guard harness, rode o comando:")
-    print("        sudo chattr -i scripts/guard_harness.py")
-    print("        sudo chmod 644 scripts/guard_harness.py")
-    print("═" * 60 + "\n")
+    print("═" * 60 + "\n")  # noqa: T201
+    print("Para desbloquear o guard harness, rode o comando:")  # noqa: T201
+    print("        sudo chattr -i scripts/guard_harness.py")  # noqa: T201
+    print("        sudo chmod 644 scripts/guard_harness.py")  # noqa: T201
+    print("═" * 60 + "\n")  # noqa: T201
 
 
 # =============================================================================
@@ -488,7 +493,7 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.seal:
-        print("\n🔏 Selando arquivos protegidos...\n")
+        logger.info("\n🔏 Selando arquivos protegidos...\n")
         seal(verbose=True)
         sys.exit(EXIT_OK)
 
@@ -505,7 +510,7 @@ def main() -> None:
     report = build_report(hash_violations, git_violations)
 
     if args.json:
-        print(json.dumps(report, indent=2, ensure_ascii=False))
+        logger.info(json.dumps(report, indent=2, ensure_ascii=False))
     else:
         print_human_report(report)
 
