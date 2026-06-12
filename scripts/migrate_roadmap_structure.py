@@ -15,6 +15,8 @@ import json
 import os
 import sys
 from typing import Any, Dict
+import logging
+logger = logging.getLogger(__name__)
 
 
 def migrate_node(node: Dict[str, Any], all_nodes: Dict[str, Dict]) -> Dict[str, Any]:
@@ -115,7 +117,7 @@ def migrate_roadmap(old_data: Dict[str, Any]) -> Dict[str, Any]:
 
 def main():
     if len(sys.argv) < 2:
-        print(
+        logger.info(
             "Uso: python migrate_roadmap_structure.py <arquivo_entrada> [--output <arquivo_saida>]"
         )
         sys.exit(1)
@@ -128,7 +130,7 @@ def main():
         if output_index + 1 < len(sys.argv):
             output_file = sys.argv[output_index + 1]
         else:
-            print("Erro: --output requer um caminho de arquivo")
+            logger.error("Erro: --output requer um caminho de arquivo")
             sys.exit(1)
     else:
         # Criar nome de saída baseado no input
@@ -137,26 +139,26 @@ def main():
 
     # Verificar se arquivo existe
     if not os.path.exists(input_file):
-        print(f"Erro: Arquivo '{input_file}' não encontrado")
+        logger.error(f"Erro: Arquivo '{input_file}' não encontrado")
         sys.exit(1)
 
     # Carregar arquivo antigo
-    print(f"📖 Lendo {input_file}...")
+    logger.info(f"📖 Lendo {input_file}...")
     with open(input_file, "r", encoding="utf-8") as f:
         old_data = json.load(f)
 
     # Migrar estrutura
-    print("🔄 Migrando estrutura...")
+    logger.info("🔄 Migrando estrutura...")
     new_data = migrate_roadmap(old_data)
 
     # Salvar novo arquivo
-    print(f"💾 Salvando em {output_file}...")
+    logger.info(f"💾 Salvando em {output_file}...")
     with open(output_file, "w", encoding="utf-8") as f:
         json.dump(new_data, f, ensure_ascii=False, indent=2)
 
-    print("✅ Migração concluída!")
-    print(f"   Nós centrais: {len(new_data['nodes'])}")
-    print(f"   Arquivo gerado: {output_file}")
+    logger.info("✅ Migração concluída!")
+    logger.info(f"   Nós centrais: {len(new_data['nodes'])}")
+    logger.info(f"   Arquivo gerado: {output_file}")
 
 
 if __name__ == "__main__":

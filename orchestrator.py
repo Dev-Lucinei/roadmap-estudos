@@ -12,6 +12,8 @@ import os
 import sys
 from datetime import datetime, timezone
 from typing import Any
+import logging
+logger = logging.getLogger(__name__)
 
 
 def update_task_status(
@@ -67,7 +69,7 @@ BOARD_PATH = "task_board.json"
 def cmd_update(args: list[str]) -> None:
     """Executa o comando update: altera status de uma tarefa."""
     if len(args) < 2:
-        print("Uso: python orchestrator.py update <task_id> <status> [output_log] [result_path]")
+        logger.info("Uso: python orchestrator.py update <task_id> <status> [output_log] [result_path]")
         sys.exit(1)
     task_id = args[0]
     status = args[1]
@@ -75,10 +77,10 @@ def cmd_update(args: list[str]) -> None:
     result_path = args[3] if len(args) > 3 else ""
     try:
         board = update_task_status(BOARD_PATH, task_id, status, output_log, result_path)
-        print(f"✅ {task_id} → {status}")
-        print(f"   last_update: {board['last_update']}")
+        logger.info(f"✅ {task_id} → {status}")
+        logger.info(f"   last_update: {board['last_update']}")
     except (FileNotFoundError, ValueError, KeyError) as e:
-        print(f"❌ Erro: {e}")
+        logger.error(f"❌ Erro: {e}")
         sys.exit(1)
 
 
@@ -89,17 +91,17 @@ def cmd_ready() -> None:
             board = json.load(f)
         ready = get_ready_tasks(board)
         if ready:
-            print("📋 Tarefas prontas para delegar:")
+            logger.info("📋 Tarefas prontas para delegar:")
             for tid in ready:
                 task = next(t for t in board["tasks"] if t["id"] == tid)
-                print(
+                logger.info(
                     f"   {tid} | agente={task.get('assigned_agent', 'TBD')}"
                     f" | input={task.get('input_data', '')}"
                 )
         else:
-            print("📋 Nenhuma tarefa pronta. Verifique dependências.")
+            logger.info("📋 Nenhuma tarefa pronta. Verifique dependências.")
     except FileNotFoundError:
-        print(f"❌ task_board.json não encontrado em {BOARD_PATH}")
+        logger.error(f"❌ task_board.json não encontrado em {BOARD_PATH}")
         sys.exit(1)
 
 
@@ -109,7 +111,7 @@ def cmd_status() -> None:
         with open(BOARD_PATH) as f:
             board = json.load(f)
     except FileNotFoundError:
-        print(f"❌ task_board.json não encontrado em {BOARD_PATH}")
+        logger.error(f"❌ task_board.json não encontrado em {BOARD_PATH}")
         sys.exit(1)
 
     counts = {"pending": 0, "in_progress": 0, "completed": 0, "failed": 0}
@@ -117,17 +119,17 @@ def cmd_status() -> None:
         s = t.get("status", "pending")
         counts[s] = counts.get(s, 0) + 1
 
-    print(f"📊 Projeto: {board.get('project_id', 'N/A')}")
-    print(f"   Última atualização: {board.get('last_update', 'N/A')}")
-    print(f"   ✅ completed: {counts['completed']}")
-    print(f"   🔄 in_progress: {counts['in_progress']}")
-    print(f"   ⏳ pending: {counts['pending']}")
-    print(f"   ❌ failed: {counts['failed']}")
+    logger.info(f"📊 Projeto: {board.get('project_id', 'N/A')}")
+    logger.info(f"   Última atualização: {board.get('last_update', 'N/A')}")
+    logger.info(f"   ✅ completed: {counts['completed']}")
+    logger.info(f"   🔄 in_progress: {counts['in_progress']}")
+    logger.info(f"   ⏳ pending: {counts['pending']}")
+    logger.error(f"   ❌ failed: {counts['failed']}")
 
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print(__doc__)
+        logger.info(__doc__)
         sys.exit(1)
 
     command = sys.argv[1]
@@ -138,6 +140,6 @@ if __name__ == "__main__":
     elif command == "status":
         cmd_status()
     else:
-        print(f"❌ Comando desconhecido: {command}")
-        print(__doc__)
+        logger.error(f"❌ Comando desconhecido: {command}")
+        logger.info(__doc__)
         sys.exit(1)

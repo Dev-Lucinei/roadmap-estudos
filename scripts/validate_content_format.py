@@ -12,6 +12,8 @@ import json
 import re
 import sys
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 # Diretórios
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -92,7 +94,7 @@ class ContentValidator:
         except json.JSONDecodeError as e:
             self.errors.append(f"❌ {filepath.name}: JSON inválido - {str(e)}")
             return False
-        except Exception as e:
+        except (OSError, ValueError) as e:
             self.errors.append(f"❌ {filepath.name}: erro ao validar - {str(e)}")
             return False
 
@@ -115,18 +117,18 @@ class ContentValidator:
             self.success_count += 1
             return True
 
-        except Exception as e:
+        except OSError as e:
             self.errors.append(f"❌ {filepath.name}: erro ao validar - {str(e)}")
             return False
 
     def validate_all(self):
         """Executa todas as validações"""
-        print("=" * 70)
-        print("VALIDAÇÃO DE FORMATO DE CONTEÚDO")
-        print("=" * 70)
+        logger.info("=" * 70)
+        logger.info("VALIDAÇÃO DE FORMATO DE CONTEÚDO")
+        logger.info("=" * 70)
 
         # Valida roadmaps
-        print("\n📚 Validando Roadmaps...")
+        logger.info("\n📚 Validando Roadmaps...")
         roadmap_files = [f for f in DATA_DIR.glob("*.json") if f.name.startswith("roadmap_")]
 
         for filepath in sorted(roadmap_files):
@@ -134,43 +136,43 @@ class ContentValidator:
                 self.validate_roadmap_structure(filepath)
 
         # Valida lições
-        print("\n📝 Validando Lições...")
+        logger.info("\n📝 Validando Lições...")
         lesson_files = list(LICOES_DIR.glob("*.md"))
 
         for filepath in sorted(lesson_files):
             self.validate_lesson_format(filepath)
 
         # Relatório final
-        print("\n" + "=" * 70)
-        print("RELATÓRIO DE VALIDAÇÃO")
-        print("=" * 70)
+        logger.info("\n" + "=" * 70)
+        logger.info("RELATÓRIO DE VALIDAÇÃO")
+        logger.info("=" * 70)
 
-        print(f"\n✅ Arquivos válidos: {self.success_count}")
+        logger.info(f"\n✅ Arquivos válidos: {self.success_count}")
 
         if self.warnings:
-            print(f"\n⚠️ Avisos ({len(self.warnings)}):")
+            logger.warning(f"\n⚠️ Avisos ({len(self.warnings)}):")
             for warning in self.warnings[:10]:
-                print(f"   {warning}")
+                logger.warning(f"   {warning}")
             if len(self.warnings) > 10:
-                print(f"   ... e mais {len(self.warnings) - 10} avisos")
+                logger.warning(f"   ... e mais {len(self.warnings) - 10} avisos")
 
         if self.errors:
-            print(f"\n❌ Erros ({len(self.errors)}):")
+            logger.error(f"\n❌ Erros ({len(self.errors)}):")
             for error in self.errors[:10]:
-                print(f"   {error}")
+                logger.error(f"   {error}")
             if len(self.errors) > 10:
-                print(f"   ... e mais {len(self.errors) - 10} erros")
+                logger.error(f"   ... e mais {len(self.errors) - 10} erros")
 
-        print("\n" + "=" * 70)
+        logger.info("\n" + "=" * 70)
 
         if self.errors:
-            print("❌ VALIDAÇÃO FALHOU - Corrija os erros acima")
+            logger.error("❌ VALIDAÇÃO FALHOU - Corrija os erros acima")
             return False
         elif self.warnings:
-            print("⚠️ VALIDAÇÃO PASSOU COM AVISOS")
+            logger.warning("⚠️ VALIDAÇÃO PASSOU COM AVISOS")
             return True
         else:
-            print("✅ VALIDAÇÃO PASSOU - Todos os arquivos estão corretos!")
+            logger.info("✅ VALIDAÇÃO PASSOU - Todos os arquivos estão corretos!")
             return True
 
 

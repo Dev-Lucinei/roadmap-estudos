@@ -6,6 +6,8 @@ e converter para estrutura nova (subtopics aninhados)
 
 import json
 import sys
+import logging
+logger = logging.getLogger(__name__)
 
 
 def convert_to_new_structure(old_data):
@@ -17,12 +19,12 @@ def convert_to_new_structure(old_data):
     # Identificar nós centrais
     central_nodes = [n for n in old_data["nodes"] if n.get("type") == "central"]
 
-    print(f"   Encontrados {len(central_nodes)} nós centrais")
+    logger.info(f"   Encontrados {len(central_nodes)} nós centrais")
 
     new_nodes = []
 
     for central in central_nodes:
-        print(f"   Processando: {central['id']}")
+        logger.info(f"   Processando: {central['id']}")
 
         new_central = {
             "id": central["id"],
@@ -37,12 +39,12 @@ def convert_to_new_structure(old_data):
 
         # Converter children para subtopics
         if "children" in central and central["children"]:
-            print(f"      Children: {central['children']}")
+            logger.info(f"      Children: {central['children']}")
             subtopics = []
             for child_id in central["children"]:
                 if child_id in all_nodes:
                     child = all_nodes[child_id]
-                    print(f"         Adicionando subtópico: {child_id}")
+                    logger.info(f"         Adicionando subtópico: {child_id}")
                     subtopic = {
                         "id": child_id,
                         "title": child["title"],
@@ -54,11 +56,11 @@ def convert_to_new_structure(old_data):
 
                     subtopics.append(subtopic)
                 else:
-                    print(f"         ⚠️  Child {child_id} não encontrado!")
+                    logger.warning(f"         ⚠️  Child {child_id} não encontrado!")
 
             if subtopics:
                 new_central["subtopics"] = subtopics
-                print(f"      Total de subtópicos adicionados: {len(subtopics)}")
+                logger.info(f"      Total de subtópicos adicionados: {len(subtopics)}")
 
         new_nodes.append(new_central)
 
@@ -67,26 +69,26 @@ def convert_to_new_structure(old_data):
 
 def main():
     if len(sys.argv) < 2:
-        print("Uso: python fix_roadmap_structure.py <arquivo.json>")
+        logger.info("Uso: python fix_roadmap_structure.py <arquivo.json>")
         sys.exit(1)
 
     input_file = sys.argv[1]
 
-    print(f"📖 Lendo {input_file}...")
+    logger.info(f"📖 Lendo {input_file}...")
     with open(input_file, "r", encoding="utf-8") as f:
         old_data = json.load(f)
 
-    print("🔄 Convertendo estrutura...")
+    logger.info("🔄 Convertendo estrutura...")
     new_data = convert_to_new_structure(old_data)
 
-    print(f"💾 Salvando {input_file}...")
+    logger.info(f"💾 Salvando {input_file}...")
     with open(input_file, "w", encoding="utf-8") as f:
         json.dump(new_data, f, ensure_ascii=False, indent=4)
 
-    print("✅ Conversão concluída!")
-    print(f"   Nós centrais: {len(new_data['nodes'])}")
+    logger.info("✅ Conversão concluída!")
+    logger.info(f"   Nós centrais: {len(new_data['nodes'])}")
     total_subtopics = sum(len(n.get("subtopics", [])) for n in new_data["nodes"])
-    print(f"   Total de subtópicos: {total_subtopics}")
+    logger.info(f"   Total de subtópicos: {total_subtopics}")
 
 
 if __name__ == "__main__":

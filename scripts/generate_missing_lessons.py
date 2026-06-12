@@ -63,7 +63,7 @@ def generate_missing(missing, limit=0, dry_run=False):
             break
 
         if dry_run:
-            print(f"  [DRY] {node_id}: {info['title']} ({info['type']})")
+            logger.info(f"  [DRY] {node_id}: {info['title']} ({info['type']})")
             results["skipped"] += 1
             continue
 
@@ -78,10 +78,10 @@ def generate_missing(missing, limit=0, dry_run=False):
                 roadmap_title=info.get("roadmap_title"),
                 subtopics=info.get("subtopics"),
             )
-            print(f"  [{i + 1}/{len(missing)}] GERADO {node_id}: {info['title']}")
+            logger.info(f"  [{i + 1}/{len(missing)}] GERADO {node_id}: {info['title']}")
             results["success"] += 1
-        except Exception as e:
-            print(f"  [{i + 1}/{len(missing)}] FALHA {node_id}: {e}")
+        except (OSError, ValueError) as e:
+            logger.error(f"  [{i + 1}/{len(missing)}] FALHA {node_id}: {e}")
             results["failed"] += 1
             results["errors"].append({"node_id": node_id, "error": str(e)})
 
@@ -90,31 +90,33 @@ def generate_missing(missing, limit=0, dry_run=False):
 
 if __name__ == "__main__":
     import argparse
+import logging
+logger = logging.getLogger(__name__)
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--limit", type=int, default=0)
     args = parser.parse_args()
 
-    print("🔍 Escaneando lições faltantes...")
+    logger.info("🔍 Escaneando lições faltantes...")
     missing = find_missing_lessons()
-    print(f"📊 Total: {len(missing)} lições faltantes")
+    logger.info(f"📊 Total: {len(missing)} lições faltantes")
 
     if not missing:
-        print("✅ Todas as lições já foram geradas!")
+        logger.info("✅ Todas as lições já foram geradas!")
         sys.exit(0)
 
     if args.dry_run:
         generate_missing(missing, limit=args.limit, dry_run=True)
         sys.exit(0)
 
-    print("🚀 Gerando lições...")
+    logger.info("🚀 Gerando lições...")
     results = generate_missing(missing, limit=args.limit)
 
-    print(
+    logger.info(
         f"\n✅ Concluído: {results['success']} geradas, "
         f"{results['failed']} falhas, {results['skipped']} puladas"
     )
     if results["errors"]:
         for err in results["errors"][:5]:
-            print(f"  Erro: {err['node_id']} — {err['error']}")
+            logger.error(f"  Erro: {err['node_id']} — {err['error']}")
