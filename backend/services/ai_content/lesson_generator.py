@@ -1,7 +1,5 @@
 """Serviço de geração de lições usando IA (OpenRouter)."""
 
-import os
-
 from openai import OpenAI
 
 from backend.core.config import (
@@ -171,12 +169,18 @@ def processar_node(
     subtopics: list[str] | None = None,
 ) -> str:
     """Gera uma lição para um nó do roadmap e salva em Markdown."""
-    final_output_dir: str = output_dir if output_dir is not None else str(LICOES_DIR)
+    from pathlib import Path
+    final_output_dir = output_dir if output_dir is not None else LICOES_DIR
+    base_dir = Path(final_output_dir).resolve()
+    base_dir.mkdir(parents=True, exist_ok=True)
 
-    if not os.path.exists(final_output_dir):
-        os.makedirs(final_output_dir)
+    safe_filename = Path(f"{node_id}.md").name
+    resolved_path = (base_dir / safe_filename).resolve()
 
-    nome_arquivo = os.path.join(final_output_dir, f"{node_id}.md")
+    if not resolved_path.is_relative_to(base_dir):
+        raise PermissionError("Acesso negado: Tentativa de Path Traversal bloqueada.")
+
+    nome_arquivo = str(resolved_path)
     conteudo = gerar_conteudo_ia(
         tema=title,
         tipo=node_type,
@@ -190,7 +194,7 @@ def processar_node(
     if not conteudo:
         raise ValueError(f"Falha ao gerar conteúdo para o tópico: {title}")
 
-    with open(nome_arquivo, "w", encoding="utf-8") as f:
+    with open(resolved_path, "w", encoding="utf-8") as f:
         f.write(conteudo)
 
     return nome_arquivo
