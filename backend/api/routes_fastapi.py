@@ -50,15 +50,20 @@ async def list_roadmaps() -> list[str]:
 async def load_roadmap(roadmap_id: str) -> dict[str, object]:
     """Carrega um roadmap pelo ID."""
     import json
-    import os
+    from pathlib import Path
 
     from backend.core.config import DATA_DIR
 
     if not re.fullmatch(r"[a-z0-9_-]+", roadmap_id):
         raise HTTPException(status_code=400, detail="ID de roadmap inválido")
 
-    path = os.path.join(DATA_DIR, f"roadmap_{roadmap_id}.json")
-    if os.path.exists(path):
+    base_dir = Path(DATA_DIR).resolve()
+    path = (base_dir / f"roadmap_{roadmap_id}.json").resolve()
+
+    if not path.is_relative_to(base_dir):
+        raise HTTPException(status_code=403, detail="Acesso negado: Tentativa de Path Traversal")
+
+    if path.exists():
         with open(path, "r", encoding="utf-8") as f:
             result: dict[str, object] = json.load(f)
             return result
@@ -157,9 +162,16 @@ async def diagnose(req: DiagnoseRequest) -> DiagnoseResponse:
 @router.get("/licoes/{lesson_file:path}")
 async def get_lesson(lesson_file: str) -> FileResponse:
     """Retorna o arquivo Markdown de uma lição."""
-    lesson_path = (LICOES_DIR / lesson_file).resolve()
-    if not lesson_path.is_relative_to(LICOES_DIR.resolve()):
+
+    if ".." in lesson_file or lesson_file.startswith("/"):
+        raise HTTPException(status_code=403, detail="Acesso negado: Caminho inválido")
+
+    base_dir = LICOES_DIR.resolve()
+    lesson_path = (base_dir / lesson_file).resolve()
+
+    if not lesson_path.is_relative_to(base_dir):
         raise HTTPException(status_code=403, detail="Acesso negado: path traversal detectado")
+
     if lesson_path.exists() and lesson_path.is_file():
         return FileResponse(lesson_path, media_type="text/markdown; charset=utf-8")
     raise HTTPException(status_code=404, detail=f"Lição não encontrada: {lesson_file}")
