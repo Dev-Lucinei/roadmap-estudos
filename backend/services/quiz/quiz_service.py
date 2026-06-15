@@ -1,7 +1,6 @@
 """Serviço de geração e avaliação de quizzes educacionais."""
 
 import json
-import os
 import re
 from pathlib import Path
 from typing import Any, cast
@@ -37,11 +36,17 @@ class QuizService:
 
     def generate_quiz(self, node_id: str, title: str) -> list[dict[str, Any]]:
         """Gera um quiz de múltipla escolha baseado no conteúdo de uma lição."""
-        lesson_path = os.path.join(self.licoes_dir, f"{node_id}.md")
-        if not os.path.exists(lesson_path):
+        base_dir = Path(self.licoes_dir).resolve()
+        safe_filename = Path(f"{node_id}.md").name
+        resolved_path = (base_dir / safe_filename).resolve()
+
+        if not resolved_path.is_relative_to(base_dir):
+            raise PermissionError("Acesso negado: Tentativa de Path Traversal bloqueada.")
+
+        if not resolved_path.exists():
             raise FileNotFoundError(f"Lição {node_id} não encontrada")
 
-        with open(lesson_path, "r", encoding="utf-8") as f:
+        with open(resolved_path, "r", encoding="utf-8") as f:
             lesson_content = f.read()
 
         lesson_content = lesson_content.split("```json")[0].strip()
@@ -99,10 +104,16 @@ class QuizService:
         user_answers: dict[str, int],
     ) -> dict[str, Any]:
         """Avalia as respostas do usuário comparando com o gabarito e gera feedback via IA."""
-        lesson_path = os.path.join(self.licoes_dir, f"{node_id}.md")
+        base_dir = Path(self.licoes_dir).resolve()
+        safe_filename = Path(f"{node_id}.md").name
+        resolved_path = (base_dir / safe_filename).resolve()
+
+        if not resolved_path.is_relative_to(base_dir):
+            raise PermissionError("Acesso negado: Tentativa de Path Traversal bloqueada.")
+
         lesson_content = ""
-        if os.path.exists(lesson_path):
-            with open(lesson_path, "r", encoding="utf-8") as f:
+        if resolved_path.exists():
+            with open(resolved_path, "r", encoding="utf-8") as f:
                 lesson_content = f.read().split("```json")[0].strip()[:1500]
 
         client = self.get_client()
