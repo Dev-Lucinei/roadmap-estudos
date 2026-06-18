@@ -33,6 +33,9 @@ Este documento registra a evolução, decisões técnicas e soluções de proble
 - **Ruff lint**: Erros E501 corrigidos em todos os services (COMPLIANCE-011)
 - **Mypy strict**: Erros type-arg corrigidos em engine.py (COMPLIANCE-012)
 
+### Security
+- Mitigadas 11 vulnerabilidades de Path Injection / Traversal em `lesson_generator.py`, `quiz_service.py` e `routes_fastapi.py` (FastAPI endpoints e FileResponse) através do uso consistente de `Path.resolve()`, `is_relative_to()` e validação explícita de caracteres `".."`.
+
 ### Removed
 - **`scripts/guard_harness.py.backup`**: Deletado (viola política de segurança) (COMPLIANCE-002)
 - **`scripts/guard_harness.py.bak`**: Deletado (viola política de segurança) (COMPLIANCE-002)
