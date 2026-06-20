@@ -122,7 +122,7 @@ def gerar_roadmap_ia(tema: str) -> RoadmapData | None:
             raise ValueError("JSON não contém 'nodes'")
 
         return cast(RoadmapData, roadmap_data)
-    except Exception as e:
+    except (json.JSONDecodeError, ValueError) as e:
         logger.error("Erro ao parsear JSON: %s", e)
         return None
 

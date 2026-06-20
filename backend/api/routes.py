@@ -92,7 +92,7 @@ class ApiRoutes:
                 return {"status": "success", "quiz": quiz_data}
             except FileNotFoundError as e:
                 return {"status": "error", "message": f"Lição não encontrada: {str(e)}"}
-            except Exception as e:
+            except (ValueError, PermissionError) as e:
                 return {"status": "error", "message": f"Erro ao gerar quiz: {str(e)}"}
         return {
             "status": "error",
@@ -115,7 +115,7 @@ class ApiRoutes:
             try:
                 evaluation = quiz_service.evaluate_quiz(node_id, title, quiz_data, user_answers)
                 return {"status": "success", "evaluation": evaluation}
-            except Exception as e:
+            except ValueError as e:
                 return {"status": "error", "message": f"Erro ao avaliar quiz: {str(e)}"}
         return {"status": "error", "message": "Parâmetros inválidos"}
 

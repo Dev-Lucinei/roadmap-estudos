@@ -1,145 +1,12 @@
-"""DSL Execution Engine for Roadmap Estudos."""
-
+# roadmap-estudos/backend/services/dsl/engine/validate/validator.py
 import re
 from typing import Any
 
 _VALID_TYPES = frozenset({"lesson", "quiz", "diagnosis", "roadmap", "review", "project"})
 _VALID_DEPTHS = frozenset({"beginner", "intermediate", "advanced"})
 
-
-class DSLExecutionEngine:
-    """Motor de execução declarativa da DSL."""
-
-    def __init__(self) -> None:
-        """Initialize the engine with an empty context."""
-        self.context: dict[str, Any] = {}
-
-    def execute(self, dsl: dict[str, Any]) -> dict[str, Any]:
-        """Execute a DSL flow after validation.
-
-        Args:
-            dsl: Dictionary representing the DSL to execute
-
-        Returns:
-            Dictionary with execution status and results
-        """
-        validation = self.validate(dsl)
-        if not validation["valid"]:
-            return {
-                "status": "validation_error",
-                "errors": validation["errors"],
-            }
-
-        executed_steps: list[dict[str, Any]] = []
-        failed_steps = []
-
-        for step in dsl.get("steps", []):
-            result = self._execute_step(step, executed_steps)
-            if result["status"] == "success":
-                executed_steps.append(result)
-            else:
-                failed_steps.append(result)
-                break
-
-        return {
-            "status": "completed" if not failed_steps else "partial",
-            "steps_count": len(dsl.get("steps", [])),
-            "executed_steps": executed_steps,
-            "failed_steps": failed_steps,
-            "context": self.context,
-        }
-
-    def _execute_step(
-        self, step: dict[str, Any], executed_steps: list[dict[str, Any]]
-    ) -> dict[str, Any]:
-        step_type = step["type"]
-        step_id = step["id"]
-        params = step.get("params", {})
-
-        for dep_id in step.get("depends_on", []):
-            if not any(s["id"] == dep_id for s in executed_steps):
-                return {
-                    "id": step_id,
-                    "type": step_type,
-                    "status": "skipped",
-                    "reason": f"Dependência '{dep_id}' não foi executada",
-                }
-
-        handlers = {
-            "lesson": self._execute_lesson,
-            "quiz": self._execute_quiz,
-            "diagnosis": self._execute_diagnosis,
-            "roadmap": self._execute_roadmap,
-            "review": self._execute_review,
-            "project": self._execute_project,
-        }
-
-        handler = handlers.get(step_type)
-        if not handler:
-            return {
-                "id": step_id,
-                "type": step_type,
-                "status": "failed",
-                "error": f"Unknown type: {step_type}",
-            }
-
-        try:
-            result = handler(step_id, params)
-            self.context[f"{step_id}_result"] = result
-            self.context["last_topic"] = params.get("topic", "")
-            return {
-                "id": step_id,
-                "type": step_type,
-                "status": "success",
-                "result": result,
-            }
-        except Exception as e:
-            return {
-                "id": step_id,
-                "type": step_type,
-                "status": "failed",
-                "error": str(e),
-            }
-
-    def _execute_lesson(self, step_id: str, params: dict[str, Any]) -> dict[str, Any]:
-        return {
-            "topic": params.get("topic", ""),
-            "difficulty": params.get("difficulty", "medium"),
-            "duration_minutes": params.get("duration_minutes", 30),
-            "content_generated": False,
-            "note": "Implementação real requer OPENROUTER_API_KEY",
-        }
-
-    def _execute_quiz(self, step_id: str, params: dict[str, Any]) -> dict[str, Any]:
-        return {
-            "topic": params.get("topic", ""),
-            "question_count": params.get("question_count", 5),
-            "pass_score": params.get("pass_score", 70),
-            "questions_generated": False,
-        }
-
-    def _execute_diagnosis(self, step_id: str, params: dict[str, Any]) -> dict[str, Any]:
-        return {
-            "topic": params.get("topic", ""),
-            "prerequisites_checked": params.get("prerequisites", []),
-        }
-
-    def _execute_roadmap(self, step_id: str, params: dict[str, Any]) -> dict[str, Any]:
-        return {
-            "theme": params.get("theme", ""),
-            "depth": params.get("depth", "intermediate"),
-        }
-
-    def _execute_review(self, step_id: str, params: dict[str, Any]) -> dict[str, Any]:
-        return {
-            "topic": params.get("topic", ""),
-        }
-
-    def _execute_project(self, step_id: str, params: dict[str, Any]) -> dict[str, Any]:
-        return {
-            "title": params.get("title", ""),
-            "description": params.get("description", ""),
-        }
+class DSLValidator:
+    """Handles validation of DSL definitions."""
 
     def validate(self, dsl: Any) -> dict[str, Any]:
         """Validate a complete DSL definition.
@@ -179,14 +46,7 @@ class DSLExecutionEngine:
         }
 
     def _validate_structure(self, dsl: dict[str, Any]) -> list[dict[str, str]]:
-        """Validate the root structure of a DSL definition.
-
-        Args:
-            dsl: Dictionary representing the DSL
-
-        Returns:
-            List of validation errors found
-        """
+        """Validate the root structure of a DSL definition."""
         errors: list[dict[str, str]] = []
 
         if "version" not in dsl:
@@ -271,14 +131,7 @@ class DSLExecutionEngine:
         return errors
 
     def _validate_steps(self, steps: list[dict[str, Any]]) -> list[dict[str, str]]:
-        """Validate each step in a DSL definition.
-
-        Args:
-            steps: List of step dictionaries
-
-        Returns:
-            List of validation errors found
-        """
+        """Validate each step in a DSL definition."""
         errors: list[dict[str, str]] = []
         seen_ids: dict[str, int] = {}
 
@@ -450,17 +303,7 @@ class DSLExecutionEngine:
     def _validate_params(
         self, step_type: str, params: dict[str, Any], step_id: str, path: str
     ) -> list[dict[str, str]]:
-        """Validate parameters for a specific step type.
-
-        Args:
-            step_type: Type of the step
-            params: Parameters dictionary
-            step_id: ID of the step
-            path: JSON path prefix for error reporting
-
-        Returns:
-            List of validation errors found
-        """
+        """Validate parameters for a specific step type."""
         errors: list[dict[str, str]] = []
 
         if step_type == "lesson":
@@ -664,14 +507,7 @@ class DSLExecutionEngine:
         return errors
 
     def _check_cycles(self, steps: list[dict[str, Any]]) -> list[dict[str, str]]:
-        """Detect cycles in step dependency graph using DFS.
-
-        Args:
-            steps: List of step dictionaries
-
-        Returns:
-            List of validation errors for cycles found
-        """
+        """Detect cycles in step dependency graph using DFS."""
         errors: list[dict[str, str]] = []
 
         id_to_idx: dict[str, int] = {}
@@ -735,14 +571,7 @@ class DSLExecutionEngine:
 
     @staticmethod
     def _validate_id_format(id_str: str) -> bool:
-        """Check if an ID string follows kebab-case format.
-
-        Args:
-            id_str: The ID string to validate
-
-        Returns:
-            True if the ID is valid kebab-case, False otherwise
-        """
+        """Check if an ID string follows kebab-case format."""
         if not isinstance(id_str, str) or not id_str:
             return False
         return bool(re.match(r"^[a-z0-9]+(-[a-z0-9]+)*$", id_str))
