@@ -30,13 +30,13 @@ policies/ (Global - non-negotiable) > rules/ (Projeto) > standards/ (Fallback)
 
 ### Padrões de Qualidade (Quality Gates)
 Após qualquer alteração, o código deve passar nas 4 validações:
-1. `python harness.py` — Validação do harness
+1. `make audit P=aplicacoes/roadmap-estudos` — Auditoria completa via Makefile
 2. `pytest --cov-fail-under=85` — Cobertura ≥ 85%
 3. `ruff check && ruff format --check` — Lint e formatação
 4. `mypy --strict` — Checagem de tipos
 
 ### ADRs Core (Obrigatórios)
-- **[ADR-001](file:///home/lucinei/Projetos/.agents/adr/core/ADR-001-harness-validation.md):** Harness de Validação Unificado
+- **[ADR-001](file:///home/lucinei/Projetos/.agents/adr/core/ADR-001-harness-validation.md):** Validação via Makefile (superseded — harness substituído por Makefile central)
 - **[ADR-002](file:///home/lucinei/Projetos/.agents/adr/core/ADR-002-pydantic-settings.md):** Configurações via pydantic-settings
 - **[ADR-003](file:///home/lucinei/Projetos/.agents/adr/core/ADR-003-fastapi-di.md):** FastAPI com DI via Depends
 - **[ADR-004](file:///home/lucinei/Projetos/.agents/adr/core/ADR-004-process-standards.md):** Padrões de Processos (DoR, DoD, WIP Limits)
@@ -84,7 +84,7 @@ Sempre que detectar uma nova funcionalidade, alteração estrutural ou bug, acio
 - Start: `cd backend && python main.py` (ou `uvicorn backend.main:app --reload`)
 - Testes: `pytest tests/`
 - Lint: `ruff check . && ruff format .`
-- Harness: `python harness.py`
+- Auditoria: `make audit P=aplicacoes/roadmap-estudos`
 - Teste rápido de API: `curl http://localhost:8000/api/roadmaps`
 - API Docs: `http://localhost:8000/docs` (Swagger UI)
 
